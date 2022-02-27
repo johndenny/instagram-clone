@@ -1,11 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
+import RouterSwitch from './RouterSwitch';
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <RouterSwitch />
   </React.StrictMode>,
   document.getElementById('root')
 );
