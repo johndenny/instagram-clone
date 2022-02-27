@@ -220,6 +220,7 @@ button {
   color: #262626;
   font-weight: 600;
   cursor: pointer;
+  margin-left: 8px;
 }
 
 .password-show-button:active {

@@ -1,41 +1,92 @@
 import "./SignUp.css";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const SignUp = () => {
   const [emailValue, setEmailValue] = useState('');
+  const [emailValidity, setEmailValidity] = useState('');
   const [fullNameValue, setFullNameValue] = useState('');
+  const [fullNameValidity, setFullNameValidity] = useState('');
   const [usernameValue, setUsernameValue] = useState('');
+  const [usernameValidity, setUsernameValidity] = useState('');
   const [passwordValue, setPasswordValue] = useState('');
+  const [passwordValidity, setPasswordValidity] = useState('');
   const [passwordHidden, setPasswordHidden] = useState(true);
   const [signUpDisabled, setSignUpDisabled] = useState(true);
-
-  const passwordHandler = (event) => {
-    const { value } = event.target;
-    setPasswordValue(value);
-  }
 
   const togglePasswordVisability = (event) => {
     event.preventDefault();
     passwordHidden ? setPasswordHidden(false) : setPasswordHidden(true);
   }
+  
+  useEffect(() => {
+      (emailValue !== '' && usernameValue !== '' && passwordValue.length > 5) 
+    ? setSignUpDisabled(false)
+    : setSignUpDisabled(true);
+  }, [emailValue, usernameValue, passwordValue]);
 
-  const usernameHandler = (event) => {
-    const { value } = event.target;
-    setUsernameValue(value);
-  }
-
-  const fullNameHandler = (event) => {
-    const { value } = event.target;
-    setFullNameValue(value);
-  }
-
-  const emailHandler = (event) => {
-    const { value } = event.target;
-    setEmailValue(value);
+  const inputHandler = (event) => {
+    const { value, name } = event.target;
+    if (name === 'email') {
+      setEmailValue(value);
+    }
+    if (name === 'fullName') {
+      setFullNameValue(value);
+    }
+    if (name === 'username') {
+      setUsernameValue(value);
+    }
+    if (name === 'password') {
+      setPasswordValue(value);
+    }
   }
 
   const focusInput = (event) => {
+    const { name } = event.target;
+    if (name === 'email') {
+      setEmailValidity('');
+    }
+    if (name === 'fullName') {
+      setFullNameValidity('');
+    }
+    if (name === 'username') {
+      setUsernameValidity('');
+    }
+    if (name === 'password') {
+      setPasswordValidity('');
+    }
     event.target.parentElement.parentElement.classList.toggle('focused')
+  }
+
+  const inputBlur = (event) => {
+    const { name } = event.target;
+    event.target.parentElement.parentElement.classList.toggle('focused')
+    if (name === 'email') {
+      setEmailValidity(event.target.checkValidity());
+      if (emailValue === '') {
+        setEmailValidity(false);
+      };      
+    }
+    if (name === 'fullName') {
+      if (fullNameValue === '') {
+        setFullNameValidity(false);
+      } else {
+        setFullNameValidity(true);
+      };
+    };
+    if (name === 'username') {
+      if (usernameValue === '') {
+        setUsernameValidity(false);
+      } else {
+        setUsernameValidity(true);
+      };
+    };
+    if (name === 'password') {
+      if (passwordValue.length < 5) {
+        setPasswordValidity(false);
+      } else {
+        setPasswordValidity(true);
+      }
+    }
   }
 
   return (
@@ -68,12 +119,19 @@ const SignUp = () => {
                     name='email' 
                     type='email' 
                     className={emailValue !== '' ? ["email-input", 'text-adjust'].join(' ') : 'email-input'}
-                    onChange={emailHandler}
+                    onChange={inputHandler}
                     onFocus={focusInput}
-                    onBlur={focusInput}
+                    onBlur={inputBlur}
                   />
                 </label>
-                <div className="username-spacer"></div>                
+                <div className="username-spacer">
+                  {emailValidity === false &&
+                    <span className="input-sprite error"></span>
+                  }
+                  {emailValidity === true && 
+                    <span className="input-sprite valid"></span>
+                  }  
+                </div>                
               </div>
               <div className="username-input-wrapper">
                 <label className="log-in-label">
@@ -86,30 +144,44 @@ const SignUp = () => {
                     name="fullName"
                     type="text"
                     className={fullNameValue !== '' ? ["full-name-input", 'text-adjust'].join(' ') : 'full-name-input'}
-                    onChange={fullNameHandler}
+                    onChange={inputHandler}
                     onFocus={focusInput}
-                    onBlur={focusInput} 
+                    onBlur={inputBlur} 
                   />
                 </label>
-                <div className="username-spacer"></div>
+                <div className="username-spacer">
+                  {fullNameValidity === false &&
+                    <span className="input-sprite error"></span>
+                  }
+                  {fullNameValidity === true && 
+                    <span className="input-sprite valid"></span>
+                  } 
+                </div>
               </div>
               <div className="username-input-wrapper">
                 <label className="log-in-label">
                   <span className={usernameValue !== '' ? ["username-placeholder", 'move-label'].join(' ') : 'username-placeholder'}>Username</span>
                   <input 
-                    aria-label="Full Name" 
+                    aria-label="Username" 
                     aria-required={true} 
                     autoCapitalize="sentences"
                     autoCorrect="off"
-                    name="fullName"
+                    name="username"
                     type="text"
                     className={usernameValue !== '' ? ["username-input", 'text-adjust'].join(' ') : 'username-input'}
-                    onChange={usernameHandler}
+                    onChange={inputHandler}
                     onFocus={focusInput}
-                    onBlur={focusInput} 
+                    onBlur={inputBlur} 
                   />
                 </label>
-                <div className="username-spacer"></div>
+                <div className="username-spacer">
+                  {usernameValidity === false &&
+                    <span className="input-sprite error"></span>
+                  }
+                  {usernameValidity === true && 
+                    <span className="input-sprite valid"></span>
+                  } 
+                </div>
               </div>
               <div className="username-input-wrapper">
                 <label className="log-in-label">
@@ -122,12 +194,18 @@ const SignUp = () => {
                     name="password"
                     type={passwordHidden ? "password" : "text"}
                     className={passwordValue !== '' ? ["password-input", 'text-adjust'].join(' ') : 'password-input'}
-                    onChange={passwordHandler}
+                    onChange={inputHandler}
                     onFocus={focusInput}
-                    onBlur={focusInput} 
+                    onBlur={inputBlur} 
                   />
                 </label>
                 <div className="username-spacer">
+                  {passwordValidity === false &&
+                    <span className="input-sprite error"></span>
+                  }
+                  {passwordValidity === true && 
+                    <span className="input-sprite valid"></span>
+                  }
                   {passwordValue !== '' &&
                     <button className="password-show-button" onClick={togglePasswordVisability}>{passwordHidden ? 'Show' : 'Hide'}</button>                  
                   }
