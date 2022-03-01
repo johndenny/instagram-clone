@@ -1,23 +1,111 @@
 import "./SignUp.css";
 import React, { useEffect, useState } from "react";
+import firebaseApp from "../Firebase";
+import { getAuth, createUserWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail} from "firebase/auth";
+import { getFirestore, setDoc, doc, addDoc, collection, getDoc, connectFirestoreEmulator } from 'firebase/firestore'
+import { useNavigate } from "react-router-dom";
+
+const db = getFirestore(firebaseApp);
+const auth = getAuth(firebaseApp);
 
 const SignUp = () => {
   const [emailValue, setEmailValue] = useState('');
   const [emailValidity, setEmailValidity] = useState('');
   const [fullNameValue, setFullNameValue] = useState('');
-  const [fullNameValidity, setFullNameValidity] = useState('');
+  const [fullNameValidity, setFullNameValidity] = useState({state: '', error: ''});
   const [usernameValue, setUsernameValue] = useState('');
-  const [usernameValidity, setUsernameValidity] = useState('');
+  const [usernameValidity, setUsernameValidity] = useState({state: '', error: ''});
   const [passwordValue, setPasswordValue] = useState('');
   const [passwordValidity, setPasswordValidity] = useState('');
   const [passwordHidden, setPasswordHidden] = useState(true);
   const [signUpDisabled, setSignUpDisabled] = useState(true);
+  const [showError, setShowError] = useState(false);
+  const [errorText, setErrorText] = useState('');
+  const navigate = useNavigate();
+
+  const createAccount = async (event) => {
+    event.preventDefault();
+    const loginEmail = emailValue;
+    const loginPassword = passwordValue;
+    try {
+      if (usernameValidity.state === false) throw usernameValidity.error;
+      if (fullNameValidity.state === false) throw fullNameValidity.error;
+      const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, loginPassword);
+      await updateProfile(userCredential.user, {displayName: usernameValue});
+      const { displayName, uid } = userCredential.user;
+      await setDoc(doc(db, 'displayNames', displayName), {
+      uid: uid
+      });
+      await setDoc(doc(db, 'users', uid), {
+      uid: uid,
+      username: displayName,
+      fullname: fullNameValue
+      });
+      console.log(userCredential.user);
+      navigate('/');
+    }
+    catch(error) {
+      console.log(error);
+      showSignUpError(error);
+    }
+  }
+
+  const checkFullNameLength = () => {
+    const fullnameArray = fullNameValue.split('');
+    if (fullnameArray.length > 30) {
+      setFullNameValidity({state: false, error: 'too-long'});
+    } else {
+      setFullNameValidity({state: true, error: ''});
+    }
+  }
+
+  const checkUsernameFormat = () => {
+    const regexp = new RegExp("^[a-zA-Z0-9_.]*$");
+    if (regexp.test(usernameValue)) {
+      setUsernameValidity({state: true, error: ''});
+    } else {
+      setUsernameValidity({state: false, error: 'formatting'})
+    }
+  }
+
+  const checkUsernameExists = async () => {
+    const docSnap = await getDoc(doc(db, 'displayNames', usernameValue));
+    if (docSnap.exists()) {
+      console.log(docSnap.data())
+      setUsernameValidity({state: false, error: 'username-taken'});
+    } else {
+      checkUsernameFormat();
+    }
+  }
+
+  const checkEmailExists = async () => {
+    const providers = await fetchSignInMethodsForEmail(auth, emailValue)
+    providers.length === 0
+      ? setEmailValidity(true)
+      : setEmailValidity(false);
+  };
+
+  const showSignUpError = (error) => {
+    setShowError(true);
+    if (error.code === 'auth/email-already-in-use') {
+      setErrorText(`Another Account is using ${emailValue}`);
+    };
+    if (error === 'username-taken') {
+      setErrorText("This username isn't available. Please try another.");
+    };
+    if (error === 'formatting') {
+      setErrorText('Usernames can only use letters, numbers, underscores and periods.');
+    };
+    if (error === 'too-long') {
+      setErrorText('Enter a name under 30 characters.');
+    };
+  }
 
   const togglePasswordVisability = (event) => {
     event.preventDefault();
     passwordHidden ? setPasswordHidden(false) : setPasswordHidden(true);
   }
-  
+
   useEffect(() => {
       (emailValue !== '' && usernameValue !== '' && passwordValue.length > 5) 
     ? setSignUpDisabled(false)
@@ -46,10 +134,10 @@ const SignUp = () => {
       setEmailValidity('');
     }
     if (name === 'fullName') {
-      setFullNameValidity('');
+      setFullNameValidity({state: '', error: ''});
     }
     if (name === 'username') {
-      setUsernameValidity('');
+      setUsernameValidity({state: '', error: ''});
     }
     if (name === 'password') {
       setPasswordValidity('');
@@ -63,21 +151,20 @@ const SignUp = () => {
     if (name === 'email') {
       setEmailValidity(event.target.checkValidity());
       if (emailValue === '') {
-        setEmailValidity(false);
-      };      
+        return setEmailValidity(false);
+      };
+      checkEmailExists();      
     }
     if (name === 'fullName') {
-      if (fullNameValue === '') {
-        setFullNameValidity(false);
-      } else {
-        setFullNameValidity(true);
+      if (fullNameValue !== '') {
+        checkFullNameLength();
       };
     };
     if (name === 'username') {
       if (usernameValue === '') {
-        setUsernameValidity(false);
+        setUsernameValidity({state: false, error: ''});
       } else {
-        setUsernameValidity(true);
+        checkUsernameExists();
       };
     };
     if (name === 'password') {
@@ -150,10 +237,10 @@ const SignUp = () => {
                   />
                 </label>
                 <div className="username-spacer">
-                  {fullNameValidity === false &&
+                  {fullNameValidity.state === false &&
                     <span className="input-sprite error"></span>
                   }
-                  {fullNameValidity === true && 
+                  {fullNameValidity.state === true && 
                     <span className="input-sprite valid"></span>
                   } 
                 </div>
@@ -175,10 +262,10 @@ const SignUp = () => {
                   />
                 </label>
                 <div className="username-spacer">
-                  {usernameValidity === false &&
+                  {usernameValidity.state === false &&
                     <span className="input-sprite error"></span>
                   }
-                  {usernameValidity === true && 
+                  {usernameValidity.state === true && 
                     <span className="input-sprite valid"></span>
                   } 
                 </div>
@@ -211,7 +298,10 @@ const SignUp = () => {
                   }
                 </div>
               </div>
-              <button className="log-in-button" disabled={signUpDisabled}>Sign Up</button>
+              <button className="log-in-button" onClick={createAccount} disabled={signUpDisabled}>Sign Up</button>
+              {showError &&
+                <p className="error-text">{errorText}</p>              
+              }
               <p className="terms-text">By signing up, you agree to our Terms , Data Policy and Cookies Policy .</p>
             </form>         
           </div>

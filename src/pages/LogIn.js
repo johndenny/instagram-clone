@@ -1,31 +1,23 @@
 import React, { useEffect, useState } from "react";
 import './LogIn.css'
-import { initializeApp } from "firebase/app";
 import screenshot1 from "../images/screenshots/screenshot1.jpg";
 import screenshot2 from "../images/screenshots/screenshot2.jpg";
 import screenshot3 from "../images/screenshots/screenshot3.jpg";
 import screenshot4 from "../images/screenshots/screenshot4.jpg";
 import screenshot5 from "../images/screenshots/screenshot5.jpg";
 import { Link } from "react-router-dom";
+import firebaseApp from "../Firebase";
+import { AuthErrorCodes, getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyB6fxJ10wIGXPvPxZ3n382SgURWu95ki8Y",
-  authDomain: "instagram-clone-9e468.firebaseapp.com",
-  projectId: "instagram-clone-9e468",
-  storageBucket: "instagram-clone-9e468.appspot.com",
-  messagingSenderId: "295610472872",
-  appId: "1:295610472872:web:e45f3069bfe5ed3df1e59d"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
 
 const LogIn = () => {
-  const [usernameValue, setUsernameValue] = useState('');
+  const [emailValue, setEmailValue] = useState('');
   const [passwordValue, setPasswordValue] = useState('');
   const [logInDisabled, setLogInDisabled] = useState(true);
   const [passwordHidden, setPasswordHidden] = useState(true);
+  const [showError, setShowError] = useState(false);
+  const [errorText, setErrorText] = useState('');
   const [currentSlide, setCurrentSlide] = useState(1);
   const [screenshot1Class, setScreenshot1Class] = useState(['screenshot-image']);
   const [screenshot2Class, setScreenshot2Class] = useState(['screenshot-image']);
@@ -33,9 +25,30 @@ const LogIn = () => {
   const [screenshot4Class, setScreenshot4Class] = useState(['screenshot-image']);
   const [screenshot5Class, setScreenshot5Class] = useState(['screenshot-image']);
 
-  const usernameHandler = (event) => {
+  const loginEmailPassword = async (event) => {
+    event.preventDefault();
+    const loginEmail = emailValue;
+    const loginPassword = passwordValue;
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      console.log(userCredential.user);      
+    }
+    catch(error) {
+      console.log(error);
+      showLoginError(error)
+    }
+  }
+
+  const showLoginError = (error) => {
+    setShowError(true);
+    if (error.code === AuthErrorCodes.INVALID_PASSWORD) {
+      setErrorText('Sorry, your password was incorrect. Please double check your password.')
+    }
+  }
+
+  const emailHandler = (event) => {
     const { value } = event.target;
-    setUsernameValue(value);
+    setEmailValue(value);
   };
 
   const passwordHandler = (event) => {
@@ -44,8 +57,8 @@ const LogIn = () => {
   };
 
   useEffect(() => {
-    (passwordValue.length > 5 && usernameValue !== '') ? setLogInDisabled(false) : setLogInDisabled(true);
-  }, [usernameValue, passwordValue]);
+    (passwordValue.length > 5 && emailValue !== '') ? setLogInDisabled(false) : setLogInDisabled(true);
+  }, [emailValue, passwordValue]);
 
   const togglePasswordVisability = (event) => {
     event.preventDefault();
@@ -111,17 +124,17 @@ const LogIn = () => {
             <form className="sign-in-form">
               <div className="username-input-wrapper">
                 <label className="log-in-label">
-                  <span className={usernameValue !== '' ? ["username-placeholder", 'move-label'].join(' ') : 'username-placeholder'}>Username</span>
+                  <span className={emailValue !== '' ? ["username-placeholder", 'move-label'].join(' ') : 'username-placeholder'}>Email</span>
                   <input 
-                    aria-label="Username" 
+                    aria-label="Email" 
                     aria-required={true} 
                     autoCapitalize='off' 
                     autoCorrect="off" 
                     maxLength='75' 
-                    name='username' 
+                    name='email' 
                     type='text' 
-                    className={usernameValue !== '' ? ["username-input", 'text-adjust'].join(' ') : 'username-input'}
-                    onChange={usernameHandler}
+                    className={emailValue !== '' ? ["username-input", 'text-adjust'].join(' ') : 'username-input'}
+                    onChange={emailHandler}
                     onFocus={focusInput}
                     onBlur={focusInput}
                   />
@@ -146,12 +159,11 @@ const LogIn = () => {
                 </label>
                 <div className="username-spacer">
                   {passwordValue !== '' &&
-                    <button className="password-show-button" onClick={togglePasswordVisability}>{passwordHidden ? 'Show' : 'Hide'}</button>                  
+                    <button type="button" className="password-show-button" onClick={togglePasswordVisability}>{passwordHidden ? 'Show' : 'Hide'}</button>                  
                   }
                 </div>
               </div>
-
-              <button className="log-in-button" disabled={logInDisabled}>Log In</button>
+              <button type="submit" className="log-in-button" onClick={loginEmailPassword} disabled={logInDisabled}>Log In</button>
             </form>
             <div className="or-seperator">
               <div className="line1"></div>
@@ -162,6 +174,9 @@ const LogIn = () => {
               <span className="facebook-sprite"></span>
               <span className="facebook-text" >Log in with Facebook</span>
             </button>
+            {showError &&
+            <p className="error-text">{errorText}</p>            
+            }
             <a className="forgot-button" href="/">Forgot password?</a>          
           </div>
           <div className="sign-up-wrapper">

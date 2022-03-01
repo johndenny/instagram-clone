@@ -272,3 +272,18 @@ button {
   visibility: visible;
   z-index: 1;
 }
+
+.error-text {
+  color: #ed4956;
+  padding: 0;
+  margin: 10px 40px;
+  font-size: 14px;
+  line-height: 18px;
+  text-align: center;
+}
+
+@media screen and (max-width: 875px) {
+  .sign-in-image-wrapper {
+    display: none;
+  }
+}

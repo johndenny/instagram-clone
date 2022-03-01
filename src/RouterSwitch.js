@@ -1,13 +1,50 @@
+import { useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Homepage from "./pages/Homepage";
 import LogIn from "./pages/LogIn";
 import SignUp from "./pages/SignUp";
+import firebaseApp from "./Firebase"; 
+import { getAuth, onAuthStateChanged} from "firebase/auth";
+import NavigationBar from "./components/NavigationBar";
+import Inbox from "./pages/Inbox";
+
+const auth = getAuth(firebaseApp);
 
 const RouterSwitch = () => {
+  const [userLoggedIn, setUserLoggedIn] = useState('');
+
+  const monitorAuthState = async () => {
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        console.log(user);
+        setUserLoggedIn(true);
+      }
+      else {
+        setUserLoggedIn(false);
+      }
+    })
+  }
+
+  useEffect(() => {
+    monitorAuthState();
+  }, []);
 
   return (
     <BrowserRouter>
+      {userLoggedIn &&
+        <NavigationBar />
+      }
       <Routes>
-        <Route path='/' element={<LogIn />} />
+        {userLoggedIn === '' &&
+          <Route path='/' element={<div></div>} />
+        }
+        {userLoggedIn
+          ? <Route path='/' element={<Homepage/>} />
+          : <Route path='/' element={<LogIn />} />
+        }
+        {userLoggedIn &&
+          <Route path='/direct/inbox/' element={<Inbox />} />
+        }
         <Route path='/accounts/emailsignup/' element={<SignUp />} />
       </Routes>
     </BrowserRouter>
