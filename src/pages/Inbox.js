@@ -2,7 +2,7 @@ import './Inbox.css';
 
 const Inbox = () => {
   return (
-    <h1>INBOX</h1>
+    <h1 className='inbox-header'>INBOX</h1>
   )
 };
 

@@ -36,6 +36,19 @@ div {
   border-radius: 50%;
   overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.drop-down-menu-container {
+  right: 204px;
+  top: 27px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex-shrink: 0;
 }
 
 .profile-picture-wrapper::after {
@@ -143,13 +156,18 @@ div {
   display: flex;
   align-items: center;
   cursor: pointer;
+  position: relative;
 }
 
 .icon:active {
   opacity: 0.5;
 }
 
-a {
+.icon:last-child:active {
+  opacity: 1;
+}
+
+.navigation-bar a {
   text-decoration: none;
   margin: 0;
   padding: 0;
@@ -162,4 +180,15 @@ a {
 
 .logo-wrapper:active {
   opacity: 0.5;
+}
+
+.profile-ring {
+  border: 1px solid rgba(38, 38, 38, 1);
+  border-radius: 50%;
+  height: 28px;
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
 }
