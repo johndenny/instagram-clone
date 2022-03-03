@@ -6,5 +6,12 @@
     "ui": {
       "enabled": true
     }
-  }
+  },
+  "headers": [ {
+    "source": "**/*.@(jpg|jpeg|gif|png",
+    "headers": [ {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    } ]
+  } ]
 }

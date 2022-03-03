@@ -86,3 +86,11 @@ svg {
   height: 1px;
   width: 100%;
 }
+
+.profile-drop-down a:hover {
+  background-color: rgba(250, 250, 250, 1);
+}
+
+.profile-drop-down a:focus {
+  background-color: rgba(239, 239, 239, 1);
+}

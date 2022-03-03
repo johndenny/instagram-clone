@@ -1,0 +1,10 @@
+.entire-wrapper {
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  box-sizing: border-box;
+  align-items: stretch;
+  flex-shrink: 0;
+}

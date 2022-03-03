@@ -2,11 +2,12 @@ import React from 'react';
 import './ProfileDropDown.css';
 import firebaseApp from '../Firebase';
 import { getAuth, signOut} from "firebase/auth";
+import { Link } from 'react-router-dom';
 
 const auth = getAuth(firebaseApp);
 
 const ProfileDropDown = (props) => {
-  const { profileDropDown } = props;
+  const { openDropDown, userData } = props;
 
   const logOut = async () => {
     await signOut(auth);
@@ -14,11 +15,11 @@ const ProfileDropDown = (props) => {
 
   return (
     <React.Fragment>
-    <div className='modal' onClick={profileDropDown}></div>
+    <div className='modal' onClick={openDropDown}></div>
     <div className='profile-drop-down'>
       <div className='drop-down-triangle'></div>
       <div className='profile-buttons-wrapper'>
-        <div className='profile-button'>
+        <Link to={`/${userData.displayName}/`} className='profile-button'>
           <div className='profile-text-icon'>
             <svg aria-label="Profile" className="profile-drop-down-svg" color="#262626" fill="#262626" height="16" role="img" viewBox="0 0 24 24" width="16">
               <circle cx="12.004" cy="12.004" fill="none" r="10.5" stroke="currentColor" strokeLinecap="round" strokeMiterlimit="10" strokeWidth="2"></circle>
@@ -27,7 +28,7 @@ const ProfileDropDown = (props) => {
             </svg>
             <div className='profile-text'>Profile</div>
           </div>
-        </div>
+        </Link>
         <div className='saved-button'>
           <div className='saved-text-icon'>
           <svg aria-label="Saved" className="profile-drop-down-svg" color="#262626" fill="#262626" height="16" role="img" viewBox="0 0 24 24" width="16">
