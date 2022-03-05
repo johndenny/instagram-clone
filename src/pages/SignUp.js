@@ -39,7 +39,11 @@ const SignUp = () => {
       await setDoc(doc(db, 'users', uid), {
       uid: uid,
       username: displayName,
-      fullname: fullNameValue
+      fullname: fullNameValue,
+      website: '',
+      bio: '',
+      gender: '',
+      suggestions: true
       });
       console.log(userCredential.user);
       navigate('/');

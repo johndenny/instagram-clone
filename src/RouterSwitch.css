@@ -8,3 +8,33 @@
   align-items: stretch;
   flex-shrink: 0;
 }
+
+.bottom-notification-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+  right: 0;
+  z-index: 500;
+}
+
+.notification-bar-content {
+  background-color: rgba(39, 39, 39, 1);
+  display: flex;
+  align-items: stretch;
+  min-width: 44px;
+  padding: 0 16px;
+  width: 100%;
+  color: #fff;
+  font-size: 14px;
+  transform: translateY(0);
+  transition: transform 0.2s ease-out;
+}
+
+.slide-up {
+  transform: translateY(0);
+}
+
+.slide-down {
+  transform: translateY(100%);
+}

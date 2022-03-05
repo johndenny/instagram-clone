@@ -26,7 +26,7 @@ const ProfilePhotoModal = (props) => {
             Cancel
           </button>
           <form>
-            <input accept="image/jpeg,image/png" className="profile-upload-input" id='profile-upload-input' type="file" onClick={uploadClick} onChange={uploadHandler}/>
+            <input accept="image/jpeg,image/png" className="profile-upload-input" id='profile-upload-input' type="file" onClick={uploadClick} onChange={uploadHandler} />
           </form>
         </div>
       </div>

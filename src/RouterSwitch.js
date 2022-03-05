@@ -5,19 +5,129 @@ import Homepage from "./pages/Homepage";
 import LogIn from "./pages/LogIn";
 import SignUp from "./pages/SignUp";
 import firebaseApp from "./Firebase"; 
-import { getAuth, onAuthStateChanged} from "firebase/auth";
+import { getAuth, onAuthStateChanged, updateProfile} from "firebase/auth";
 import NavigationBar from "./components/NavigationBar";
 import Inbox from "./pages/Inbox";
 import Explore from "./pages/Explore";
 import Profile from "./pages/Profile";
 import defaultProfileImage from "./images/default-profile-image.jpg";
+import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
+import EditProfile from './pages/EditProfile';
 
 const auth = getAuth(firebaseApp);
+const storage = getStorage();
 
 const RouterSwitch = () => {
   const [userLoggedIn, setUserLoggedIn] = useState('');
   const [userData, setUserData] = useState({});
   const [profilePhotoURL, setProfilePhotoURL] = useState('');
+  const [profileUpload, setProfileUpload] = useState('');
+  const profileImageRef = ref(storage, `profilePhotos/${userData.uid}.jpg`);
+  const [profilePhotoModal, setProfilePhotoModal] = useState(false);
+  const [displayNotification, setDisplayNotification] = useState(false);
+  const [notificationText, setNotificationText] = useState('');
+
+  const showNotification = (text) => {
+    setNotificationText(text);
+    setDisplayNotification(true);
+    setTimeout(() => {
+      setDisplayNotification(false)
+    }, 4000);
+  };
+
+  const clearNotificationText = () => {
+    if (!displayNotification) {
+      setNotificationText('');      
+    }
+  }
+
+  const profilePhotoModalToggle = () => {
+    profilePhotoModal
+      ? setProfilePhotoModal(false)
+      : setProfilePhotoModal(true);
+  };
+  
+  const removeProfilePhoto = async () => {
+    profilePhotoModalToggle()
+    await deleteObject(profileImageRef);
+    await updateProfile(auth.currentUser, {
+      photoURL: ''
+    });
+    getProfilePhotoURL();
+  }
+
+  useEffect(() => {
+    if (profileUpload !== '') {
+      if (profilePhotoModal === true) {
+        setProfilePhotoModal(false);
+      };
+    resizeImage();      
+    };
+  },[profileUpload]);
+
+  const uploadPhoto = async (blob) => {
+    const photoUpload = await uploadBytes(profileImageRef, blob);
+    const photoURL = await getDownloadURL(ref(storage, photoUpload.metadata.fullPath))
+    setProfileUpload('');
+    console.log(photoUpload);
+    await updateProfile(auth.currentUser, {
+      photoURL: photoURL
+    });
+    showNotification('Profile photo added.')
+    getProfilePhotoURL()
+  }
+
+  const uploadHandler = (event) => {
+    const {files} = event.target;
+    setProfileUpload(files[0]);
+  }
+
+  const uploadClick = (event) => {
+    event.target.value = null;
+  }
+
+  const resizeImage = () => {
+    const reader = new FileReader();
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    reader.onload = () => {
+      img.onload = function() {
+        canvas_scale(img)
+      }; 
+      img.src = reader.result;      
+    };
+    reader.readAsDataURL(profileUpload);
+  }
+
+  function canvas_scale(img) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = 150;
+    canvas.height = 150;
+
+    ctx.globalCompositeOperation = 'destination-under';
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const ratio = img.width / img.height;
+    let newWidth = canvas.width;
+    let newHeight = newWidth / ratio;
+    if (newHeight < canvas.height) {
+      newHeight = canvas.height;
+      newWidth = newHeight * ratio;
+    }
+    const xOffset = newWidth > canvas.width ? (canvas.width - newWidth) / 2 : 0;
+    const yOffset =
+      newHeight > canvas.height ? (canvas.height - newHeight) / 2 : 0;
+    ctx.drawImage(img, xOffset, yOffset, newWidth, newHeight);
+
+    canvas.toBlob((blob) => {
+      const image = new Image();
+      image.src = blob;
+      uploadPhoto(blob);
+    });
+  }
 
   const monitorAuthState = async () => {
     onAuthStateChanged(auth, user => {
@@ -71,12 +181,38 @@ const RouterSwitch = () => {
               <Route path='/' element={<Homepage/>} />
               <Route path='/direct/inbox/' element={<Inbox />} />
               <Route path='/explore/' element={<Explore />} />
-              <Route path='/explore/' element={<Explore />} />            
+              <Route path='/accounts/edit/' element={
+                <EditProfile 
+                profilePhotoModal={profilePhotoModal} 
+                profilePhotoModalToggle={profilePhotoModalToggle} 
+                removeProfilePhoto={removeProfilePhoto} 
+                uploadHandler={uploadHandler} 
+                uploadClick={uploadClick} 
+                getProfilePhotoURL={getProfilePhotoURL} 
+                profilePhotoURL={profilePhotoURL} 
+                userData={userData}/>} />            
             </React.Fragment>
           }
-          <Route path='/:username' element={<Profile getProfilePhotoURL={getProfilePhotoURL} profilePhotoURL={profilePhotoURL} userData={userData}/>} />
+          <Route path='/:username' element={
+            <Profile 
+              profilePhotoModal={profilePhotoModal} 
+              profilePhotoModalToggle={profilePhotoModalToggle} 
+              removeProfilePhoto={removeProfilePhoto} 
+              uploadHandler={uploadHandler} 
+              uploadClick={uploadClick} 
+              getProfilePhotoURL={getProfilePhotoURL} 
+              profilePhotoURL={profilePhotoURL} 
+              userData={userData}/>} />
         </Routes>
       </section>
+      <div className='bottom-notification-bar'>
+        <div 
+          className={displayNotification ? ['notification-bar-content', 'slide-up'].join(' ') : ['notification-bar-content', 'slide-down'].join(' ')} 
+          onTransitionEnd={clearNotificationText} 
+        >
+          <p>{notificationText}</p>          
+        </div>
+      </div>
     </BrowserRouter>
   );
 }

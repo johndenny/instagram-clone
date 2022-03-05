@@ -13,12 +13,6 @@
   z-index: 50;
 }
 
-@media screen and (min-width: 736px) {
-  .profile-photo-content {
-    width: 400px;
-  }
-}
-
 .profile-photo-content {
   margin: 20px;
   flex-shrink: 1;
@@ -32,6 +26,13 @@
   max-height: 100%;
   overflow: hidden;
   z-index: 100;
+  width: 260px;
+}
+
+@media screen and (min-width: 736px) {
+  .profile-photo-content {
+    width: 400px;
+  }
 }
 
 .profile-photo-title {
