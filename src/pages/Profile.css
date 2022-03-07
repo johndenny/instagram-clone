@@ -19,7 +19,23 @@
   justify-content: center;
 }
 
+.follow-profile-button {
+  background-color: rgba(0, 149, 246, 1);
+  color: rgba(255, 255, 255, 1);
+  line-height: 26px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  width: 100%;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
 @media screen and (min-width: 736px) {
+  .follow-profile-button {
+    padding: 2px 24px;
+  }
+
   .profile {
     padding: 30px 20px 0;
     box-sizing: content-box;
@@ -67,7 +83,8 @@
     box-sizing: border-box;
     flex-shrink: 0;
   }
-  .profile-image-button {
+  .profile-image-button,
+  .profile-image-wrapper {
     height: 150px;
     width: 150px;
     display: block;
@@ -87,7 +104,8 @@
     height: 52px;
   }
 
-  .edit-profile-button-wrapper {
+  .edit-profile-button-wrapper,
+  .follow-profile-button-wrapper {
     margin-left: 20px;
     flex: 0 1 auto;
     justify-content: flex-start;
@@ -128,6 +146,11 @@
 }
 
 @media screen and (max-width: 735px) {
+  .follow-profile-button {
+    padding: 2px 12px;
+    max-width: 250px;
+  }
+
   .profile-image {
     display: flex;
     flex-direction: column;
@@ -137,7 +160,8 @@
     flex-shrink: 0;
   }
 
-  .profile-image-button {
+  .profile-image-button,
+  .profile-image-wrapper {
     height: 77px;
     width: 77px;
     display: block;
@@ -248,7 +272,8 @@
   position: relative;
 }
 
-.upload-profile-image img {
+.upload-profile-image img,
+.profile-image-wrapper img {
   height: 100%;
   left: 0;
   top: 0;
@@ -261,7 +286,7 @@
   color: rgba(38, 38, 38, 1);
   border-radius: 4px;
   position: relative;
-  padding: 5px 9px;
+  padding: 6px 9px;
   font-size: 14px;
   text-align: center;
   cursor: pointer;
@@ -303,7 +328,8 @@
   color: rgba(0, 55, 107, 1);
 }
 
-.profile-image-button::after {
+.profile-image-button::after,
+.profile-image-wrapper::after {
   border: 1px solid rgba(0, 0, 0, 0.0975);
   border-radius: 50%;
   bottom: 0;
@@ -315,7 +341,8 @@
   top: 0;
 }
 
-.profile-image-button {
+.profile-image-button,
+.profile-image-wrapper {
   cursor: pointer;
 }
 
@@ -347,4 +374,30 @@
 
 .selected svg {
   color: rgba(38, 38, 38, 1);
+}
+
+.no-user-profile {
+  padding: 0 30px;
+}
+
+.no-user-profile h2 {
+  margin: 0;
+  padding: 0;
+  font-size: 22px;
+  line-height: 26px;
+  text-align: center;
+}
+
+.no-user-profile div {
+  margin-top: 30px;
+  margin-bottom: 20px;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+}
+
+.no-user-profile a {
+  color: rgba(0, 55, 107, 1);
+  text-decoration: none;
 }

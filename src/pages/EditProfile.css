@@ -3,7 +3,6 @@
 }
 
 .edit-profile-settings {
-  min-height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -167,7 +166,7 @@
 }
 
 .edit-account-section.phone-button {
-  display: flex;
+  display: none;
   align-items: flex-start;
 }
 

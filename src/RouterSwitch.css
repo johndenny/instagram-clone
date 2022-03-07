@@ -7,15 +7,18 @@
   box-sizing: border-box;
   align-items: stretch;
   flex-shrink: 0;
+  position: relative;
 }
 
 .bottom-notification-bar {
+  bottom: 0;
   position: fixed;
   bottom: 0;
   left: 0;
   overflow: hidden;
   right: 0;
   z-index: 500;
+  margin-bottom: 44px;
 }
 
 .notification-bar-content {
@@ -23,7 +26,7 @@
   display: flex;
   align-items: stretch;
   min-width: 44px;
-  padding: 0 16px;
+  padding: 16px 16px;
   width: 100%;
   color: #fff;
   font-size: 14px;

@@ -1,6 +1,7 @@
 import './RouterSwitch.css';
+import MobileNavigationBars from './components/MobileNavigationBars.js'
 import React, { useEffect, useState } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Link } from "react-router-dom";
 import Homepage from "./pages/Homepage";
 import LogIn from "./pages/LogIn";
 import SignUp from "./pages/SignUp";
@@ -13,9 +14,11 @@ import Profile from "./pages/Profile";
 import defaultProfileImage from "./images/default-profile-image.jpg";
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import EditProfile from './pages/EditProfile';
+import { getFirestore, setDoc, doc, getDoc } from 'firebase/firestore';
 
 const auth = getAuth(firebaseApp);
 const storage = getStorage();
+const db = getFirestore();
 
 const RouterSwitch = () => {
   const [userLoggedIn, setUserLoggedIn] = useState('');
@@ -26,6 +29,12 @@ const RouterSwitch = () => {
   const [profilePhotoModal, setProfilePhotoModal] = useState(false);
   const [displayNotification, setDisplayNotification] = useState(false);
   const [notificationText, setNotificationText] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
+  const [hideTopNavigation, setHideTopNavigation] = useState(false);
+
+  const toggleTopNavigation = (boolean) => {
+    setHideTopNavigation(boolean)
+  }
 
   const showNotification = (text) => {
     setNotificationText(text);
@@ -53,6 +62,7 @@ const RouterSwitch = () => {
     await updateProfile(auth.currentUser, {
       photoURL: ''
     });
+    await setDoc(doc(db, 'users', userData.uid), {photoURL: ''}, {merge: true});
     getProfilePhotoURL();
   }
 
@@ -73,6 +83,7 @@ const RouterSwitch = () => {
     await updateProfile(auth.currentUser, {
       photoURL: photoURL
     });
+    await setDoc(doc(db, 'users', userData.uid), {photoURL: photoURL}, {merge: true});
     showNotification('Profile photo added.')
     getProfilePhotoURL()
   }
@@ -153,48 +164,62 @@ const RouterSwitch = () => {
     : setProfilePhotoURL(userData.photoURL);
   }
 
+  const checkForMobile = () => {
+    if (/Mobi|Andriod/i.test(navigator.userAgent)) {
+      setIsMobile(true);
+      console.log('isMobile');
+    }
+  }
+
   useEffect(() => {
     getProfilePhotoURL();
+    checkForMobile();
   }, []);
 
   return (
     <BrowserRouter>
       <section className="entire-wrapper">
-        {userLoggedIn &&
+        {(userLoggedIn && !isMobile) &&
           <NavigationBar getProfilePhotoURL={getProfilePhotoURL} profilePhotoURL={profilePhotoURL} userData={userData}/>
+        }
+        {(userLoggedIn && isMobile) &&
+          <MobileNavigationBars toggleTopNavigation={toggleTopNavigation} hideTopNavigation={hideTopNavigation} getProfilePhotoURL={getProfilePhotoURL} profilePhotoURL={profilePhotoURL} userData={userData}/>
         }
         <Routes>
           {userLoggedIn === '' &&
             <React.Fragment>
               <Route path='/' element={<div></div>} />
-              <Route path='/accounts/emailsignup/' element={<div></div>} />            
+              <Route path='/accounts/emailsignup' element={<div></div>} />            
             </React.Fragment>
           }
           {!userLoggedIn &&
             <React.Fragment>
               <Route path='/' element={<LogIn />} />
-              <Route path='/accounts/emailsignup/' element={<SignUp />} />
+              <Route path='/accounts/emailsignup' element={<SignUp />} />
             </React.Fragment>
           }
           {userLoggedIn &&
             <React.Fragment>
               <Route path='/' element={<Homepage/>} />
-              <Route path='/direct/inbox/' element={<Inbox />} />
+              <Route path='/direct/inbox' element={<Inbox />} />
               <Route path='/explore/' element={<Explore />} />
-              <Route path='/accounts/edit/' element={
-                <EditProfile 
-                profilePhotoModal={profilePhotoModal} 
-                profilePhotoModalToggle={profilePhotoModalToggle} 
-                removeProfilePhoto={removeProfilePhoto} 
-                uploadHandler={uploadHandler} 
-                uploadClick={uploadClick} 
-                getProfilePhotoURL={getProfilePhotoURL} 
-                profilePhotoURL={profilePhotoURL} 
-                userData={userData}/>} />            
+              <Route path='/accounts/edit' element={
+                <EditProfile
+                  showNotification={showNotification} 
+                  profilePhotoModal={profilePhotoModal} 
+                  profilePhotoModalToggle={profilePhotoModalToggle} 
+                  removeProfilePhoto={removeProfilePhoto} 
+                  uploadHandler={uploadHandler} 
+                  uploadClick={uploadClick} 
+                  getProfilePhotoURL={getProfilePhotoURL} 
+                  profilePhotoURL={profilePhotoURL} 
+                  userData={userData}/>} 
+                />            
             </React.Fragment>
           }
           <Route path='/:username' element={
-            <Profile 
+            <Profile
+              toggleTopNavigation={toggleTopNavigation}
               profilePhotoModal={profilePhotoModal} 
               profilePhotoModalToggle={profilePhotoModalToggle} 
               removeProfilePhoto={removeProfilePhoto} 
@@ -202,7 +227,13 @@ const RouterSwitch = () => {
               uploadClick={uploadClick} 
               getProfilePhotoURL={getProfilePhotoURL} 
               profilePhotoURL={profilePhotoURL} 
-              userData={userData}/>} />
+              userData={userData}
+            />} 
+          />
+          <Route path='*' element={<div className="no-user-profile">
+            <h2 className="no-user-header">Sorry, this page isn't availble.</h2>
+            <div className="no-user-text">The link you followed may be broken, or the page may have been removed. <Link to='/'>Go Back to Instagram.</Link></div>
+          </div>} />
         </Routes>
       </section>
       <div className='bottom-notification-bar'>
@@ -210,7 +241,7 @@ const RouterSwitch = () => {
           className={displayNotification ? ['notification-bar-content', 'slide-up'].join(' ') : ['notification-bar-content', 'slide-down'].join(' ')} 
           onTransitionEnd={clearNotificationText} 
         >
-          <p>{notificationText}</p>          
+          {notificationText}          
         </div>
       </div>
     </BrowserRouter>
