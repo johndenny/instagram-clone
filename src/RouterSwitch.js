@@ -1,7 +1,7 @@
 import './RouterSwitch.css';
 import MobileNavigationBars from './components/MobileNavigationBars.js'
 import React, { useEffect, useState } from "react";
-import { BrowserRouter, Route, Routes, Link } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Link, useNavigate } from "react-router-dom";
 import Homepage from "./pages/Homepage";
 import LogIn from "./pages/LogIn";
 import SignUp from "./pages/SignUp";
@@ -15,6 +15,7 @@ import defaultProfileImage from "./images/default-profile-image.jpg";
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import EditProfile from './pages/EditProfile';
 import { getFirestore, setDoc, doc, getDoc } from 'firebase/firestore';
+import UploadPhotoMobile from './pages/UploadPhotoMobile';
 
 const auth = getAuth(firebaseApp);
 const storage = getStorage();
@@ -31,6 +32,23 @@ const RouterSwitch = () => {
   const [notificationText, setNotificationText] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const [hideTopNavigation, setHideTopNavigation] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState('');
+  const [flippedAspectRatio, setFlippedAspectRatio] = useState('');
+  const [mobilePhotoUpload, setMobilePhotoUpload] = useState('');
+
+  const mobilePhotoUploadHandler = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const image = new Image();
+      image.src = URL.createObjectURL(file);
+      image.onload = () => {
+        console.log(image.naturalWidth/ image.naturalHeight);
+        setAspectRatio(image.naturalWidth/ image.naturalHeight);
+        setFlippedAspectRatio(image.naturalHeight / image.naturalWidth);
+      }
+      setMobilePhotoUpload(image.src);
+    }
+  }
 
   const toggleTopNavigation = (boolean) => {
     setHideTopNavigation(boolean)
@@ -129,8 +147,7 @@ const RouterSwitch = () => {
       newWidth = newHeight * ratio;
     }
     const xOffset = newWidth > canvas.width ? (canvas.width - newWidth) / 2 : 0;
-    const yOffset =
-      newHeight > canvas.height ? (canvas.height - newHeight) / 2 : 0;
+    const yOffset = newHeight > canvas.height ? (canvas.height - newHeight) / 2 : 0;
     ctx.drawImage(img, xOffset, yOffset, newWidth, newHeight);
 
     canvas.toBlob((blob) => {
@@ -183,7 +200,7 @@ const RouterSwitch = () => {
           <NavigationBar getProfilePhotoURL={getProfilePhotoURL} profilePhotoURL={profilePhotoURL} userData={userData}/>
         }
         {(userLoggedIn && isMobile) &&
-          <MobileNavigationBars toggleTopNavigation={toggleTopNavigation} hideTopNavigation={hideTopNavigation} getProfilePhotoURL={getProfilePhotoURL} profilePhotoURL={profilePhotoURL} userData={userData}/>
+          <MobileNavigationBars mobilePhotoUploadHandler={mobilePhotoUploadHandler} toggleTopNavigation={toggleTopNavigation} hideTopNavigation={hideTopNavigation} getProfilePhotoURL={getProfilePhotoURL} profilePhotoURL={profilePhotoURL} userData={userData}/>
         }
         <Routes>
           {userLoggedIn === '' &&
@@ -214,7 +231,8 @@ const RouterSwitch = () => {
                   getProfilePhotoURL={getProfilePhotoURL} 
                   profilePhotoURL={profilePhotoURL} 
                   userData={userData}/>} 
-                />            
+                />
+              <Route path='/create/style' element={<UploadPhotoMobile flippedAspectRatio={flippedAspectRatio} aspectRatio={aspectRatio} mobilePhotoUpload={mobilePhotoUpload} />} />            
             </React.Fragment>
           }
           <Route path='/:username' element={

@@ -144,3 +144,7 @@ h1.logo-header {
 .back-svg {
   transform: rotate(-90deg);
 }
+
+.mobile-add-photo-input {
+  display: none;
+}
