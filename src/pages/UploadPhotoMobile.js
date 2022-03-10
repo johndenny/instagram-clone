@@ -48,7 +48,7 @@ const UploadPhotoMobile = (props) => {
       y = (pointerStartXY.y - event.screenY) * -1;  
     }
     console.log("x: ", (pointerStartXY.x - event.screenX), "y: ", (pointerStartXY.y - event.screenY));
-    if (imageFitHeight || (!imageFitHeight && flippedAspectRatio * 100 < 52.356) || (!imageFitHeight && aspectRatio * 100 < 80)) {
+    if (imageFitHeight) {
       setPointerX((x/4) + imageX);
       setPointerY((y/4) + imageY);
       console.log((x/4) + imageX);
@@ -72,19 +72,6 @@ const UploadPhotoMobile = (props) => {
         setOriginPointY(50 + ((((imageWidth - 100) / 2) / (imageWidth / 2)) * 50));
         setLastOriginY(50 + ((((imageWidth - 100) / 2) / (imageWidth / 2)) * 50));
         return
-      }
-    } else {
-      if (flippedAspectRatio * 100 < 52.356) {
-        if (pointerY !== 52.356) {
-          setPointerY(((shortestImageRatio * 100) - 100) / 4);
-          setImageY(((shortestImageRatio * 100) - 100) / 4);
-        }
-        if (pointerX < ((aspectRatio * 52.356) - 100) * -1) {
-          console.log(((aspectRatio * 52.356) - 100) * -1);
-          setPointerX(((aspectRatio * 52.356) - 100) * -1);
-          setImageX(((aspectRatio * 52.356) - 100) * -1);
-          return
-        }
       }
     }
     if (pointerX >= 0) {
@@ -112,18 +99,6 @@ const UploadPhotoMobile = (props) => {
         setOriginPointX(50 + ((((imageHeight - 100) / 2) / (imageHeight / 2)) * 50));
         setLastOriginX(50 + ((((imageHeight - 100) / 2) / (imageHeight / 2)) * 50));
         return
-      }
-    } else {
-      if ((aspectRatio * 100) < 80 ) {
-        if (pointerX !== 10) {
-          setPointerX(10);
-          setImageX(10);
-        }
-        if (pointerY < ((flippedAspectRatio * 80) - 100) * -1) {
-          setPointerY(((flippedAspectRatio * 80) - 100) * -1);
-          setImageY(((flippedAspectRatio * 80) - 100) * -1);
-          return
-        }
       }
     }
     if (pointerY >= 0) {
@@ -226,13 +201,13 @@ const UploadPhotoMobile = (props) => {
       if (!imageFitHeight) {
         if (imageFlipped) {
           console.log('flipped');
-          const imageWidth = (flippedAspectRatio * 100) < 52.356 ? 52.356 : ((flippedAspectRatio * 100) / 2);
-          setImageHeight((flippedAspectRatio * 100) < 52.356 ? aspectRatio * 52.356 : 100);
+          const imageWidth = (aspectRatio * 100) < 52.356 ? 52.356 : ((aspectRatio * 100));
+          setImageHeight((aspectRatio * 100) < 52.356 ? aspectRatio * 52.356 : 100);
           setImageWidth(imageWidth);
           setPointerY(0);
           setImageY(0);
-          setPointerX(imageWidth * .25);
-          setImageX(imageWidth * .25);
+          setPointerX((100 - imageWidth) / 2);
+          setImageX((100 - imageWidth) / 2);
           setOriginPointX(50);
           setLastOriginX(50);
           setOriginPointY(50);
