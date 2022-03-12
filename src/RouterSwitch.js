@@ -199,7 +199,7 @@ const RouterSwitch = () => {
         {(userLoggedIn && !isMobile) &&
           <NavigationBar getProfilePhotoURL={getProfilePhotoURL} profilePhotoURL={profilePhotoURL} userData={userData}/>
         }
-        {(userLoggedIn && isMobile) &&
+        {(userLoggedIn && isMobile && mobilePhotoUpload === '') &&
           <MobileNavigationBars mobilePhotoUploadHandler={mobilePhotoUploadHandler} toggleTopNavigation={toggleTopNavigation} hideTopNavigation={hideTopNavigation} getProfilePhotoURL={getProfilePhotoURL} profilePhotoURL={profilePhotoURL} userData={userData}/>
         }
         <Routes>
@@ -232,7 +232,12 @@ const RouterSwitch = () => {
                   profilePhotoURL={profilePhotoURL} 
                   userData={userData}/>} 
                 />
-              <Route path='/create/style' element={<UploadPhotoMobile flippedAspectRatio={flippedAspectRatio} aspectRatio={aspectRatio} mobilePhotoUpload={mobilePhotoUpload} />} />            
+              <Route path='/create/style' element={<UploadPhotoMobile 
+                flippedAspectRatio={flippedAspectRatio} 
+                aspectRatio={aspectRatio} 
+                mobilePhotoUpload={mobilePhotoUpload} 
+                setMobilePhotoUpload={setMobilePhotoUpload}
+              />} />            
             </React.Fragment>
           }
           <Route path='/:username' element={

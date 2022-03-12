@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import './UploadPhotoMobile.css';
+import { useNavigate } from "react-router-dom";
 
 const UploadPhotoMobile = (props) => {
-  const { mobilePhotoUpload, aspectRatio, flippedAspectRatio } = props;
+  const navigate = useNavigate();
+  const { mobilePhotoUpload, aspectRatio, flippedAspectRatio, setMobilePhotoUpload } = props;
   const [imageX, setImageX] = useState(0);
   const [imageY, setImageY] = useState(0);
   const [pointerX, setPointerX] = useState(0);
@@ -18,6 +20,8 @@ const UploadPhotoMobile = (props) => {
   const [lastOrginX, setLastOriginX] = useState(50);
   const [imageFlipped, setImageFlipped] = useState(false);
   const [imageOrientation, setImageOrientation] = useState('horizontal-up')
+  const [editorPage, setEditorPage] = useState('edit');
+  const canvasRef = useRef(null);
   const shortestImageRatio = 1080/565;
   const widestImageRatio = 1080/1350;
 
@@ -323,9 +327,211 @@ const UploadPhotoMobile = (props) => {
     imageLoad();
   },[aspectRatio, flippedAspectRatio]);
 
+  useEffect(() => () => setMobilePhotoUpload(''), []);
+
+  useEffect(() => {
+    resizeImage();
+  }, [imageLoad]);
+
+  const editPageToggle = () => {
+    editorPage === 'edit' ? setEditorPage('filter') : setEditorPage('edit');
+  }
+
+  const resizeImage = () => {
+    const img = new Image();
+    img.onload = () => {
+        canvas_scale(img)    
+    };
+    img.src = mobilePhotoUpload;
+  }
+
+  function canvas_scale(img) {
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext("2d");
+
+    if (imageFitHeight) {
+      canvas.width = 1080;
+      canvas.height = 1080;
+    }
+    if (!imageFitHeight && !imageFlipped && (aspectRatio > 1)) {
+      console.log('hello')
+      canvas.width = 1080;
+      const height = canvas.width * flippedAspectRatio;
+      if (height < 565) {
+        canvas.height = 565;
+      } else {
+        canvas.height = canvas.width * flippedAspectRatio;        
+      }
+    }
+    if (!imageFitHeight && !imageFlipped && (aspectRatio < 1)) {
+      canvas.width = 1080;
+      const height = canvas.width * flippedAspectRatio
+      if (height > 1350) {
+        canvas.height = 1350
+      } else {
+        canvas.height = canvas.width * flippedAspectRatio;        
+      }
+    }
+    if (!imageFitHeight && imageFlipped && (aspectRatio > 1)) {
+      canvas.width = 1080;
+      const height = canvas.width * aspectRatio;
+      if (height > 1350) {
+        canvas.height = 1350;
+      } else {
+        canvas.height = canvas.width * aspectRatio;        
+      };
+    };
+    if (!imageFitHeight && imageFlipped && (aspectRatio < 1)) {
+      canvas.width = 1080;
+      const height = canvas.width * aspectRatio;
+      if (height < 565) {
+        canvas.height = 565;
+      } else {
+        canvas.height = canvas.width * aspectRatio;
+      };
+    };
+
+    ctx.globalCompositeOperation = 'destination-under';
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const ratio = img.width / img.height;
+    let newWidth = canvas.width;
+    let newHeight = newWidth / ratio;
+    if (!imageFitHeight && imageFlipped && (aspectRatio < 1)) {
+      newHeight = canvas.width;
+      newWidth = canvas.width * ratio;    
+    }
+    if (newHeight < canvas.height) {
+      if (imageFlipped && (aspectRatio > 1)) {
+        newHeight = canvas.width;
+        newWidth = canvas.width * ratio;    
+      }    
+      if (!imageFlipped) {
+        newHeight = canvas.height;
+        newWidth = newHeight * ratio;        
+      }
+    }
+
+    let xOffset;
+    let yOffset;
+    if (imageFitHeight) {
+      xOffset = (newHeight * (pointerX / 100));
+      yOffset = (newWidth * (pointerY / 100));   
+    }   
+    if (!imageFitHeight && (aspectRatio > 1)) {
+      xOffset = newWidth > canvas.width ? (canvas.width - newWidth) / 2 : 0;
+      yOffset = newHeight > canvas.height ? (canvas.height - newHeight) / 2 : 0;
+    }
+    if (!imageFitHeight && (aspectRatio < 1)) {
+      xOffset = newWidth > canvas.width ? (canvas.width - newWidth) / 2 : 0;
+      yOffset = newHeight > canvas.height ? (canvas.height - newHeight) / 2 : 0;
+    }
+    if (!imageFitHeight && imageFlipped && (aspectRatio > 1)) {
+      xOffset = (canvas.height - newWidth) / 2;
+      yOffset = newHeight > canvas.height ? (canvas.height - newHeight) / 2 : 0;
+    }
+    if (!imageFitHeight && imageFlipped && (aspectRatio < 1)) {
+      console.log('hello!')
+      xOffset = (canvas.height - newWidth) / 2;
+      yOffset = newHeight > canvas.width ? (canvas.height - newHeight) / 2 : 0;
+    }
+
+
+    console.log('yOffset:', yOffset, 'xOffset:', xOffset);
+
+    console.log('canvas:', xOffset, pointerY, 'new:', newWidth, newHeight)
+    switch (true) {
+      case imageOrientation === 'vertical-up':
+        if (!imageFitHeight) {
+          ctx.translate(0, canvas.height);
+        } else {
+          ctx.translate(0, canvas.width);
+        };
+        break;
+      case imageOrientation === 'horizontal-down':
+        if (!imageFitHeight) {
+          if (newWidth > canvas.width) {
+            ctx.translate(newWidth - (newWidth - canvas.width), newHeight);
+          } else if (newHeight > canvas.height) {
+            ctx.translate(newWidth, newHeight - (newHeight - canvas.height))
+          } else {
+            ctx.translate(newWidth, newHeight);
+          };
+        };
+        if (imageFitHeight) {
+          ctx.translate(canvas.height, canvas.width);
+        }
+        break;
+      case imageOrientation === 'vertical-down':
+        if (!imageFitHeight) {
+          ctx.translate(canvas.width, 0);
+        } else {
+          ctx.translate(canvas.height, 0);
+        }
+        break;
+      default: 
+    }
+    ctx.rotate(imageDegrees * Math.PI / 180);
+    ctx.drawImage(img, xOffset, yOffset, newWidth, newHeight);
+    
+
+    // canvas.toBlob((blob) => {
+    //   const image = new Image();
+    //   image.src = blob;
+    //   uploadPhoto(blob);
+    // });
+  }
+
+  useEffect(() => {
+    resizeImage();
+  }, [pointerX, pointerY]);
+
+  const [canvasWrapperClass, setCanvasWrapperClass] = useState([]);
+  const [canvasClass, setCanvasClass] = useState([]);
+
+  const photoCanvasWrapperClass = () => {  
+    if (!imageFitHeight && !imageFlipped && (aspectRatio < 1)) {
+      setCanvasWrapperClass(["photo-canvas-wrapper", "vertical-fitted"]);
+      setCanvasClass(["photo-canvas", "vertical-fitted"]);
+      return
+    }
+    if (!imageFitHeight && imageFlipped && (aspectRatio > 1)) {
+      setCanvasClass(['photo-canvas', "vertical-fitted"]);
+      setCanvasWrapperClass(['photo-canvas-wrapper', "vertical-fitted"]);
+      return
+    }
+    setCanvasClass(['photo-canvas']);
+    setCanvasWrapperClass(['photo-canvas-wrapper']);
+  };
+
+  useEffect(() => {
+    photoCanvasWrapperClass()
+    console.log("wrapper:", canvasWrapperClass, "canvas-class:", canvasClass);
+  },[imageFitHeight, imageFlipped]);
+
   return (
     <section className="mobile-photo-upload-editor">
-      <div className="photo-overflow-frame" 
+      <header className="new-post-header">
+        <div className="header-content-wrapper">
+          <button className="close-new-post-button" onClick={() => navigate(-1)}>
+            <svg aria-label="Close" className="close-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+              <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="21" x2="3" y1="3" y2="21"></line>
+              <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="21" x2="3" y1="21" y2="3"></line>
+            </svg>
+          </button>
+          <h1 className="new-post-header-text">New Photo Post</h1>
+          <button className="next-new-post-button">Next</button>
+        </div>
+      </header>
+      <div className={editorPage === 'edit' ? ["photo-canvas-preview", 'hidden'].join(' ') : 'photo-canvas-preview'}>
+        <div className="photo-canvas-padding-wrapper">
+          <div className={canvasWrapperClass.join(' ')}>
+            <canvas className={canvasClass.join(' ')} ref={canvasRef} width='1080' height='1080'></canvas>
+          </div>
+        </div>
+      </div>
+      <div className={editorPage === 'filter' ? ["photo-overflow-frame", 'hidden'].join(' ') : 'photo-overflow-frame'} 
         onPointerMove={pointerTracker} 
         onPointerDown={pointerStart} 
         onPointerUp={(aspectRatio < 1) ? verticalImageHandler : imageLocationHandler}
@@ -358,6 +564,20 @@ const UploadPhotoMobile = (props) => {
               <span className="rotate-button-sprite"></span>
             </button>
           </div>
+        </div>
+      </div>
+      <div className="editor-selection-tabs">
+        <div className="button-tab-wrapper">
+          <button className={editorPage === 'filter' ? ["filter-edit-button", 'selected'].join(' ') : 'filter-edit-button'} onClick={editPageToggle}>
+            <div className="filter-button-inner-text">
+              Filter
+            </div>
+          </button>
+          <button className={editorPage === 'edit' ? ['edit-photo-button', 'selected'].join(' ') : "edit-photo-button"} onClick={editPageToggle}>
+            <div className="edit-button-inner-text">
+              Edit
+            </div>
+          </button>    
         </div>
       </div>
     </section>
