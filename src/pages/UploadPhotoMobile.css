@@ -165,7 +165,7 @@
   font-size: 16px;
   font-weight: 600;
   left: 0;
-  position: fixed;
+  position: static;
   right: 0;
   top: 0;
   z-index: 1;

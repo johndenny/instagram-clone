@@ -32,8 +32,6 @@ const MobileNavigationBars = (props) => {
   const topNavigationHandler = () => {
     const { pathname } = location;
     const newPathname = pathname.replace(/\//g, '');
-    console.log(newPathname);
-    console.log(newPathname === userData.displayName);
     if (location.pathname === '/') {
       return (
         <header className="mobile-navigation-header">
