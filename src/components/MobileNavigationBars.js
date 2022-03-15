@@ -11,6 +11,11 @@ const MobileNavigationBars = (props) => {
   const location = useLocation();
   const [currentPath, setCurrentPath] = useState('');
   const {
+    profileExists,
+    getProfileDataFromLink,
+    profileData,
+    profileImages,
+    currentUsersPage,
     mobilePhotoUploadHandler,
     toggleTopNavigation,
     hideTopNavigation, 
@@ -93,6 +98,11 @@ const MobileNavigationBars = (props) => {
         ''
       )
     }
+    if (profileData.length === 0) {
+      return (
+        ''
+      );
+    };
     if (userData.displayName === newPathname) {
       return (
         <header className="mobile-navigation-header">
@@ -143,6 +153,12 @@ const MobileNavigationBars = (props) => {
     getProfilePhotoURL();
   },[]);
 
+  useEffect(() => {
+    if (profileData.length !== 0) {
+      navigate(`/${profileData.username}`);
+    }
+  }, [profileData]);
+
   return (
     <React.Fragment>
       <nav className="mobile-navigation-top-wrapper">
@@ -191,14 +207,14 @@ const MobileNavigationBars = (props) => {
                 <path d="M34.6 3.1c-4.5 0-7.9 1.8-10.6 5.6-2.7-3.7-6.1-5.5-10.6-5.5C6 3.1 0 9.6 0 17.6c0 7.3 5.4 12 10.6 16.5.6.5 1.3 1.1 1.9 1.7l2.3 2c4.4 3.9 6.6 5.9 7.6 6.5.5.3 1.1.5 1.6.5s1.1-.2 1.6-.5c1-.6 2.8-2.2 7.8-6.8l2-1.8c.7-.6 1.3-1.2 2-1.7C42.7 29.6 48 25 48 17.6c0-8-6-14.5-13.4-14.5z"></path>
               </svg> */}
             </div>
-            <Link to={`/${userData.displayName}/`} className='profile-picture icon'>
+            <Link to={`/${userData.displayName}/`} onClick={getProfileDataFromLink} className='profile-picture icon'>
               {currentPath === `/${userData.displayName}/` &&
                 <div className='profile-ring'></div>
               }
               <div className='profile-picture-wrapper'>
                 {profilePhotoURL === null
-                  ? <img alt='' src={defaultProfileImage}/>
-                  : <img alt='' src={profilePhotoURL} />
+                  ? <img className="navigation-profile-photo" alt='' src={defaultProfileImage}/>
+                  : <img className="navigation-profile-photo" alt='' src={profilePhotoURL} />
                 }
               </div>
             </Link> 

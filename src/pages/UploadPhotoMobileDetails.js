@@ -11,6 +11,7 @@ const db = getFirestore();
 
 const UploadPhotoMobileDetails = (props) => {
   const {
+    thumbnailImage,
     showNotification,
     photoUploadText,
     photoUploadTextHandler,
@@ -26,10 +27,14 @@ const UploadPhotoMobileDetails = (props) => {
     setSharingPost(true);
     const id = uniqid();
     const newPostRef = ref(storage, `photoUploads/${id}.jpg`);
+    const newThumbnailRef = ref(storage, `photoUploadsThumbnails/${id}-150px.jpg`);
     const photoUpload = await uploadBytes(newPostRef, editedPhoto);
-    const photoURL = await getDownloadURL(ref(storage, photoUpload.metadata.fullPath))
+    const thumbnailUpload = await uploadBytes(newThumbnailRef, thumbnailImage);
+    const photoURL = await getDownloadURL(ref(storage, photoUpload.metadata.fullPath));
+    const thumbnailURL = await getDownloadURL(ref(storage, thumbnailUpload.metadata.fullPath));
     await setDoc(doc(db, 'photoUploads', id), {
-      photoURL: photoURL, 
+      photoURL: photoURL,
+      thumbnailURL: thumbnailURL, 
       photoText: photoUploadText, 
       uid: userData.uid,
       uploadDate: Date.now(),

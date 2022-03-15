@@ -421,7 +421,7 @@ const EditProfile = (props) => {
                       type="checkbox" 
                       name='account-suggestion' 
                       onClick={inputHandler} 
-                      checked={suggestionValue} 
+                      checked={suggestionValue}
                       readOnly
                     />
                     <div className='replacement-checkbox'></div>

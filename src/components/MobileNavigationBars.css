@@ -148,3 +148,8 @@ h1.logo-header {
 .mobile-add-photo-input {
   display: none;
 }
+
+.navigation-profile-photo,
+.profile-picture-wrapper {
+  pointer-events: none;
+}

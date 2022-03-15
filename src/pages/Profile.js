@@ -5,7 +5,7 @@ import ProfilePhotoModal from "../components/ProfilePhotoModal";
 import { Link, useParams} from "react-router-dom";
 import useWindowSize from "../hooks/useWindowSize";
 import firebaseApp from "../Firebase";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const db = getFirestore(firebaseApp);
@@ -13,6 +13,12 @@ const auth = getAuth();
 
 const Profile = (props) => {
   const {
+    setDataLoading,
+    getUserProfileData,
+    profileExists,
+    currentUsersPage,
+    profileData,
+    profileImages,
     toggleTopNavigation,
     profilePhotoURL, 
     uploadClick, 
@@ -22,63 +28,77 @@ const Profile = (props) => {
     profilePhotoModalToggle 
   } = props;
   const [width, height] = useWindowSize();
-  const [userDetails, setUserDetails] = useState({});
-  const [uid, setUID] = useState(null);
+  // const [profileData, setUserDetails] = useState({});
+  // const [uid, setUID] = useState(null);
   const params = useParams();
-  const [currentUsersPage, setCurrentUsersPage] = useState(false);
-  const [userExists, setUserExists] = useState('');
-
-  const getUID = async () => {
-    const user = auth.currentUser;
-    const { username } = params;
-    const docRef = doc(db, 'displayNames', username)
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const { uid } = docSnap.data();
-      setUID(uid)
-      if (user !== null) {
-        setUserExists(true);
-        toggleTopNavigation(false);
-        if (uid === user.uid) {
-          setCurrentUsersPage(true);
-        } else {
-          setCurrentUsersPage(false);
-        }
-      }
-    } else {
-      console.log('no displayName document');
-      setUserExists(false)
-      toggleTopNavigation(true);
-    };     
-  };
-
-  const getUserData = async () => {
-    const docRef = doc(db, "users", uid);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      console.log('Document Data:', docSnap.data());
-      setUserDetails(docSnap.data());
-    } else {
-      console.log('no document');
-    }
-  }
+  // const [userExists, setUserExists] = useState('');
 
   useEffect(() => {
-    if (uid !== null) {
-      getUserData();       
+    if (profileData.length === 0) {
+      console.log('params:', params.username);
+      setDataLoading(true)
+      getUserProfileData(params.username);
     }
-  }, [uid]);
+  }, []);
 
-  useEffect(() => {
-    getUID();
-  }, [params]);
+  // const getUID = async () => {
+  //   const user = auth.currentUser;
+  //   const { username } = params;
+  //   const docRef = doc(db, 'displayNames', username)
+  //   const docSnap = await getDoc(docRef);
+  //   if (docSnap.exists()) {
+  //     const { uid } = docSnap.data();
+  //     setUID(uid)
+  //       setUserExists(true);
+  //       toggleTopNavigation(false);
+  //       if (uid === user.uid) {
+  //         setCurrentUsersPage(true);
+  //       } else {
+  //         setCurrentUsersPage(false);
+  //       }
+  //   } else {
+  //     console.log('no displayName document');
+  //     setUserExists(false)
+  //     toggleTopNavigation(true);
+  //   };     
+  // };
+
+  // const getUserData = async () => {
+  //   const docRef = doc(db, "users", uid);
+  //   const docSnap = await getDoc(docRef);
+  //   if (docSnap.exists()) {
+  //     console.log('Document Data:', docSnap.data());
+  //     setUserDetails(docSnap.data());
+  //   } else {
+  //     console.log('no document');
+  //   }
+  // }
+
+  // const getUserImageData = async () => {
+  //   const q = query(collection(db, 'photoUploads'), where('uid', '==', uid));
+  //   const querySnapshot = await getDocs(q);
+  //   querySnapshot.forEach((doc) => {
+  //     console.log(doc.id, '=>', doc.data());
+  //   });
+  // };
+
+  // useEffect(() => {
+  //   if (uid !== null) {
+  //     getUserData();
+  //     getUserImageData();       
+  //   }
+  // }, [uid]);
+
+  // useEffect(() => {
+  //   getUID();
+  // }, [params]);
 
   return (
     <main className="profile-wrapper">
       {profilePhotoModal &&
         <ProfilePhotoModal uploadClick={uploadClick} uploadHandler={uploadHandler} removeProfilePhoto={removeProfilePhoto} profilePhotoModalToggle={profilePhotoModalToggle}/>      
       }
-      {userExists
+      {profileExists
         ? <div className="profile">
             {width > 736 &&
               <React.Fragment>
@@ -99,8 +119,8 @@ const Profile = (props) => {
                       </div>
                     : <div className="profile-image">
                         <div className="profile-image-wrapper">
-                            {userDetails.photoURL !== null
-                              ? <img alt="" src={userDetails.photoURL}/>
+                            {profileData.photoURL !== null
+                              ? <img alt="" src={profileData.photoURL}/>
                               : <img alt="" src={defaultProfileImage}/>
                             }
                         </div>
@@ -109,7 +129,7 @@ const Profile = (props) => {
                   <section className="profile-details">
                     <div className="top-details">
                       <h2 className="displayName">
-                        {userDetails.username}
+                        {profileData.username}
                       </h2>
                       {currentUsersPage
                         ? <Link to="/accounts/edit/" className="edit-profile-button-wrapper">
@@ -162,9 +182,9 @@ const Profile = (props) => {
                       </ul>
                     </div>
                     <div className="profile-text-block">
-                      <div className="profile-full-name">{userDetails.fullname}</div>
-                      <div className="profile-bio-text">{userDetails.bio}</div>
-                      <a href={`http://${userDetails.website}`}>{userDetails.website}</a>
+                      <div className="profile-full-name">{profileData.fullname}</div>
+                      <div className="profile-bio-text">{profileData.bio}</div>
+                      <a href={`http://${profileData.website}`}>{profileData.website}</a>
                     </div>
                   </section>
                 </header>
@@ -226,8 +246,8 @@ const Profile = (props) => {
                       </div>
                     : <div className="profile-image">
                         <div className="profile-image-wrapper">
-                            {userDetails.photoURL !== null
-                              ? <img alt="" src={userDetails.photoURL}/>
+                            {profileData.photoURL !== null
+                              ? <img alt="" src={profileData.photoURL}/>
                               : <img alt="" src={defaultProfileImage}/>
                             }
                         </div>
@@ -236,7 +256,7 @@ const Profile = (props) => {
                   <section className="profile-details">
                     <div className="top-details">
                       <h2 className="displayName">
-                        {userDetails.username}
+                        {profileData.username}
                       </h2>
 
                       <div className="settings-quick-links-wrapper">
@@ -263,9 +283,9 @@ const Profile = (props) => {
                   </section>
                 </header>
                 <div className="profile-text-block">
-                  <div className="profile-full-name">{userDetails.fullname}</div>
-                  <div className="profile-bio-text">{userDetails.bio}</div>
-                  <a href={userDetails.website}>{userDetails.website}</a>
+                  <div className="profile-full-name">{profileData.fullname}</div>
+                  <div className="profile-bio-text">{profileData.bio}</div>
+                  <a href={profileData.website}>{profileData.website}</a>
                 </div>
                 <ul className="profile-numbers-list">
                   <li className="posts-number-wrapper">
