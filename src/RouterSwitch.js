@@ -12,11 +12,13 @@ import Inbox from "./pages/Inbox";
 import Explore from "./pages/Explore";
 import Profile from "./pages/Profile";
 import defaultProfileImage from "./images/default-profile-image.jpg";
-import { connectStorageEmulator, deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
+import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import EditProfile from './pages/EditProfile';
 import { getFirestore, setDoc, doc, getDoc, query, collection, where, getDocs } from 'firebase/firestore';
 import UploadPhotoMobile from './pages/UploadPhotoMobile';
 import UploadPhotoMobileDetails from './pages/UploadPhotoMobileDetails';
+import UploadPhotoModal from './components/UploadPhotoModal';
+import DiscardPostModal from './components/DiscardPostModal';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -46,6 +48,10 @@ const RouterSwitch = () => {
   const profileImageRef = ref(storage, `profilePhotos/${userData.uid}.jpg`);
   const [profilePhotoModal, setProfilePhotoModal] = useState(false);
 
+  // IMAGE UPLOAD MODAL //
+
+  const [photoUploadModalOpen, setPhotoUploadModalOpen] = useState(false);
+  const [discardPostModalOpen, setDiscardPostModalOpen] = useState(false);
 
   // Image Upload //
 
@@ -94,6 +100,7 @@ const RouterSwitch = () => {
       setImageFitHeight(true);
       setFilterScrollLeft(0);
       setPhotoUploadText('');
+      setMobilePhotoUpload('');
     }
   }, [photoUploadOpen]);
 
@@ -114,7 +121,7 @@ const RouterSwitch = () => {
 
   useEffect(() => {
     resizeCropFilterImage(true);
-  }, [imageX, imageY, selectedFilter])
+  }, [imageX, imageY, selectedFilter, imageDegrees, imageFitHeight]);
 
   useEffect(() => {
     createThumbnailImage();
@@ -438,11 +445,13 @@ const RouterSwitch = () => {
   }
   
   const resizeCropFilterImage = (upload) => {
-    const img = new Image();
-    img.onload = () => {
-        canvasCropFilterResize(img, upload)    
-    };
-    img.src = mobilePhotoUpload;
+    if (mobilePhotoUpload !== '') {
+      const img = new Image();
+      img.onload = () => {
+          canvasCropFilterResize(img, upload)    
+      };
+      img.src = mobilePhotoUpload;      
+    }
   }
 
   function canvasCropFilterResize(img, upload) {
@@ -830,6 +839,18 @@ const RouterSwitch = () => {
 
   return (
     <BrowserRouter>
+      {discardPostModalOpen &&
+        <DiscardPostModal 
+          setDiscardPostModalOpen={setDiscardPostModalOpen} 
+          setPhotoUploadModalOpen={setPhotoUploadModalOpen}           
+        />
+      }
+      {photoUploadModalOpen &&
+        <UploadPhotoModal 
+          setDiscardPostModalOpen={setDiscardPostModalOpen} 
+          setPhotoUploadModalOpen={setPhotoUploadModalOpen} 
+        />
+      }
       <section className="entire-wrapper">
         {(authLoading || dataLoading) &&
           <div className='loading-placeholder'>
@@ -841,8 +862,14 @@ const RouterSwitch = () => {
         {isLoadingPage &&
             <div className='share-post-loading-bar'></div>
         }
+
         {(userLoggedIn && !isMobile) &&
-          <NavigationBar getProfilePhotoURL={getProfilePhotoURL} profilePhotoURL={profilePhotoURL} userData={userData}/>
+          <NavigationBar 
+            photoUploadModalOpen={photoUploadModalOpen}
+            setPhotoUploadModalOpen={setPhotoUploadModalOpen}
+            getProfilePhotoURL={getProfilePhotoURL} 
+            profilePhotoURL={profilePhotoURL} 
+            userData={userData}/>
         }
         {(userLoggedIn && isMobile && !photoUploadOpen) &&
           <MobileNavigationBars

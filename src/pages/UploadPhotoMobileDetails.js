@@ -27,12 +27,13 @@ const UploadPhotoMobileDetails = (props) => {
     setSharingPost(true);
     const id = uniqid();
     const newPostRef = ref(storage, `photoUploads/${id}.jpg`);
-    const newThumbnailRef = ref(storage, `photoUploadsThumbnails/${id}-150px.jpg`);
+    const newThumbnailRef = ref(storage, `photoUploadsThumbnails/${id}.jpg`);
     const photoUpload = await uploadBytes(newPostRef, editedPhoto);
     const thumbnailUpload = await uploadBytes(newThumbnailRef, thumbnailImage);
     const photoURL = await getDownloadURL(ref(storage, photoUpload.metadata.fullPath));
     const thumbnailURL = await getDownloadURL(ref(storage, thumbnailUpload.metadata.fullPath));
     await setDoc(doc(db, 'photoUploads', id), {
+      photoID: id,
       photoURL: photoURL,
       thumbnailURL: thumbnailURL, 
       photoText: photoUploadText, 

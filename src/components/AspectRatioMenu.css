@@ -1,0 +1,123 @@
+.aspect-ratio-button-menu {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  margin: 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-direction: column;
+}
+
+.aspect-ratio-menu-wrapper {
+  max-width: 100%;
+  margin: 8px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
+  flex-direction: column;
+  background: rgba(26, 26, 26, 0.8);
+  border-radius: 8px;
+  z-index: 3;
+  animation: SlideUp 180ms ease-out;
+}
+
+.aspect-ratio-menu-wrapper.slideDown {
+  animation: SlideDown 180ms ease-out;
+}
+
+.aspect-ratio-inner-button > svg {
+  padding: 12px;
+}
+
+.aspect-ratio-inner-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-right: 4px;
+  padding-left: 12px;
+}
+
+.inner-button-text {
+  text-align: left;
+  flex: 1;
+  font-size: 14px;
+  line-height: 18px;
+  color: rgba(142, 142, 142, 1);
+  font-weight: 600;
+}
+
+.inner-button-text.selected {
+  color: rgba(255, 255, 255, 1);
+}
+
+.aspect-ratio-divider {
+  background-color: rgba(255, 255, 255, 1);
+  opacity: 0.15;
+  border: 0;
+  height: 1px;
+  margin: 0;
+  width: 100%;
+}
+
+.aspect-ratio-button-wrapper {
+  margin: 8px;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: rgba(26, 26, 26, 0.8);
+  cursor: pointer;
+  position: relative;
+  z-index: 3;
+  line-height: 0px;
+}
+
+.aspect-ratio-button-wrapper.selected {
+  background: rgba(255, 255, 255, 1);
+}
+
+.aspect-ratio-button-wrapper:hover {
+  opacity: 0.7;
+}
+
+.aspect-ratio-button-inner {
+  padding: 8px;
+  display: inline-block;
+}
+
+.aspect-ratio-button {
+  cursor: pointer;
+  text-overflow: ellipsis;
+  position: relative;
+  display: inline-block;
+  line-height: 0px;
+}
+
+@keyframes SlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(10%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0%);
+  }
+}
+
+@keyframes SlideDown {
+  0% {
+    opacity: 1;
+    transform: translateY(0%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(10%);
+  }
+}
+
+.aspect-ratio-menu-wrapper > button {
+  cursor: pointer;
+}
+
+.aspect-ratio-menu-wrapper > button:active {
+  opacity: 0.7;
+}

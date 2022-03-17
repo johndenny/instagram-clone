@@ -7,19 +7,20 @@ import useWindowSize from "../hooks/useWindowSize";
 import firebaseApp from "../Firebase";
 import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import ProfileImagesLoader from "../components/ProfileImagesLoader";
 
 const db = getFirestore(firebaseApp);
 const auth = getAuth();
 
 const Profile = (props) => {
   const {
+    userData,
     setDataLoading,
     getUserProfileData,
     profileExists,
     currentUsersPage,
     profileData,
     profileImages,
-    toggleTopNavigation,
     profilePhotoURL, 
     uploadClick, 
     uploadHandler, 
@@ -28,10 +29,7 @@ const Profile = (props) => {
     profilePhotoModalToggle 
   } = props;
   const [width, height] = useWindowSize();
-  // const [profileData, setUserDetails] = useState({});
-  // const [uid, setUID] = useState(null);
   const params = useParams();
-  // const [userExists, setUserExists] = useState('');
 
   useEffect(() => {
     if (profileData.length === 0) {
@@ -39,59 +37,7 @@ const Profile = (props) => {
       setDataLoading(true)
       getUserProfileData(params.username);
     }
-  }, []);
-
-  // const getUID = async () => {
-  //   const user = auth.currentUser;
-  //   const { username } = params;
-  //   const docRef = doc(db, 'displayNames', username)
-  //   const docSnap = await getDoc(docRef);
-  //   if (docSnap.exists()) {
-  //     const { uid } = docSnap.data();
-  //     setUID(uid)
-  //       setUserExists(true);
-  //       toggleTopNavigation(false);
-  //       if (uid === user.uid) {
-  //         setCurrentUsersPage(true);
-  //       } else {
-  //         setCurrentUsersPage(false);
-  //       }
-  //   } else {
-  //     console.log('no displayName document');
-  //     setUserExists(false)
-  //     toggleTopNavigation(true);
-  //   };     
-  // };
-
-  // const getUserData = async () => {
-  //   const docRef = doc(db, "users", uid);
-  //   const docSnap = await getDoc(docRef);
-  //   if (docSnap.exists()) {
-  //     console.log('Document Data:', docSnap.data());
-  //     setUserDetails(docSnap.data());
-  //   } else {
-  //     console.log('no document');
-  //   }
-  // }
-
-  // const getUserImageData = async () => {
-  //   const q = query(collection(db, 'photoUploads'), where('uid', '==', uid));
-  //   const querySnapshot = await getDocs(q);
-  //   querySnapshot.forEach((doc) => {
-  //     console.log(doc.id, '=>', doc.data());
-  //   });
-  // };
-
-  // useEffect(() => {
-  //   if (uid !== null) {
-  //     getUserData();
-  //     getUserImageData();       
-  //   }
-  // }, [uid]);
-
-  // useEffect(() => {
-  //   getUID();
-  // }, [params]);
+  }, [userData]);
 
   return (
     <main className="profile-wrapper">
@@ -332,6 +278,7 @@ const Profile = (props) => {
                 </div>            
               </React.Fragment>
             }
+            <ProfileImagesLoader profileImages={profileImages}/>
           </div>
         : <div className="no-user-profile">
             <h2 className="no-user-header">Sorry, this page isn't availble.</h2>
