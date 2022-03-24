@@ -366,13 +366,13 @@
   color: #8e8e8e;
 }
 
-.selected {
+.profile-tabs.selected {
   border-top: 1px solid rgba(38, 38, 38, 1);
   margin-top: -1px;
   color: rgba(38, 38, 38, 1);
 }
 
-.selected svg {
+.profile-tabs.selected svg {
   color: rgba(38, 38, 38, 1);
 }
 

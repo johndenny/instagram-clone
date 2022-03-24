@@ -6,7 +6,9 @@ import { Link, useLocation } from 'react-router-dom';
 import ProfileDropDown from './ProfileDropDown';
 
 const NavigationBar = (props) => {
-  const { 
+  const {
+    setCurrentPath,
+    currentPath, 
     userData, 
     getProfilePhotoURL, 
     profilePhotoURL,
@@ -14,7 +16,6 @@ const NavigationBar = (props) => {
     photoUploadModalOpen 
   } = props
   const location = useLocation();
-  const [currentPath, setCurrentPath] = useState('');
   const [dropDownOpen, setDropDownOpen] = useState(false);
 
   useEffect(() => {

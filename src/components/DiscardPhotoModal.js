@@ -1,9 +1,9 @@
 import './DiscardPostModal.css';
 
-const DiscardPostModal = (props) => {
+const DiscardPhotoModal = (props) => {
   const {
-    discardPostHandler,
-    setDiscardPostModalOpen,
+    discardPhotoHandler,
+    setDiscardPhotoModalOpen,
   } = props;
 
   const stopBubbles = (event) => {
@@ -11,7 +11,12 @@ const DiscardPostModal = (props) => {
   }
 
   const cancelHandler = () => {
-    setDiscardPostModalOpen(false);
+    setDiscardPhotoModalOpen(false);
+  }
+
+  const discardHandler = () => {
+    setDiscardPhotoModalOpen(false);
+    discardPhotoHandler();
   }
 
   return (
@@ -20,13 +25,13 @@ const DiscardPostModal = (props) => {
         <div className="discard-modal-content-wrapper">
           <div className="discard-post-modal-text">
             <h1 className="discard-modal-title-text">
-              Discard post?
+              Discard photo?
             </h1>
             <div className="discard-modal-text">
-              if you leave, your edits won't be saved.
+              This will remove the photo from your post.
             </div>
           </div>
-          <button className="discard-modal-button" onClick={discardPostHandler} >Discard</button>
+          <button className="discard-modal-button" onClick={discardHandler} >Discard</button>
           <button className="discard-modal-cancel-button" onClick={cancelHandler} >Cancel</button>
         </div>
       </div>
@@ -34,4 +39,4 @@ const DiscardPostModal = (props) => {
   )
 }
 
-export default DiscardPostModal
+export default DiscardPhotoModal

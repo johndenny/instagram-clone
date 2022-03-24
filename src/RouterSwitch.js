@@ -18,13 +18,13 @@ import { getFirestore, setDoc, doc, getDoc, query, collection, where, getDocs } 
 import UploadPhotoMobile from './pages/UploadPhotoMobile';
 import UploadPhotoMobileDetails from './pages/UploadPhotoMobileDetails';
 import UploadPhotoModal from './components/UploadPhotoModal';
-import DiscardPostModal from './components/DiscardPostModal';
 
 const auth = getAuth();
 const storage = getStorage();
 const db = getFirestore();
 
 const RouterSwitch = () => {
+
   // Site Wide //
 
   const [userLoggedIn, setUserLoggedIn] = useState('');
@@ -40,6 +40,7 @@ const RouterSwitch = () => {
   const [currentUsersPage, setCurrentUsersPage] = useState(false);
   const [profileData, setProfileData] = useState([]);
   const [profileImages, setProfileImages] = useState([]);
+  const [currentPath, setCurrentPath] = useState('');
 
   // Profile Upload //
 
@@ -48,12 +49,11 @@ const RouterSwitch = () => {
   const profileImageRef = ref(storage, `profilePhotos/${userData.uid}.jpg`);
   const [profilePhotoModal, setProfilePhotoModal] = useState(false);
 
-  // IMAGE UPLOAD MODAL //
+  // DESKTOP IMAGE UPLOAD //
 
   const [photoUploadModalOpen, setPhotoUploadModalOpen] = useState(false);
-  const [discardPostModalOpen, setDiscardPostModalOpen] = useState(false);
 
-  // Image Upload //
+  // MOBILE IMAGE UPLOAD //
 
   const [aspectRatio, setAspectRatio] = useState('');
   const [flippedAspectRatio, setFlippedAspectRatio] = useState('');
@@ -82,6 +82,10 @@ const RouterSwitch = () => {
   const canvasRef = useRef(null);
   const shortestImageRatio = 1080/565;
   const widestImageRatio = 1080/1350;
+
+  // DESKTOP IMAGE UPLOAD //
+
+  // MOBILE IMAGE UPLOAD //
 
   const photoUploadTextHandler = (event) => {
     const { value } = event.target;
@@ -839,15 +843,9 @@ const RouterSwitch = () => {
 
   return (
     <BrowserRouter>
-      {discardPostModalOpen &&
-        <DiscardPostModal 
-          setDiscardPostModalOpen={setDiscardPostModalOpen} 
-          setPhotoUploadModalOpen={setPhotoUploadModalOpen}           
-        />
-      }
       {photoUploadModalOpen &&
-        <UploadPhotoModal 
-          setDiscardPostModalOpen={setDiscardPostModalOpen} 
+        <UploadPhotoModal
+          setCurrentPath={setCurrentPath}
           setPhotoUploadModalOpen={setPhotoUploadModalOpen} 
         />
       }
@@ -864,12 +862,16 @@ const RouterSwitch = () => {
         }
 
         {(userLoggedIn && !isMobile) &&
-          <NavigationBar 
+          <NavigationBar
+            currentPath={currentPath} 
+            setCurrentPath={setCurrentPath}
             photoUploadModalOpen={photoUploadModalOpen}
             setPhotoUploadModalOpen={setPhotoUploadModalOpen}
             getProfilePhotoURL={getProfilePhotoURL} 
             profilePhotoURL={profilePhotoURL} 
-            userData={userData}/>
+            userData={userData}
+          />
+            
         }
         {(userLoggedIn && isMobile && !photoUploadOpen) &&
           <MobileNavigationBars
