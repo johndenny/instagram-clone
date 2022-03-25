@@ -62,13 +62,21 @@
 .upload-photo-content-wrapper {
   display: flex;
   align-items: stretch;
-  flex-direction: column;
   position: relative;
   width: min(calc(100vw - 219px), 861px);
   max-height: min(calc(100vw - (372px + 43px)), 898px);
   max-width: min(calc(100vw - 372px), 855px);
   min-height: 348px;
   min-width: 348px;
+  transition: all 0.2s ease-in;
+}
+
+.upload-photo-content-wrapper.side-menu {
+  flex: 1;
+  width: min(calc(100vw + 120px), 1201px);
+  max-width: min(calc(100vw - 32px), 1195px);
+  max-height: 898px;
+  min-width: 688px;
 }
 
 .upload-photo-header-wrapper {
@@ -107,7 +115,6 @@
   display: flex;
   align-items: stretch;
   max-height: min(calc(100vw - 372px), 855px);
-  max-width: min(calc(100vw - 372px), 855px);
   min-height: 348px;
   min-width: 348px;
   position: relative;

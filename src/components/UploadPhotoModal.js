@@ -7,6 +7,7 @@ import GalleryUploadMenu from './GalleryUploadMenu';
 import DiscardPostModal from './DiscardPostModal';
 import DiscardPhotoModal from './DiscardPhotoModal';
 import uniqid from 'uniqid';
+import UploadModalFilters from './UploadModalFilters';
 
 const UploadPhotoModal = (props) => {
   const {
@@ -40,11 +41,18 @@ const UploadPhotoModal = (props) => {
   const [animateSlideMenu, setAnimateSlideMenu] = useState(false);
   const [previousLocation, setPreviousLocation] = useState({x: 0, y: 0});
   const [cursorMovement, setCursorMovement] = useState({x: 0, y: 0});
+  const [currentPage, setCurrentPage] = useState('crop');
 
   const maxHorizontalRatio = 1080/565;
   const flippedHorizontalRatio = 565/1080;
   const maxVerticalRatio = 1080/1350;
   const flippedVerticalRatio = 1350/1080;
+
+  const currentPageToggle = () => {
+    if (currentPage === 'crop') {
+      setCurrentPage('filter');
+    }
+  }
 
   const loadPhotoLocation = (index) => {
     const {
@@ -787,8 +795,13 @@ const UploadPhotoModal = (props) => {
         </button>
         <div className={filesDraggedOver ? ['upload-photo-content', 'events-off'].join(' ') : 'upload-photo-content'} onClick={stopBubbles}>
           <div className='upload-photo-height-wrapper'>
-            <div className='upload-photo-content-wrapper'>
-              <div className='upload-photo-inner-content-wrapper'>
+            <div className={
+              currentPage !== 'crop' 
+                ? ['upload-photo-content-wrapper', 'side-menu'].join(' ')
+                : 'upload-photo-content-wrapper'
+              }
+            >
+              <div className={'upload-photo-inner-content-wrapper'}>
                 <div className='upload-photo-header-wrapper'>
                   <div className='upload-photo-back-wrapper'>
                     {selectedPhoto !== '' &&
@@ -801,17 +814,23 @@ const UploadPhotoModal = (props) => {
                     }
                   </div>
                   <h1 className='upload-photo-title'>
-                    {selectedPhoto !== '' &&
+                    {selectedPhoto !== '' && currentPage === 'crop' &&
                       'Crop'
                     }
                     {photoUploads.length === 0 &&
                       'Create new post'
                     }
+                    {currentPage === 'filter' &&
+                      'Edit'
+                    }
                     
                   </h1>
                   <div className='upload-photo-forwards-wrapper'>
                     {selectedPhoto !== '' &&
-                      <button className='upload-photo-forwards-button'>
+                      <button 
+                        className='upload-photo-forwards-button' 
+                        onClick={currentPageToggle}
+                      >
                         Next
                       </button>
                     }
@@ -819,11 +838,21 @@ const UploadPhotoModal = (props) => {
                 </div>
                 <div className='editing-content'>
                   <div className='photo-editing-wrapper'>
-                    {selectedPhoto !== '' &&
+                    {(selectedPhoto !== '' && currentPage === 'filter') &&
+                      <UploadModalFilters />
+                    }
+                    {(selectedPhoto !== '' && currentPage === 'crop') &&
                       <div className='upload-photo-edit-buttons-wrapper'>
                         {errorModalOpen && 
                           <div className='upload-max-error-modal'>
-                            <div className={fadeOutErrorModal ? ['upload-max-content', 'fade-out'].join(' ') : 'upload-max-content'} onAnimationEnd={removeExtraFiles}>
+                            <div 
+                              className={
+                                fadeOutErrorModal 
+                                  ? ['upload-max-content', 'fade-out'].join(' ') 
+                                  : 'upload-max-content'
+                              } 
+                              onAnimationEnd={removeExtraFiles}
+                            >
                               {extraFiles === 1 
                                 ? `The last file was not uploaded. You can only choose 10 or fewer files.` 
                                 : `The last ${extraFiles} files were not uploaded. You can only choose 10 or fewer files.`}
