@@ -12,9 +12,25 @@ import aden from '../images/filters/aden.jpg';
 import perpetua from '../images/filters/perpetua.jpg';
 import React, { useEffect, useRef, useState } from 'react';
 import './UploadModalFilters.css'
+import UploadModalText from './UploadModalText';
+import { async } from '@firebase/util';
 
-const UploadModalFilters = () => {
-
+const UploadModalFilters = (props) => {
+  const {
+    captionText,
+    setCaptionText,
+    userData,
+    currentPage,
+    photoUploads,
+    selectedIndex,
+    setSelectedIndex,
+    selectedPhoto,
+    setSelectedPhoto,
+    frameDimensions,
+    setPhotoUploads,
+    canvasCrop,
+    canvasRef
+  } = props;
   const [currentFilterPage, setCurrentFilterPage] = useState('filters');
   const [selectedFilter, setSelectedFilter] = useState('normal');
   const [filterFadeValue, setFilterFadeValue] = useState(100);
@@ -24,7 +40,6 @@ const UploadModalFilters = () => {
   const [temperatureValue, setTemperatureValue] = useState('0');
   const [fadeValue, setFadeValue] = useState('0');
   const [vignetteValue, setVignetteValue] = useState('0');
-  const canvasRef = useRef(null);
   const adjustments = [
     {
       title: 'brightness', 
@@ -152,6 +167,13 @@ const UploadModalFilters = () => {
   const filterSelectionHandler = (event) => {
     const { id } = event.target;
     setSelectedFilter(id);
+    const newArray = [...photoUploads];
+    const newObject = {
+      ...photoUploads[selectedIndex],
+      filter: id,
+    }
+    newArray.splice(selectedIndex, 1, newObject);
+    setPhotoUploads(newArray);  
   } 
 
   const filterFadeHandler = (event) => {
@@ -159,188 +181,275 @@ const UploadModalFilters = () => {
     setFilterFadeValue(value);
   }
 
-  const loadCanvasPhoto = () => {
-
+  const leftPhotoButton = () => {
+    const nextIndex = selectedIndex - 1;
+    const { 
+      filter, 
+      id, 
+    } = photoUploads[nextIndex];
+    setSelectedPhoto(id);
+    setSelectedIndex(nextIndex);
+    setSelectedFilter(filter);
   }
+
+  const rightPhotoButton = () => {
+    const nextIndex = selectedIndex + 1;
+    const { 
+      filter, 
+      id, 
+    } = photoUploads[nextIndex];
+    setSelectedPhoto(id);
+    setSelectedIndex(nextIndex);
+    setSelectedFilter(filter);
+  }
+
+  const loadCanvasPhoto = async () => {
+    const image = new Image();
+    image.onload = () => {
+      canvasCrop(image, selectedIndex, 1080, 'display').then((element) => {
+        console.log(element);
+      })
+    };
+    image.src = photoUploads[selectedIndex].url;
+  };
+
+  useEffect(() => {
+    loadCanvasPhoto();
+  },[brightnessValue, contrastValue, saturationValue, temperatureValue, selectedIndex, photoUploads]);
 
   return (
     <div className='upload-canvas-filters-wrapper'>
       <div className='upload-canvas-wrapper'>
-        <canvas ref={canvasRef}></canvas>
-      </div>
-      <div className='upload-filters-wrapper'>
-        <div className='upload-filter-tabs-wrapper'>
-          <button 
-            className={
-              currentFilterPage === 'filters' 
-                ? ['upload-filters-button', 'selected'].join(' ') 
-                : 'upload-filters-button'
-            }
-            onClick={filterPageToggle}
-          >
-            Filters
-          </button>
-          <button 
-            className={
-              currentFilterPage === 'adjustments' 
-                ? ['upload-adjustments-button', 'selected'].join(' ') 
-                : 'upload-adjustments-button'
-            }
-            onClick={filterPageToggle}
-          >
-            Adjustments
-          </button>
-        </div>
-        <div className='upload-filter-content'>
-          {currentFilterPage === 'filters' &&
-            <React.Fragment>
-              <div className='upload-filter-grid-wrapper'>
-                {filters.map((filter) => {
-                  const {
-                    image,
-                    title,
-                  } = filter
+        <canvas 
+          ref={canvasRef} 
+          className='upload-filter-canvas'
+          style={{
+            width: `${frameDimensions.width}px`,
+            height: `${frameDimensions.height}px`,
+          }}
+        ></canvas>
+        <div className='gallery-navigation-buttons'>
+          {selectedIndex !== 0 &&
+            <button className='left-photo-button' onClick={leftPhotoButton}>
+              <svg aria-label="Left chevron" className="left-photo-svg" color="#ffffff" fill="#ffffff" height="16" role="img" viewBox="0 0 24 24" width="16">
+                <polyline fill="none" points="16.502 3 7.498 12 16.502 21" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></polyline>
+              </svg>
+            </button>                        
+          }
+          {selectedIndex !== photoUploads.length - 1 &&
+            <button className='right-photo-button' onClick={rightPhotoButton}>
+              <svg aria-label="Right chevron" className="right-photo-svg" color="#ffffff" fill="#ffffff" height="16" role="img" viewBox="0 0 24 24" width="16">
+                <polyline fill="none" points="8 3 17.004 12 8 21" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></polyline>
+              </svg>
+            </button>                        
+          }
+          {photoUploads.length > 1 &&
+            <div className='upload-slide-indicators-wrapper'>
+              {photoUploads.map((photo) => {
+                if (photo.id === selectedPhoto) {
                   return (
-                    <button 
-                      key={title} 
-                      className={
-                        selectedFilter === title 
-                          ? [`upload-filter-button-${title}`, 'selected'].join(' ') 
-                          : `upload-filter-button-${title}`
-                      } 
-                      id={title}
-                      onClick={filterSelectionHandler}
+                    <div key={photo.id} className='upload-slide-indicator selected'></div>
+                  )
+                } else {
+                  return (
+                    <div key={photo.id} className='upload-slide-indicator'></div>
+                  )
+                }
+              })}
+            </div>                        
+          }
+        </div>
+      </div>
+      {currentPage === 'text' &&
+        <UploadModalText
+          captionText={captionText}
+          setCaptionText={setCaptionText}
+          userData={userData}
+        />
+      }
+      {currentPage === 'filter' &&
+        <div className='upload-filters-wrapper'>
+          <div className='upload-filter-tabs-wrapper'>
+            <button 
+              className={
+                currentFilterPage === 'filters' 
+                  ? ['upload-filters-button', 'selected'].join(' ') 
+                  : 'upload-filters-button'
+              }
+              onClick={filterPageToggle}
+            >
+              Filters
+            </button>
+            <button 
+              className={
+                currentFilterPage === 'adjustments' 
+                  ? ['upload-adjustments-button', 'selected'].join(' ') 
+                  : 'upload-adjustments-button'
+              }
+              onClick={filterPageToggle}
+            >
+              Adjustments
+            </button>
+          </div>
+
+          <div className='upload-filter-content'>
+            {currentFilterPage === 'filters' &&
+              <React.Fragment>
+                <div className='upload-filter-grid-wrapper'>
+                  {filters.map((filter) => {
+                    const {
+                      image,
+                      title,
+                    } = filter
+                    return (
+                      <button 
+                        key={title} 
+                        className={
+                          selectedFilter === title 
+                            ? [`upload-filter-button-${title}`, 'selected'].join(' ') 
+                            : `upload-filter-button-${title}`
+                        } 
+                        id={title}
+                        onClick={filterSelectionHandler}
+                      >
+                        <div className='upload-filter-image-wrapper'>
+                          <img 
+                            alt={`Filter: ${title}`} 
+                            className='upload-filter-image' 
+                            id={title} 
+                            src={image} 
+                            draggable='false'
+                          />                      
+                        </div>
+                        <span id={title} className='upload-filter-title' >
+                          {title}  
+                        </span> 
+                      </button>
+                    )
+                  })}
+                </div>
+
+              </React.Fragment>          
+            }
+            {currentFilterPage === 'adjustments' &&
+              <div className='upload-filter-adjustments-wrapper'>
+                {adjustments.map((adjustment) => {
+                  const {
+                    title,
+                    state,
+                    valueHandler,
+                    resetValue,
+                  } = adjustment
+                  return (
+                    <div
+                      key={title}
+                      className='filter-adjustment-input-wrapper'
                     >
-                      <div className='upload-filter-image-wrapper'>
-                        <img alt={`Filter: ${title}`} className='upload-filter-image' id={title} src={image} />                      
+                      <div className='adjustment-text-reset-wrapper'>
+                        <span className={'adjustment-text'}>
+                          {title}
+                        </span>
+                        {state !== '0' &&
+                          <button 
+                            onClick={resetValue}
+                            className='adjustment-reset-button'
+                          >
+                            Reset
+                          </button>                      
+                        }
                       </div>
-                      <span id={title} className='upload-filter-title' >
-                        {title}  
-                      </span> 
-                    </button>
+                      <div
+                        className='adjustment-input-value-wrapper'>
+                        {title === 'vignette'
+                          ? <input 
+                              className='adjustment-input' 
+                              max='100' 
+                              min='0' 
+                              type='range'
+                              style={{
+                                backgroundImage: `linear-gradient(
+                                  to right, 
+                                  rgb(38, 38, 38) 0%, 
+                                  rgb(38, 38, 38) ${state}%, 
+                                  rgb(219, 219, 219) ${state}%, 
+                                  rgb(219, 219, 219) 100%)`
+                              }}
+                              value={state}
+                              onChange={valueHandler}
+                            />
+                          : <input 
+                              className='adjustment-input' 
+                              max='100' 
+                              min='-100' 
+                              type='range'
+                              style={{
+                                backgroundImage: `linear-gradient(
+                                  to right, 
+                                  rgb(219, 219, 219) 0%, 
+                                  rgb(219, 219, 219) ${
+                                    state < 0 
+                                      ? 50 + (state / 2) 
+                                      : 50
+                                  }%, 
+                                  rgb(38, 38, 38) ${
+                                    state < 0 
+                                      ? 50 + (state / 2) 
+                                      : 50
+                                  }%, 
+                                  rgb(38, 38, 38) ${
+                                    state > 0 
+                                      ? 50 + (state / 2) 
+                                      : 50
+                                  }%, 
+                                  rgb(219, 219, 219) ${
+                                    state > 0 
+                                      ? 50 + (state / 2) 
+                                      : 50
+                                  }%, 
+                                  rgb(219, 219, 219) 100%)`,
+                              }}
+                              value={state}
+                              onChange={valueHandler}
+                            />
+                        }
+                        <span className={state === '0' ? ['adjustment-input-value', 'zero'].join(' ') : 'adjustment-input-value'}>
+                          {state}
+                        </span>                      
+                      </div>
+                    </div>
                   )
                 })}
+              </div>          
+            }
+          </div>
+          {currentFilterPage === 'filters' && selectedFilter !== 'normal' &&
+            <div className='filter-fade-input-wrapper'>
+              <div className='filter-fade-input-value-wrapper'>
+                <input 
+                  className='filter-fade-input' 
+                  max='100' 
+                  min='0' 
+                  type="range"
+                  value={filterFadeValue}
+                  onChange={filterFadeHandler}
+                  style={{
+                    backgroundImage: `linear-gradient(
+                      to right, 
+                      rgb(38, 38, 38) 0%, 
+                      rgb(38, 38, 38) ${filterFadeValue}%, 
+                      rgb(219, 219, 219) ${filterFadeValue}%, 
+                      rgb(219, 219, 219) 100%)`
+                  }}
+                />
+                <span className='filter-fade-input-value'>
+                  {filterFadeValue}
+                </span>
               </div>
-
-            </React.Fragment>          
-          }
-          {currentFilterPage === 'adjustments' &&
-            <div className='upload-filter-adjustments-wrapper'>
-              {adjustments.map((adjustment) => {
-                const {
-                  title,
-                  state,
-                  valueHandler,
-                  resetValue,
-                } = adjustment
-                return (
-                  <div
-                    key={title}
-                    className='filter-adjustment-input-wrapper'
-                  >
-                    <div className='adjustment-text-reset-wrapper'>
-                      <span className={'adjustment-text'}>
-                        {title}
-                      </span>
-                      {state !== '0' &&
-                        <button 
-                          onClick={resetValue}
-                          className='adjustment-reset-button'
-                        >
-                          Reset
-                        </button>                      
-                      }
-                    </div>
-                    <div
-                      className='adjustment-input-value-wrapper'>
-                      {title === 'vignette'
-                        ? <input 
-                            className='adjustment-input' 
-                            max='100' 
-                            min='0' 
-                            type='range'
-                            style={{
-                              backgroundImage: `linear-gradient(
-                                to right, 
-                                rgb(38, 38, 38) 0%, 
-                                rgb(38, 38, 38) ${state}%, 
-                                rgb(219, 219, 219) ${state}%, 
-                                rgb(219, 219, 219) 100%)`
-                            }}
-                            value={state}
-                            onChange={valueHandler}
-                          />
-                        : <input 
-                            className='adjustment-input' 
-                            max='100' 
-                            min='-100' 
-                            type='range'
-                            style={{
-                              backgroundImage: `linear-gradient(
-                                to right, 
-                                rgb(219, 219, 219) 0%, 
-                                rgb(219, 219, 219) ${
-                                  state < 0 
-                                    ? 50 + (state / 2) 
-                                    : 50
-                                }%, 
-                                rgb(38, 38, 38) ${
-                                  state < 0 
-                                    ? 50 + (state / 2) 
-                                    : 50
-                                }%, 
-                                rgb(38, 38, 38) ${
-                                  state > 0 
-                                    ? 50 + (state / 2) 
-                                    : 50
-                                }%, 
-                                rgb(219, 219, 219) ${
-                                  state > 0 
-                                    ? 50 + (state / 2) 
-                                    : 50
-                                }%, 
-                                rgb(219, 219, 219) 100%)`,
-                            }}
-                            value={state}
-                            onChange={valueHandler}
-                          />
-                      }
-                      <span className={state === '0' ? ['adjustment-input-value', 'zero'].join(' ') : 'adjustment-input-value'}>
-                        {state}
-                      </span>                      
-                    </div>
-                  </div>
-                )
-              })}
-            </div>          
+            </div>        
           }
         </div>
-        {currentFilterPage === 'filters' && selectedFilter !== 'normal' &&
-          <div className='filter-fade-input-wrapper'>
-            <div className='filter-fade-input-value-wrapper'>
-              <input 
-                className='filter-fade-input' 
-                max='100' 
-                min='0' 
-                type="range"
-                value={filterFadeValue}
-                onChange={filterFadeHandler}
-                style={{
-                  backgroundImage: `linear-gradient(
-                    to right, 
-                    rgb(38, 38, 38) 0%, 
-                    rgb(38, 38, 38) ${filterFadeValue}%, 
-                    rgb(219, 219, 219) ${filterFadeValue}%, 
-                    rgb(219, 219, 219) 100%)`
-                }}
-              />
-              <span className='filter-fade-input-value'>
-                {filterFadeValue}
-              </span>
-            </div>
-          </div>        
-        }
-      </div>
+      }      
+      
     </div>
   )
 }

@@ -10,9 +10,10 @@
 .upload-canvas-wrapper {
   display: flex;
   height: 100%;
-  align-items: flex-start;
+  align-items: center;
   width: calc(100% - 340px);
   justify-content: center;
+  position: relative;
 }
 
 .upload-filters-wrapper {
@@ -217,4 +218,8 @@
 
 .filter-adjustment-input-wrapper:hover .adjustment-reset-button {
   display: block;
+}
+
+.upload-filter-canvas {
+  width: 100%;
 }

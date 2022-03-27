@@ -845,6 +845,7 @@ const RouterSwitch = () => {
     <BrowserRouter>
       {photoUploadModalOpen &&
         <UploadPhotoModal
+          userData={userData}
           setCurrentPath={setCurrentPath}
           setPhotoUploadModalOpen={setPhotoUploadModalOpen} 
         />

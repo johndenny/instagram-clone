@@ -1,5 +1,5 @@
 import './UploadPhotoModal.css';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
 import AspectRatioMenu from './AspectRatioMenu';
 import { useLocation } from 'react-router-dom';
@@ -8,9 +8,18 @@ import DiscardPostModal from './DiscardPostModal';
 import DiscardPhotoModal from './DiscardPhotoModal';
 import uniqid from 'uniqid';
 import UploadModalFilters from './UploadModalFilters';
+import firebaseApp from '../Firebase';
+import { getFirestore, setDoc, doc, getDoc } from 'firebase/firestore';
+import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
+import spinner10s from '../images/spinner10s.gif'
+import checkmarkLoopsOnce from '../images/checkmarkLoopsOnce.gif'
+
+const storage = getStorage();
+const db = getFirestore();
 
 const UploadPhotoModal = (props) => {
   const {
+    userData,
     setCurrentPath,
     setPhotoUploadModalOpen,
   } = props;
@@ -42,6 +51,13 @@ const UploadPhotoModal = (props) => {
   const [previousLocation, setPreviousLocation] = useState({x: 0, y: 0});
   const [cursorMovement, setCursorMovement] = useState({x: 0, y: 0});
   const [currentPage, setCurrentPage] = useState('crop');
+  const [isResizing, setIsResizing] = useState(false);
+  const [captionText, setCaptionText] = useState('');
+  const [resizedPhotos, setResizedPhotos] = useState([]);
+  const [postID, setPostID] = useState('');
+  const [IDArray, setIDArray] = useState([]);
+  const uploadCanvasRef = useRef(null);
+  const canvasRef = useRef(null);
 
   const maxHorizontalRatio = 1080/565;
   const flippedHorizontalRatio = 565/1080;
@@ -51,6 +67,10 @@ const UploadPhotoModal = (props) => {
   const currentPageToggle = () => {
     if (currentPage === 'crop') {
       setCurrentPage('filter');
+    }
+    if (currentPage === 'filter') {
+      setCurrentPage('text');
+      saveCanvasPhotos();
     }
   }
 
@@ -310,31 +330,34 @@ const UploadPhotoModal = (props) => {
     }; 
     const imageOverflowX = ((photoDimensions.width * ((zoomValue/100) + 1)) - frameDimensions.width) / 2;
     const imageOverflowY = ((photoDimensions.height * ((zoomValue/100) + 1)) - frameDimensions.height) / 2;
+    const xOverflowPercent = (imageOverflowX / photoDimensions.width) * 100;
+    const yOverflowPercent = (imageOverflowY / photoDimensions.height) * 100;
+    console.log(xOverflowPercent,yOverflowPercent);
     console.log("image overflow:", imageOverflowY);
-    if (x > imageOverflowX ) {
+    if (x > xOverflowPercent) {
       console.log('helloX');
       newLocation = {
-        x: imageOverflowX,
+        x: xOverflowPercent,
         y: newLocation.y,          
       };
     } 
-    if (x < imageOverflowX * -1) {
+    if (x < xOverflowPercent * -1) {
       newLocation = {
-        x: imageOverflowX * -1,
+        x: xOverflowPercent * -1,
         y: newLocation.y,          
       };
     } 
-    if (y > imageOverflowY){
+    if (y > yOverflowPercent){
       console.log('hello!Y');
       newLocation = {
         x: newLocation.x,
-        y: imageOverflowY,
+        y: yOverflowPercent,
       };      
     } 
-    if (y < imageOverflowY * -1) {
+    if (y < yOverflowPercent * -1) {
       newLocation = {
         x: newLocation.x,
-        y: imageOverflowY * -1,
+        y: yOverflowPercent * -1,
       };      
     };
     setCursorMovement(newLocation);
@@ -352,28 +375,30 @@ const UploadPhotoModal = (props) => {
     }; 
     const imageOverflowX = ((photoDimensions.width * ((zoomValue/100) + 1)) - frameDimensions.width) / 2;
     const imageOverflowY = ((photoDimensions.height * ((zoomValue/100) + 1)) - frameDimensions.height) / 2;
-    if (cursorMovement.x > imageOverflowX ) {
+    const xOverflowPercent = (imageOverflowX / photoDimensions.width) * 100;
+    const yOverflowPercent = (imageOverflowY / photoDimensions.height) * 100;
+    if (cursorMovement.x > xOverflowPercent ) {
       newLocation = {
-        x: imageOverflowX,
+        x: xOverflowPercent,
         y: newLocation.y,          
       };
     } 
-    if (cursorMovement.x < imageOverflowX * -1) {
+    if (cursorMovement.x < xOverflowPercent * -1) {
       newLocation = {
-        x: imageOverflowX * -1,
+        x: xOverflowPercent * -1,
         y: newLocation.y,          
       };
     } 
-    if (cursorMovement.y > imageOverflowY){
+    if (cursorMovement.y > yOverflowPercent){
       newLocation = {
         x: newLocation.x,
-        y: imageOverflowY,
+        y: yOverflowPercent,
       };      
     } 
-    if (cursorMovement.y < imageOverflowY * -1) {
+    if (cursorMovement.y < yOverflowPercent * -1) {
       newLocation = {
         x: newLocation.x,
-        y: imageOverflowY * -1,
+        y: yOverflowPercent * -1,
       };      
     };
     setCursorMovement(newLocation);
@@ -445,11 +470,13 @@ const UploadPhotoModal = (props) => {
       clientX, 
       clientY
     } = event;
-    let xMovement = (clientX - startLocation.x) + previousLocation.x;
-    let yMovement = (clientY - startLocation.y) + previousLocation.y;
+    let xMovement = (clientX - startLocation.x);
+    let yMovement = (clientY - startLocation.y);
+    const xPercent = ((xMovement / photoDimensions.width) * 100) + previousLocation.x;
+    const yPercent = ((yMovement / photoDimensions.height) * 100) + previousLocation.y; 
     setCursorMovement({
-        x: xMovement,
-        y: yMovement,
+        x: xPercent,
+        y: yPercent,
     });
   };
 
@@ -613,6 +640,9 @@ const UploadPhotoModal = (props) => {
 
   useEffect(() => {
     modalWidthHandler();
+    if (selectedPhoto !== '') {
+      ratioSelectionHandler(selectedIndex);
+    }
   }, [width]);
 
   const getAspectRatios = async () => {
@@ -636,6 +666,7 @@ const UploadPhotoModal = (props) => {
             x: 0,
             y: 0,
             zoom: 0,
+            filter: 'normal',
           });
           };
         });
@@ -667,7 +698,7 @@ const UploadPhotoModal = (props) => {
   const closeUploadModal = () => {
     console.log("start:", startLocation);
     if (startLocation === '') {
-      if (photoUploads.length !== 0) {
+      if (selectedPhoto !== '') {
         setDiscardPostModalOpen(true);
       } else {
         setPhotoUploadModalOpen(false);
@@ -751,6 +782,282 @@ const UploadPhotoModal = (props) => {
       setCurrentPath(location.pathname);
   }, []);
 
+  const uploadPhotos = async (photo, arrayID, postID) => {
+    console.log(photo);
+    const {
+      photoID,
+      w1080,
+      w750,
+      w640,
+      w480,
+      w320,
+      w240,
+      w150,
+    } = photo;
+    const w1080Ref = ref(storage, `w1080_photoUploads/${photoID}.jpg`);
+    const w750Ref = ref(storage, `w750_photoUploads/${photoID}.jpg`);
+    const w640Ref = ref(storage, `w640_photoUploads/${photoID}.jpg`);
+    const w480Ref = ref(storage, `w480_photoUploads/${photoID}.jpg`);
+    const w320Ref = ref(storage, `w320_photoUploads/${photoID}.jpg`);
+    const w240Ref = ref(storage, `w240_photoUploads/${photoID}.jpg`);
+    const w150Ref = ref(storage, `w150_photoUploads/${photoID}.jpg`);
+    const w1080Upload = await uploadBytes(w1080Ref, w1080);
+    const w1080URL = await getDownloadURL(
+      ref(storage, w1080Upload.metadata.fullPath)
+    );
+    const w750Upload = await uploadBytes(w750Ref, w750);
+    const w750URL = await getDownloadURL(
+      ref(storage, w750Upload.metadata.fullPath)
+    );
+    const w640Upload = await uploadBytes(w640Ref, w640);
+    const w640URL = await getDownloadURL(
+      ref(storage, w640Upload.metadata.fullPath)
+    );
+    const w480Upload = await uploadBytes(w480Ref, w480);
+    const w480URL = await getDownloadURL(
+      ref(storage, w480Upload.metadata.fullPath)
+    );
+    const w320Upload = await uploadBytes(w320Ref, w320);
+    const w320URL = await getDownloadURL(
+      ref(storage, w320Upload.metadata.fullPath)
+    );
+    const w240Upload = await uploadBytes(w240Ref, w240);
+    const w240URL = await getDownloadURL(
+      ref(storage, w240Upload.metadata.fullPath)
+    );
+    const w150Upload = await uploadBytes(w150Ref, w150);
+    const w150URL = await getDownloadURL(
+      ref(storage, w150Upload.metadata.fullPath)
+    );
+    await setDoc(doc(db, 'photoUploads', photoID), {
+      photoID: photoID,
+      w1080: w1080URL,
+      w750: w750URL,
+      w640: w640URL,
+      w480: w480URL,
+      w320: w320URL,
+      w240: w240URL,
+      w150: w150URL,
+      uploadDate: Date.now(),
+    });
+    await setDoc(doc(db, 'postUploads', postID), {
+      postID: postID,
+      photos: arrayID,
+      postCaption: captionText,
+      uid: userData.uid,
+      uploadDate: Date.now(),
+    });
+    console.log('photo uploaded', w1080URL);
+    setCurrentPage('shared');
+  }
+
+  const saveCanvasPhotos = async () => {
+    setIsResizing(true)
+    const postID = uniqid();
+    const IDs = [];
+    const photoArray = [];
+    Promise.all(Array.from(
+      {length: photoUploads.length},
+      (_, i) => {
+        const index = i;
+        const { url } = photoUploads[i];
+        const image = new Image();
+        image.src = url;
+        return new Promise((resolve) => {
+          const photoID = uniqid()
+          let w1080;
+          let w750;
+          let w640;
+          let w480;
+          let w320;
+          let w240;
+          let w150;
+          image.onload = () => {
+            canvasCrop(image, index, 1080, 'hide')
+              .then((element) => {
+                w1080 = element;
+                canvasCrop(image, index, 750, 'hide')
+                  .then((element) => {
+                    w750 = element;
+                    canvasCrop(image, index, 640, 'hide')
+                      .then((element) => {
+                        w640 = element;
+                        canvasCrop(image, index, 480, 'hide')
+                          .then((element) => {
+                            w480 = element;
+                            canvasCrop(image, index, 320, 'hide')
+                              .then((element) => {
+                                w320 = element;
+                                canvasCrop(image, index, 240, 'hide')
+                                  .then((element) => {
+                                    w240 = element;
+                                    canvasCrop(image, index, 150, 'hide')
+                                      .then((element) => {
+                                        w150 = element;
+                                        IDs.push(photoID);
+                                        resolve({
+                                          photoID: photoID,
+                                          w1080: w1080,
+                                          w750: w750,
+                                          w640: w640,
+                                          w480: w480,
+                                          w320: w320,
+                                          w240: w240,
+                                          w150: w150,
+                                        })
+                                      })
+                                  })
+                              })
+                          })
+                      })
+                  })
+              })
+          };
+        });
+      }
+    ))
+    .then((images) => {
+      console.log(IDs)
+      setIsResizing(false);
+      images.forEach((image) => {
+        photoArray.push(image);
+      })
+      setResizedPhotos(photoArray);
+      setPostID(postID);
+      setIDArray(IDs);
+      console.log(images);
+    });
+  };
+
+  const sharePost = () => {
+    setSelectedPhoto('');
+    setCurrentPage('sharing');
+    resizedPhotos.map( async (image) => await uploadPhotos(image, IDArray, postID));
+  }
+
+  const canvasCrop = (image, index, width, result) => {
+    return new Promise((resolve) => {
+      let canvas;
+      if (result === 'display') {
+        canvas = canvasRef.current;
+      } else if (result === 'hide') {
+        canvas = uploadCanvasRef.current;
+      }; 
+      const ctx = canvas.getContext('2d');
+      const canvasAspectRatio = photoUploads[0].aspectRatio;
+      const canvasFlippedRatio = photoUploads[0].flippedAspectRatio;
+      const sixteenByNine = 16/9;
+      const minimumHeight = width / canvasAspectRatio;
+      const maximumHeight = width / canvasAspectRatio
+
+      if (cropSelection === 'one-one') {
+        canvas.width = width;
+        canvas.height = width;
+      }
+      if (cropSelection === 'original') {
+        if (canvasAspectRatio > 1) {
+          canvas.width = width;
+          const height = canvas.width * canvasFlippedRatio
+          if (height < minimumHeight) {
+            canvas.height = minimumHeight;
+          } else {
+            canvas.height = canvas.width * canvasFlippedRatio
+          };
+        } else if (canvasAspectRatio < 1) {
+          canvas.width = width;
+          const height = canvas.width * canvasFlippedRatio
+          if (height > maximumHeight) {
+            canvas.height = maximumHeight;
+          } else {
+            canvas.height = canvas.width * canvasFlippedRatio
+          };
+        };
+      };
+      if (cropSelection === 'four-five') {
+        canvas.width = width;
+        canvas.height = maximumHeight;
+      }
+      if (cropSelection === 'sixteen-nine') {
+        canvas.width = width;
+        canvas.height = width / sixteenByNine;
+      }
+      const ratio = image.width / image.height;
+      const {
+        filter, 
+        zoom,
+        x,
+        y, 
+      } = photoUploads[index];
+      let newWidth;
+      let newHeight;
+
+      if (ratio < 1) {
+        newHeight = (canvas.width / ratio) * (1 + (zoom / 100));
+        newWidth = (canvas.width) * (1 + (zoom / 100));
+        if (cropSelection === 'sixteen-nine') {
+          newHeight = canvas.width / ratio * (1 + (zoom / 100));
+        }
+      }
+      if (ratio > 1) {
+        newHeight = canvas.height * (1 + (zoom / 100));
+        newWidth = canvas.height * ratio * (1 + (zoom / 100));
+      }
+      const yPixels = newHeight * ((y / (1 + (zoom / 100))) / 100);
+      const xPixels = newWidth * ((x / (1 + (zoom / 100))) / 100);
+      let xCenter = canvas.width / 2 - newWidth / 2;
+      let yCenter = canvas.height / 2 - newHeight / 2;
+
+      let xOffset = xCenter + xPixels;
+      let yOffset = yCenter + yPixels;
+
+      switch (true) {
+        case filter === 'moon':
+          ctx.filter = 'grayscale(100%) brightness(125%)';
+          break;
+        case filter === 'clarendon':
+          ctx.filter = 'saturate(130%) brightness(115%) contrast(120%) hue-rotate(5deg)';
+          break;
+        case filter === 'gingham':
+          ctx.filter = 'contrast(75%) saturate(90%) brightness(115%)'
+          break;
+        case filter === 'lark':
+          ctx.filter = 'saturate(115%) brightness(110%) hue-rotate(5deg)';
+          break;
+        case filter === 'reyes':
+          ctx.filter = 'contrast(50%) saturate(75%) brightness(125%) hue-rotate(355deg)';
+          break;
+        case filter === 'juno':
+          ctx.filter = 'contrast(90%) hue-rotate(10deg) brightness(110%)';
+          break;
+        case filter === 'slumber':
+          ctx.filter = 'brightness(80%) hue-rotate(350deg) saturate(125%)';
+          break;
+        case filter === 'crema':
+          ctx.filter = 'brightness(85%) hue-rotate(5deg) saturate(90%)';
+          break;
+        case filter === 'ludwig':
+          ctx.filter = 'hue-rotate(355deg) saturate(125%)';
+          break;
+        case filter === 'aden':
+          ctx.filter = 'sepia(50%) saturate(150%)';
+          break;
+        case filter === 'perpetua':
+          ctx.filter = 'brightness(80%) saturate(130%)';
+          break;
+        default: 
+      }
+      
+      ctx.drawImage(image, xOffset, yOffset, newWidth, newHeight);
+      
+      canvas.toBlob((blob) => {
+        const image = new Image();
+        image.src = blob;
+        resolve(blob);
+      });     
+    })
+
+  };
+
   return (
     <React.Fragment>
       {discardPhotoModalOpen &&
@@ -766,6 +1073,10 @@ const UploadPhotoModal = (props) => {
           setPhotoUploadModalOpen={setPhotoUploadModalOpen}           
         />
       }
+      {isResizing &&
+        <canvas className='upload-canvas' ref={uploadCanvasRef}>
+        </canvas>
+      }
       {startLocation !== '' &&
         <div 
           className='mouse-move-modal'
@@ -777,7 +1088,7 @@ const UploadPhotoModal = (props) => {
         className='upload-photo-modal' 
         onDragEnter={fileDragEnter} 
         onDragLeave={fileDragLeave} 
-        onClick={closeUploadModal} 
+        onMouseDown={closeUploadModal} 
         onDrop={dropHandler} 
         onDragOver={dragOverHandler}
       >
@@ -793,12 +1104,12 @@ const UploadPhotoModal = (props) => {
             <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" x1="20.649" x2="3.354" y1="20.649" y2="3.354"></line>
           </svg>
         </button>
-        <div className={filesDraggedOver ? ['upload-photo-content', 'events-off'].join(' ') : 'upload-photo-content'} onClick={stopBubbles}>
+        <div className={filesDraggedOver ? ['upload-photo-content', 'events-off'].join(' ') : 'upload-photo-content'} onMouseDown={stopBubbles}>
           <div className='upload-photo-height-wrapper'>
             <div className={
-              currentPage !== 'crop' 
-                ? ['upload-photo-content-wrapper', 'side-menu'].join(' ')
-                : 'upload-photo-content-wrapper'
+              currentPage === 'crop' || currentPage === 'sharing' || currentPage === 'shared'
+                ? 'upload-photo-content-wrapper'
+                : ['upload-photo-content-wrapper', 'side-menu'].join(' ')
               }
             >
               <div className={'upload-photo-inner-content-wrapper'}>
@@ -817,29 +1128,183 @@ const UploadPhotoModal = (props) => {
                     {selectedPhoto !== '' && currentPage === 'crop' &&
                       'Crop'
                     }
-                    {photoUploads.length === 0 &&
+                    {(photoUploads.length === 0 || currentPage === 'text') &&
                       'Create new post'
                     }
                     {currentPage === 'filter' &&
                       'Edit'
                     }
+                    {currentPage === 'sharing' &&
+                      'Sharing'
+                    }
+                    {currentPage === 'shared' &&
+                      'Post shared'
+                    }
                     
                   </h1>
                   <div className='upload-photo-forwards-wrapper'>
-                    {selectedPhoto !== '' &&
+                    {selectedPhoto !== '' && !isResizing &&
                       <button 
                         className='upload-photo-forwards-button' 
-                        onClick={currentPageToggle}
+                        onClick={currentPage === 'text' ? sharePost : currentPageToggle}
                       >
-                        Next
+                        {currentPage === 'text' ? 'Share' : 'Next'}
                       </button>
                     }
+                  <svg aria-label="Loading..." className={isResizing ? 'resize-spinner' : ['resize-spinner', 'hidden'].join(' ')} viewBox="0 0 100 100">
+                    <rect fill="#555555" height="6" opacity="0" rx="3" ry="3" transform="rotate(-90 50 50)" width="25" x="72" y="47">
+                      <animate 
+                        id="anim1" 
+                        attributeType="xml"
+                        attributeName="opacity" 
+                        begin="0s" 
+                        values="1;0;" 
+                        dur="1.2s"
+                        repeatCount="indefinite" 
+                      />
+                    </rect>
+                    <rect fill="#555555" height="6" opacity="0.08333333333333333" rx="3" ry="3" transform="rotate(-60 50 50)" width="25" x="72" y="47">
+                      <animate 
+                        id="anim2" 
+                        attributeType="xml"
+                        attributeName="opacity" 
+                        begin=".1s" 
+                        values="1;0;" 
+                        dur="1.2s"
+                        repeatCount="indefinite" 
+                      />
+                    </rect>
+                    <rect fill="#555555" height="6" opacity="0.16666666666666666" rx="3" ry="3" transform="rotate(-30 50 50)" width="25" x="72" y="47">
+                      <animate 
+                        id="anim3" 
+                        attributeType="xml"
+                        attributeName="opacity" 
+                        begin=".2s" 
+                        values="1;0;" 
+                        dur="1.2s"
+                        repeatCount="indefinite" 
+                      />
+                    </rect>
+                    <rect fill="#555555" height="6" opacity="0.25" rx="3" ry="3" transform="rotate(0 50 50)" width="25" x="72" y="47">
+                      <animate 
+                        id="anim4" 
+                        attributeType="xml"
+                        attributeName="opacity" 
+                        begin=".3s" 
+                        values="1;0;" 
+                        dur="1.2s"
+                        repeatCount="indefinite" 
+                      />
+                    </rect>
+                    <rect fill="#555555" height="6" opacity="0.3333333333333333" rx="3" ry="3" transform="rotate(30 50 50)" width="25" x="72" y="47">
+                      <animate 
+                        id="anim5" 
+                        attributeType="xml"
+                        attributeName="opacity" 
+                        begin=".4s" 
+                        values="1;0;" 
+                        dur="1.2s"
+                        repeatCount="indefinite" 
+                      />
+                    </rect>
+                    <rect fill="#555555" height="6" opacity="0.4166666666666667" rx="3" ry="3" transform="rotate(60 50 50)" width="25" x="72" y="47">
+                      <animate 
+                        id="anim6" 
+                        attributeType="xml"
+                        attributeName="opacity" 
+                        begin=".5s" 
+                        values="1;0;" 
+                        dur="1.2s"
+                        repeatCount="indefinite" 
+                      />
+                    </rect>
+                    <rect fill="#555555" height="6" opacity="0.5" rx="3" ry="3" transform="rotate(90 50 50)" width="25" x="72" y="47">
+                      <animate 
+                        id="anim7" 
+                        attributeType="xml"
+                        attributeName="opacity" 
+                        begin=".6s" 
+                        values="1;0;" 
+                        dur="1.2s"
+                        repeatCount="indefinite" 
+                      />
+                    </rect>
+                    <rect fill="#555555" height="6" opacity="0.5833333333333334" rx="3" ry="3" transform="rotate(120 50 50)" width="25" x="72" y="47">
+                      <animate 
+                        id="anim8" 
+                        attributeType="xml"
+                        attributeName="opacity" 
+                        begin=".7s" 
+                        values="1;0;" 
+                        dur="1.2s"
+                        repeatCount="indefinite" 
+                      />
+                    </rect>
+                    <rect fill="#555555" height="6" opacity="0.6666666666666666" rx="3" ry="3" transform="rotate(150 50 50)" width="25" x="72" y="47">
+                      <animate 
+                        id="anim9" 
+                        attributeType="xml"
+                        attributeName="opacity" 
+                        begin=".8s" 
+                        values="1;0;" 
+                        dur="1.2s"
+                        repeatCount="indefinite" 
+                      />
+                    </rect>
+                    <rect fill="#555555" height="6" opacity="0.75" rx="3" ry="3" transform="rotate(180 50 50)" width="25" x="72" y="47">
+                      <animate 
+                        id="anim10" 
+                        attributeType="xml"
+                        attributeName="opacity" 
+                        begin=".9s" 
+                        values="1;0;" 
+                        dur="1.2s"
+                        repeatCount="indefinite" 
+                      />
+                    </rect>
+                    <rect fill="#555555" height="6" opacity="0.8333333333333334" rx="3" ry="3" transform="rotate(210 50 50)" width="25" x="72" y="47">
+                      <animate 
+                        id="anim11" 
+                        attributeType="xml"
+                        attributeName="opacity" 
+                        begin="1s" 
+                        values="1;0;" 
+                        dur="1.2s"
+                        repeatCount="indefinite" 
+                      />
+                    </rect>
+                    <rect fill="#555555" height="6" opacity="0.9166666666666666" rx="3" ry="3" transform="rotate(240 50 50)" width="25" x="72" y="47">
+                      <animate 
+                        id="anim12" 
+                        attributeType="xml"
+                        attributeName="opacity" 
+                        begin="1.1s" 
+                        values="1;0;" 
+                        dur="1.2s"
+                        repeatCount="indefinite" 
+                      />
+                    </rect>
+                  </svg>   
                   </div>
                 </div>
                 <div className='editing-content'>
                   <div className='photo-editing-wrapper'>
-                    {(selectedPhoto !== '' && currentPage === 'filter') &&
-                      <UploadModalFilters />
+                    {(selectedPhoto !== '' && (currentPage === 'filter' || currentPage === 'text')) &&
+                      <UploadModalFilters
+                        captionText={captionText}
+                        setCaptionText={setCaptionText}
+                        canvasRef={canvasRef}
+                        canvasCrop={canvasCrop}
+                        userData={userData}
+                        currentPage={currentPage}
+                        setPhotoUploads={setPhotoUploads}
+                        setSelectedIndex={setSelectedIndex}
+                        setSelectedPhoto={setSelectedPhoto}
+                        photoUploads={photoUploads}
+                        selectedIndex={selectedIndex}
+                        selectedPhoto={selectedPhoto}
+                        frameDimensions={frameDimensions}
+                     />
                     }
                     {(selectedPhoto !== '' && currentPage === 'crop') &&
                       <div className='upload-photo-edit-buttons-wrapper'>
@@ -928,7 +1393,7 @@ const UploadPhotoModal = (props) => {
                                     backgroundImage: `url(${url})`,
                                     width: `${photoDimensions.width}px`,
                                     height: `${photoDimensions.height}px`,
-                                    transform: `translate3d(${cursorMovement.x}px, ${cursorMovement.y}px, 0px) scale(${1 + (zoomValue/100)})`,
+                                    transform: `translate3d(${cursorMovement.x}%, ${cursorMovement.y}%, 0px) scale(${1 + (zoomValue/100)})`,
                         
                                   }}
                                 ></div>                               
@@ -997,6 +1462,21 @@ const UploadPhotoModal = (props) => {
                           </label>
                         </div>
 
+                      </div>                    
+                    }
+                    {(currentPage === 'sharing' || currentPage === 'shared') &&
+                      <div className='photo-uploading-loader'>
+                        {currentPage === 'sharing' &&
+                          <img alt='loading Spinner' className='loading-spinner-gif' src={spinner10s} />
+                        }
+                        {currentPage === 'shared' &&
+                          <div className='shared-wrapper'>
+                            <img alt='upload complete' className='upload-complete-gif' src={checkmarkLoopsOnce} />
+                            <span className='post-shared-text'>
+                              Your post has been shared.
+                            </span>                              
+                          </div>
+                        }
                       </div>                    
                     }
                     <form className='photo-upload-input-form'>
