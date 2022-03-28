@@ -48,6 +48,7 @@ const RouterSwitch = () => {
   const [profileUpload, setProfileUpload] = useState('');
   const profileImageRef = ref(storage, `profilePhotos/${userData.uid}.jpg`);
   const [profilePhotoModal, setProfilePhotoModal] = useState(false);
+  const [isProfilePhotoUploading, setIsProfilePhotoUploading] = useState(false);
 
   // DESKTOP IMAGE UPLOAD //
 
@@ -674,12 +675,14 @@ const RouterSwitch = () => {
   
   const removeProfilePhoto = async () => {
     profilePhotoModalToggle()
+    setIsProfilePhotoUploading(true);
     await deleteObject(profileImageRef);
     await updateProfile(auth.currentUser, {
       photoURL: ''
     });
     await setDoc(doc(db, 'users', userData.uid), {photoURL: ''}, {merge: true});
     getProfilePhotoURL();
+    setIsProfilePhotoUploading(false);
   }
 
   useEffect(() => {
@@ -692,6 +695,7 @@ const RouterSwitch = () => {
   },[profileUpload]);
 
   const uploadPhoto = async (blob) => {
+    setIsProfilePhotoUploading(true);
     const photoUpload = await uploadBytes(profileImageRef, blob);
     const photoURL = await getDownloadURL(ref(storage, photoUpload.metadata.fullPath))
     setProfileUpload('');
@@ -702,6 +706,7 @@ const RouterSwitch = () => {
     await setDoc(doc(db, 'users', userData.uid), {photoURL: photoURL}, {merge: true});
     showNotification('Profile photo added.')
     getProfilePhotoURL()
+    setIsProfilePhotoUploading(false);
   }
 
   const uploadHandler = (event) => {
@@ -811,7 +816,7 @@ const RouterSwitch = () => {
         setCurrentUsersPage(false);
       };
       let imageArray = [];
-      const profileImageData = query(collection(db, 'photoUploads'), 
+      const profileImageData = query(collection(db, 'postUploads'), 
         where('uid', '==', uid));
       const profileImageDataSnap = await getDocs(profileImageData);
       profileImageDataSnap.forEach((doc) => {
@@ -971,6 +976,10 @@ const RouterSwitch = () => {
           }
           <Route path='/:username' element={
             <Profile
+              isMobile={isMobile}
+              setCurrentPath={setCurrentPath}
+              setPhotoUploadModalOpen={setPhotoUploadModalOpen}
+              isProfilePhotoUploading={isProfilePhotoUploading}
               setDataLoading={setDataLoading}
               getUserProfileData={getUserProfileData}
               profileExists={profileExists}

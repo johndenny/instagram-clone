@@ -434,3 +434,7 @@
 .resize-spinner.hidden {
   display: none;
 }
+
+.upload-canvas {
+  display: none;
+}

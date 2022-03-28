@@ -6,13 +6,13 @@ import { useLocation } from 'react-router-dom';
 import GalleryUploadMenu from './GalleryUploadMenu';
 import DiscardPostModal from './DiscardPostModal';
 import DiscardPhotoModal from './DiscardPhotoModal';
-import uniqid from 'uniqid';
 import UploadModalFilters from './UploadModalFilters';
 import firebaseApp from '../Firebase';
 import { getFirestore, setDoc, doc, getDoc } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import spinner10s from '../images/spinner10s.gif'
 import checkmarkLoopsOnce from '../images/checkmarkLoopsOnce.gif'
+import { v4 as uuidv4 } from 'uuid'
 
 const storage = getStorage();
 const db = getFirestore();
@@ -659,7 +659,7 @@ const UploadPhotoModal = (props) => {
           const aspectRatio = width/height;
           const flippedAspectRatio = height/width;
           resolve({
-            id: uniqid(),
+            id: uuidv4(),
             url: url,
             aspectRatio: aspectRatio,
             flippedAspectRatio: flippedAspectRatio,
@@ -853,7 +853,7 @@ const UploadPhotoModal = (props) => {
 
   const saveCanvasPhotos = async () => {
     setIsResizing(true)
-    const postID = uniqid();
+    const postID = uuidv4();
     const IDs = [];
     const photoArray = [];
     Promise.all(Array.from(
@@ -864,7 +864,7 @@ const UploadPhotoModal = (props) => {
         const image = new Image();
         image.src = url;
         return new Promise((resolve) => {
-          const photoID = uniqid()
+          const photoID = uuidv4()
           let w1080;
           let w750;
           let w640;
@@ -917,7 +917,6 @@ const UploadPhotoModal = (props) => {
       }
     ))
     .then((images) => {
-      console.log(IDs)
       setIsResizing(false);
       images.forEach((image) => {
         photoArray.push(image);
@@ -925,7 +924,6 @@ const UploadPhotoModal = (props) => {
       setResizedPhotos(photoArray);
       setPostID(postID);
       setIDArray(IDs);
-      console.log(images);
     });
   };
 

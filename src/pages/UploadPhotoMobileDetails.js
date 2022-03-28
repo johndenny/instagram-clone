@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { getFirestore, setDoc, doc, getDoc } from 'firebase/firestore';
 import firebaseApp from '../Firebase';
-import uniqid from 'uniqid';
+import {v4 as uuidv4} from 'uuid';
 
 const storage = getStorage();
 const db = getFirestore();
@@ -25,7 +25,7 @@ const UploadPhotoMobileDetails = (props) => {
 
   const uploadNewPost = async () => {
     setSharingPost(true);
-    const id = uniqid();
+    const id = uuidv4();
     const newPostRef = ref(storage, `photoUploads/${id}.jpg`);
     const newThumbnailRef = ref(storage, `photoUploadsThumbnails/${id}.jpg`);
     const photoUpload = await uploadBytes(newPostRef, editedPhoto);

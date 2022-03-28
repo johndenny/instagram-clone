@@ -14,6 +14,7 @@ const auth = getAuth();
 
 const Profile = (props) => {
   const {
+    isMobile,
     userData,
     setDataLoading,
     getUserProfileData,
@@ -26,10 +27,14 @@ const Profile = (props) => {
     uploadHandler, 
     removeProfilePhoto, 
     profilePhotoModal, 
-    profilePhotoModalToggle 
+    profilePhotoModalToggle,
+    isProfilePhotoUploading,
+    setCurrentPath,
+    setPhotoUploadModalOpen,
   } = props;
   const [width, height] = useWindowSize();
   const params = useParams();
+  const [pageSelected, setPageSelected] = useState('posts');
 
   useEffect(() => {
     if (profileData.length === 0) {
@@ -38,6 +43,15 @@ const Profile = (props) => {
       getUserProfileData(params.username);
     }
   }, [userData]);
+
+  const openNewPostModal = () => {
+    setPhotoUploadModalOpen(true);
+    setCurrentPath('');
+  }
+
+  useEffect(() => {
+    console.log(params)
+  }, [params]);
 
   return (
     <main className="profile-wrapper">
@@ -52,6 +66,142 @@ const Profile = (props) => {
                   {currentUsersPage
                     ? <div className="profile-image">
                         <button className="profile-image-button" onClick={profilePhotoModalToggle}>
+                          <div className={isProfilePhotoUploading ? "profile-photo-spinner" : ["profile-photo-spinner", 'hidden'].join(' ')}>
+                            <svg aria-label="Loading..." className='spinner' viewBox="0 0 100 100">
+                              <rect fill="#555555" height="6" opacity="0" rx="3" ry="3" transform="rotate(-90 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim1" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin="0s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.08333333333333333" rx="3" ry="3" transform="rotate(-60 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim2" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".1s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.16666666666666666" rx="3" ry="3" transform="rotate(-30 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim3" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".2s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.25" rx="3" ry="3" transform="rotate(0 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim4" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".3s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.3333333333333333" rx="3" ry="3" transform="rotate(30 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim5" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".4s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.4166666666666667" rx="3" ry="3" transform="rotate(60 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim6" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".5s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.5" rx="3" ry="3" transform="rotate(90 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim7" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".6s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.5833333333333334" rx="3" ry="3" transform="rotate(120 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim8" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".7s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.6666666666666666" rx="3" ry="3" transform="rotate(150 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim9" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".8s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.75" rx="3" ry="3" transform="rotate(180 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim10" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".9s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.8333333333333334" rx="3" ry="3" transform="rotate(210 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim11" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin="1s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.9166666666666666" rx="3" ry="3" transform="rotate(240 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim12" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin="1.1s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                            </svg>    
+                          </div>
                           <label htmlFor="profile-image-upload" className={profilePhotoURL === null ? "upload-profile-image" : ["upload-profile-image", "hidden"].join(' ')}>
                             {profilePhotoURL !== null
                               ? <img alt="" src={profilePhotoURL}/>
@@ -91,18 +241,21 @@ const Profile = (props) => {
                       }
 
                       <div className="settings-quick-links-wrapper">
-                        <button className="setting-quick-links-button">
-                          {currentUsersPage
-                            ? <svg aria-label="Options" className="_8-yf5 " color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                        {currentUsersPage && !isMobile &&
+                          <button className="setting-quick-links-button">
+                              <svg aria-label="Options" className="_8-yf5 " color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
                                 <circle cx="12" cy="12" fill="none" r="8.635" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></circle>
                                 <path d="M14.232 3.656a1.269 1.269 0 01-.796-.66L12.93 2h-1.86l-.505.996a1.269 1.269 0 01-.796.66m-.001 16.688a1.269 1.269 0 01.796.66l.505.996h1.862l.505-.996a1.269 1.269 0 01.796-.66M3.656 9.768a1.269 1.269 0 01-.66.796L2 11.07v1.862l.996.505a1.269 1.269 0 01.66.796m16.688-.001a1.269 1.269 0 01.66-.796L22 12.93v-1.86l-.996-.505a1.269 1.269 0 01-.66-.796M7.678 4.522a1.269 1.269 0 01-1.03.096l-1.06-.348L4.27 5.587l.348 1.062a1.269 1.269 0 01-.096 1.03m11.8 11.799a1.269 1.269 0 011.03-.096l1.06.348 1.318-1.317-.348-1.062a1.269 1.269 0 01.096-1.03m-14.956.001a1.269 1.269 0 01.096 1.03l-.348 1.06 1.317 1.318 1.062-.348a1.269 1.269 0 011.03.096m11.799-11.8a1.269 1.269 0 01-.096-1.03l.348-1.06-1.317-1.318-1.062.348a1.269 1.269 0 01-1.03-.096" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></path>
                               </svg>
-                            : <svg aria-label="Options" className="_8-yf5 " color="#262626" fill="#262626" height="32" role="img" viewBox="0 0 24 24" width="32">
-                                <circle cx="12" cy="12" r="1.5"></circle><circle cx="6" cy="12" r="1.5"></circle><circle cx="18" cy="12" r="1.5"></circle>
-                              </svg>
-                          }
-
-                        </button>
+                          </button>                        
+                        }
+                        {!currentUsersPage &&
+                          <button className="user-quick-links-button">
+                            <svg aria-label="Options" className="_8-yf5 " color="#262626" fill="#262626" height="32" role="img" viewBox="0 0 24 24" width="32">
+                              <circle cx="12" cy="12" r="1.5"></circle><circle cx="6" cy="12" r="1.5"></circle><circle cx="18" cy="12" r="1.5"></circle>
+                            </svg>
+                          </button>                        
+                        }
                       </div>
                     </div>
                     <div className="profile-numbers-wrapper">
@@ -135,7 +288,13 @@ const Profile = (props) => {
                   </section>
                 </header>
                   <div className="tablist-wrapper">
-                  <Link to='/' className="profile-tabs posts">
+                  <Link 
+                    to='/'
+                    className={
+                      pageSelected === "posts" 
+                        ? ["profile-tabs", 'selected'].join(' ') 
+                        : "profile-tabs"}
+                  >
                     <div className="tablist-icon-text-wrapper">
                       <svg aria-label="" className="tablist-svg" color="#8e8e8e" fill="#262626" height="12" role="img" viewBox="0 0 24 24" width="12">
                         <rect fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" width="18" x="3" y="3"></rect>
@@ -149,7 +308,13 @@ const Profile = (props) => {
                       </span>
                     </div>
                   </Link>
-                  <Link to='/' className="profile-tabs saved">
+                  <Link
+                    to='/' 
+                    className={
+                      pageSelected === "saved" 
+                        ? ["profile-tabs", 'selected'].join(' ') 
+                        : "profile-tabs"}
+                  >
                     <div className="tablist-icon-text-wrapper">
                       <svg aria-label="" className="tablist-svg" color="#8e8e8e" fill="#8e8e8e" height="12" role="img" viewBox="0 0 24 24" width="12">
                         <polygon fill="none" points="20 21 12 13.44 4 21 4 3 20 3 20 21" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></polygon>
@@ -159,7 +324,13 @@ const Profile = (props) => {
                       </span>
                     </div>
                   </Link>
-                  <Link to='/' className="profile-tabs tagged">
+                  <Link 
+                    to='/'
+                    className={
+                      pageSelected === "tagged" 
+                        ? ["profile-tabs", 'selected'].join(' ') 
+                        : "profile-tabs"}
+                  >
                     <div className="tablist-icon-text-wrapper">
                       <svg aria-label="" className="tablist-svg" color="#8e8e8e" fill="#8e8e8e" height="12" role="img" viewBox="0 0 24 24" width="12">
                         <path d="M10.201 3.797L12 1.997l1.799 1.8a1.59 1.59 0 001.124.465h5.259A1.818 1.818 0 0122 6.08v14.104a1.818 1.818 0 01-1.818 1.818H3.818A1.818 1.818 0 012 20.184V6.08a1.818 1.818 0 011.818-1.818h5.26a1.59 1.59 0 001.123-.465z" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
@@ -206,12 +377,21 @@ const Profile = (props) => {
                       </h2>
 
                       <div className="settings-quick-links-wrapper">
-                        <button className="setting-quick-links-button">
-                          <svg aria-label="Options" className="_8-yf5 " color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
-                            <circle cx="12" cy="12" fill="none" r="8.635" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></circle>
-                            <path d="M14.232 3.656a1.269 1.269 0 01-.796-.66L12.93 2h-1.86l-.505.996a1.269 1.269 0 01-.796.66m-.001 16.688a1.269 1.269 0 01.796.66l.505.996h1.862l.505-.996a1.269 1.269 0 01.796-.66M3.656 9.768a1.269 1.269 0 01-.66.796L2 11.07v1.862l.996.505a1.269 1.269 0 01.66.796m16.688-.001a1.269 1.269 0 01.66-.796L22 12.93v-1.86l-.996-.505a1.269 1.269 0 01-.66-.796M7.678 4.522a1.269 1.269 0 01-1.03.096l-1.06-.348L4.27 5.587l.348 1.062a1.269 1.269 0 01-.096 1.03m11.8 11.799a1.269 1.269 0 011.03-.096l1.06.348 1.318-1.317-.348-1.062a1.269 1.269 0 01.096-1.03m-14.956.001a1.269 1.269 0 01.096 1.03l-.348 1.06 1.317 1.318 1.062-.348a1.269 1.269 0 011.03.096m11.799-11.8a1.269 1.269 0 01-.096-1.03l.348-1.06-1.317-1.318-1.062.348a1.269 1.269 0 01-1.03-.096" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></path>
-                          </svg>
-                        </button>
+                        {currentUsersPage && !isMobile &&
+                          <button className="setting-quick-links-button">
+                              <svg aria-label="Options" className="_8-yf5 " color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                                <circle cx="12" cy="12" fill="none" r="8.635" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></circle>
+                                <path d="M14.232 3.656a1.269 1.269 0 01-.796-.66L12.93 2h-1.86l-.505.996a1.269 1.269 0 01-.796.66m-.001 16.688a1.269 1.269 0 01.796.66l.505.996h1.862l.505-.996a1.269 1.269 0 01.796-.66M3.656 9.768a1.269 1.269 0 01-.66.796L2 11.07v1.862l.996.505a1.269 1.269 0 01.66.796m16.688-.001a1.269 1.269 0 01.66-.796L22 12.93v-1.86l-.996-.505a1.269 1.269 0 01-.66-.796M7.678 4.522a1.269 1.269 0 01-1.03.096l-1.06-.348L4.27 5.587l.348 1.062a1.269 1.269 0 01-.096 1.03m11.8 11.799a1.269 1.269 0 011.03-.096l1.06.348 1.318-1.317-.348-1.062a1.269 1.269 0 01.096-1.03m-14.956.001a1.269 1.269 0 01.096 1.03l-.348 1.06 1.317 1.318 1.062-.348a1.269 1.269 0 011.03.096m11.799-11.8a1.269 1.269 0 01-.096-1.03l.348-1.06-1.317-1.318-1.062.348a1.269 1.269 0 01-1.03-.096" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></path>
+                              </svg>
+                          </button>                        
+                        }
+                        {!currentUsersPage &&
+                          <button className="user-quick-links-button">
+                            <svg aria-label="Options" className="_8-yf5 " color="#262626" fill="#262626" height="32" role="img" viewBox="0 0 24 24" width="32">
+                              <circle cx="12" cy="12" r="1.5"></circle><circle cx="6" cy="12" r="1.5"></circle><circle cx="18" cy="12" r="1.5"></circle>
+                            </svg>
+                          </button>                        
+                        }
                       </div>
                     </div>
                     {currentUsersPage
@@ -278,14 +458,78 @@ const Profile = (props) => {
                 </div>            
               </React.Fragment>
             }
-            <ProfileImagesLoader profileImages={profileImages}/>
+            <div className="profile-posts">
+              <ProfileImagesLoader profileImages={profileImages}/>
+
+              {currentUsersPage &&
+                <article className="no-posts-from-user">
+                  <div className="no-posts-content">
+                    {isMobile 
+                      ? <label htmlFor='mobile-add-photo-input'>
+                          <div className="add-first-photo-button">
+                            <div className="camera-sprite-first-photo">
+                            </div>
+                          </div>                 
+                        </label>
+                      : <button className="add-first-photo-button" onClick={openNewPostModal}>
+                          <div className="camera-sprite-first-photo">
+                          </div>
+                        </button>
+                    }
+                    <h1 className="share-first-photo-header">
+                      Share Photos
+                    </h1>
+                    <div className="share-first-photo-text">
+                      When you share photos, they will appear on your profile.
+                    </div>
+                    {isMobile
+                      ? <label htmlFor='mobile-add-photo-input'>
+                          <div className="add-first-photo-text-button" type="button">
+                            Share your first photo
+                          </div>                      
+                        </label>
+                      : <button className="add-first-photo-text-button" onClick={openNewPostModal}>
+                          Share your first photo
+                        </button>
+                    }
+
+                  </div>
+                </article>              
+              }
+              {!currentUsersPage && width < 736 &&
+                <article className="no-posts-yet">
+                  <div className="no-posts-yet-content">
+                    <div className="camera-sprite-wrapper">
+                      <span className="camera-sprite-no-posts">
+                      </span>                      
+                    </div>
+                    <div className="no-posts-text-wrapper">
+                      <h2 className="no-posts-text-header">
+                        No Posts Yet
+                      </h2>
+                      <span className="no-posts-text">
+                        {`When ${profileData.username} posts, you'll see their photos and videos here.`}
+                      </span>
+                    </div>                    
+                  </div>
+                </article>
+              }
+              {!currentUsersPage && width > 735 &&
+                <article className="no-posts-yet-wide">
+                  <span className="camera-sprite-no-posts">
+                  </span>                      
+                  <h2 className="no-posts-text-header-wide">
+                    No Posts Yet
+                  </h2>
+                </article>
+              }
+            </div>         
           </div>
         : <div className="no-user-profile">
             <h2 className="no-user-header">Sorry, this page isn't availble.</h2>
             <div className="no-user-text">The link you followed may be broken, or the page may have been removed. <Link to='/'>Go Back to Instagram.</Link></div>
           </div>
       }
-      
     </main>
   )
 };
