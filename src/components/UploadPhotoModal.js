@@ -56,6 +56,7 @@ const UploadPhotoModal = (props) => {
   const [resizedPhotos, setResizedPhotos] = useState([]);
   const [postID, setPostID] = useState('');
   const [IDArray, setIDArray] = useState([]);
+  const [postURLS, setPostURLS] = useState([]);
   const uploadCanvasRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -786,6 +787,7 @@ const UploadPhotoModal = (props) => {
     console.log(photo);
     const {
       photoID,
+      aspectRatio,
       w1080,
       w750,
       w640,
@@ -794,6 +796,25 @@ const UploadPhotoModal = (props) => {
       w240,
       w150,
     } = photo;
+    let croppedAspectRatio;
+    if (cropSelection === 'one-one') {
+      croppedAspectRatio = 1;
+    }
+    if (cropSelection === 'original') {
+      croppedAspectRatio = aspectRatio;
+      if (croppedAspectRatio < 4/5) {
+        croppedAspectRatio = 4/5
+      }
+      if (croppedAspectRatio > 1080/565) {
+        croppedAspectRatio = 1080/565
+      } 
+    }
+    if (cropSelection === 'four-five') {
+      croppedAspectRatio = 4/5;
+    } 
+    if (cropSelection === 'sixteen-nine') {
+      croppedAspectRatio = 16/9;
+    }
     const w1080Ref = ref(storage, `w1080_photoUploads/${photoID}.jpg`);
     const w750Ref = ref(storage, `w750_photoUploads/${photoID}.jpg`);
     const w640Ref = ref(storage, `w640_photoUploads/${photoID}.jpg`);
@@ -829,8 +850,9 @@ const UploadPhotoModal = (props) => {
     const w150URL = await getDownloadURL(
       ref(storage, w150Upload.metadata.fullPath)
     );
-    await setDoc(doc(db, 'photoUploads', photoID), {
+    const photoURLS = {
       photoID: photoID,
+      aspectRatio: croppedAspectRatio,
       w1080: w1080URL,
       w750: w750URL,
       w640: w640URL,
@@ -839,7 +861,8 @@ const UploadPhotoModal = (props) => {
       w240: w240URL,
       w150: w150URL,
       uploadDate: Date.now(),
-    });
+    }
+    await setDoc(doc(db, 'photoUploads', photoID), photoURLS);
     await setDoc(doc(db, 'postUploads', postID), {
       postID: postID,
       photos: arrayID,
@@ -860,7 +883,10 @@ const UploadPhotoModal = (props) => {
       {length: photoUploads.length},
       (_, i) => {
         const index = i;
-        const { url } = photoUploads[i];
+        const { 
+          url,
+          aspectRatio 
+        } = photoUploads[i];
         const image = new Image();
         image.src = url;
         return new Promise((resolve) => {
@@ -897,6 +923,7 @@ const UploadPhotoModal = (props) => {
                                         IDs.push(photoID);
                                         resolve({
                                           photoID: photoID,
+                                          aspectRatio: aspectRatio,
                                           w1080: w1080,
                                           w750: w750,
                                           w640: w640,
@@ -942,11 +969,14 @@ const UploadPhotoModal = (props) => {
         canvas = uploadCanvasRef.current;
       }; 
       const ctx = canvas.getContext('2d');
-      const canvasAspectRatio = photoUploads[0].aspectRatio;
-      const canvasFlippedRatio = photoUploads[0].flippedAspectRatio;
+      let canvasAspectRatio = photoUploads[0].aspectRatio;
+      if (canvasAspectRatio < 4/5) {
+        canvasAspectRatio = 4/5
+      }
+      if (canvasAspectRatio > 1080/565) {
+        canvasAspectRatio = 1080/565
+      } 
       const sixteenByNine = 16/9;
-      const minimumHeight = width / canvasAspectRatio;
-      const maximumHeight = width / canvasAspectRatio
 
       if (cropSelection === 'one-one') {
         canvas.width = width;
@@ -955,25 +985,18 @@ const UploadPhotoModal = (props) => {
       if (cropSelection === 'original') {
         if (canvasAspectRatio > 1) {
           canvas.width = width;
-          const height = canvas.width * canvasFlippedRatio
-          if (height < minimumHeight) {
-            canvas.height = minimumHeight;
-          } else {
-            canvas.height = canvas.width * canvasFlippedRatio
-          };
+          canvas.height = canvas.width / canvasAspectRatio
+         
         } else if (canvasAspectRatio < 1) {
           canvas.width = width;
-          const height = canvas.width * canvasFlippedRatio
-          if (height > maximumHeight) {
-            canvas.height = maximumHeight;
-          } else {
-            canvas.height = canvas.width * canvasFlippedRatio
-          };
+          canvas.height = canvas.width / canvasAspectRatio
+          
         };
+        console.log('canvas height:', canvas.height)
       };
       if (cropSelection === 'four-five') {
         canvas.width = width;
-        canvas.height = maximumHeight;
+        canvas.height = canvas.width / (4/5);
       }
       if (cropSelection === 'sixteen-nine') {
         canvas.width = width;
@@ -988,9 +1011,10 @@ const UploadPhotoModal = (props) => {
       } = photoUploads[index];
       let newWidth;
       let newHeight;
-
+      console.log('ratio',ratio)
       if (ratio < 1) {
         newHeight = (canvas.width / ratio) * (1 + (zoom / 100));
+        console.log("newHeight", newHeight)
         newWidth = (canvas.width) * (1 + (zoom / 100));
         if (cropSelection === 'sixteen-nine') {
           newHeight = canvas.width / ratio * (1 + (zoom / 100));

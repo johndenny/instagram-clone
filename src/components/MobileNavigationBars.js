@@ -11,6 +11,10 @@ const MobileNavigationBars = (props) => {
   const location = useLocation();
   const [currentPath, setCurrentPath] = useState('');
   const {
+    setProfileNavigate,
+    profileNavigate,
+    isLoadingPage,
+    profileUsername,
     profileExists,
     getProfileDataFromLink,
     profileData,
@@ -36,8 +40,7 @@ const MobileNavigationBars = (props) => {
 
   const topNavigationHandler = () => {
     const { pathname } = location;
-    const newPathname = pathname.replace(/\//g, '');
-    if (location.pathname === '/') {
+    if (pathname === '/') {
       return (
         <header className="mobile-navigation-header">
           <div className="mobile-navigation-icon-wrapper">
@@ -66,7 +69,7 @@ const MobileNavigationBars = (props) => {
         </header>   
       )
     }
-    if (location.pathname === '/explore/') {
+    if (pathname === '/explore/') {
       return (
         <header className="mobile-navigation-header">
           <div className="mobile-explore-search-wrapper">
@@ -75,7 +78,7 @@ const MobileNavigationBars = (props) => {
         </header>   
       )
     }
-    if (location.pathname === '/accounts/edit/') {
+    if (pathname === '/accounts/edit/') {
       return (
         <header className="mobile-navigation-header">
           <div className="mobile-navigation-icon-wrapper">
@@ -103,7 +106,7 @@ const MobileNavigationBars = (props) => {
         ''
       );
     };
-    if (userData.displayName === newPathname) {
+    if (userData.displayName === profileUsername) {
       return (
         <header className="mobile-navigation-header">
           <div className="mobile-navigation-icon-wrapper">
@@ -114,7 +117,7 @@ const MobileNavigationBars = (props) => {
               </svg>
             </button>
             <h1 className="logo-header">
-              {newPathname}
+              {profileUsername}
             </h1>
             <div className="discover-people-icon-wrapper">
               <svg aria-label="Discover People" className="discover-people-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 48 48" width="24">
@@ -134,7 +137,7 @@ const MobileNavigationBars = (props) => {
             </svg>
           </button>
           <h1 className="logo-header">
-            {newPathname}
+            {profileUsername}
           </h1>
           <div className="message-icon-wrapper">
           </div>            
@@ -154,10 +157,12 @@ const MobileNavigationBars = (props) => {
   },[]);
 
   useEffect(() => {
-    if (profileData.length !== 0) {
-      navigate(`/${profileData.username}`);
+    if (profileNavigate !== '') {
+      console.log('navigate:', profileNavigate);
+      navigate(`/${profileNavigate}`);
+      setProfileNavigate('');
     }
-  }, [profileData]);
+  }, [profileNavigate]);
 
   return (
     <React.Fragment>
@@ -165,7 +170,7 @@ const MobileNavigationBars = (props) => {
         <div className='mobile-navigation-bar-spacer'></div>
         {topNavigationHandler()}
       </nav>
-      <nav className="mobile-bottom-navigation">
+      <nav className="mobile-bottom-navigation">  
         <div className="bottom-navigation-icon-wrapper">
           <Link to='/' className="mobile-home-link icon">
             {currentPath === '/'

@@ -31,7 +31,7 @@
   cursor: pointer;
 }
 
-@media screen and (min-width: 736px) {
+@media screen and (min-width: 737px) {
   .follow-profile-button {
     padding: 2px 24px;
   }
@@ -145,7 +145,11 @@
   }
 }
 
-@media screen and (max-width: 735px) {
+@media screen and (max-width: 736px) {
+  .profile-wrapper {
+    margin-bottom: 44px;
+  }
+
   .profile-posts {
     border-top: 1px solid rgba(219, 219, 219, 1);
   }
@@ -375,6 +379,10 @@
   cursor: pointer;
 }
 
+.profile-tabs:active {
+  opacity: 0.7;
+}
+
 .profile-tabs.selected {
   border-top: 1px solid rgba(38, 38, 38, 1);
   color: rgba(38, 38, 38, 1);
@@ -382,6 +390,19 @@
 
 .profile-tabs.selected svg {
   color: rgba(38, 38, 38, 1);
+}
+
+.profile-feed-sprite {
+  background-image: url(../images/sprite-glyphs-2x-2.png);
+  height: 24px;
+  width: 24px;
+  background-size: 577px 545px;
+  background-position: -150px -521px;
+  background-repeat: no-repeat;
+}
+
+.profile-feed-sprite.selected {
+  background-position: -125px -521px;
 }
 
 .no-user-profile {
@@ -431,15 +452,20 @@
   display: flex;
   align-items: stretch;
   flex-direction: column;
+  width: 100%;
 }
 
-.no-posts-from-user {
+.no-posts-from-user,
+.no-saved-posts,
+.no-tagged-posts {
   display: flex;
   align-items: center;
   flex-direction: column;
 }
 
-.no-posts-content {
+.no-posts-content,
+.no-saved-posts-content,
+.no-tagged-posts-content {
   display: flex;
   align-items: center;
   flex-direction: column;
@@ -456,7 +482,9 @@
   background-repeat: no-repeat;
 }
 
-.share-first-photo-header {
+.share-first-photo-header,
+.no-saved-posts-title,
+.no-tagged-posts-title {
   color: rgba(38, 38, 38, 1);
   font-weight: 300;
   font-size: 28px;
@@ -467,7 +495,9 @@
   margin-top: 22px;
 }
 
-.share-first-photo-text {
+.share-first-photo-text,
+.no-saved-posts-text,
+.no-tagged-posts-text {
   color: rgba(38, 38, 38, 1);
   font-weight: 400;
   font-size: 14px;
@@ -564,7 +594,8 @@
   flex: 1;
 }
 
-.no-posts-yet-wide {
+.no-posts-yet-wide,
+.no-tagged-posts-public {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -572,11 +603,38 @@
   margin-top: 60px;
 }
 
-.no-posts-text-header-wide {
+.no-posts-text-header-wide,
+.no-tagged-posts-title-public {
   margin: 48px 0;
   font-weight: 300;
   font-size: 28px;
   line-height: 32px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
+}
+
+.no-saved-top-text {
+  color: rgba(142, 142, 142, 1);
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  margin: 16px;
+}
+
+.no-saved-posts-sprite,
+.no-tagged-posts-sprite,
+.no-tagged-sprite-public {
+  background-image: url(../images/sprite-core-2x.png);
+  height: 62px;
+  width: 62px;
+  background-size: 440px 411px;
+  background-position: -126px -288px;
+  background-repeat: no-repeat;
+}
+
+.no-tagged-posts-sprite,
+.no-tagged-sprite-public {
+  background-position: -189px -288px;
 }

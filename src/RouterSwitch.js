@@ -1,7 +1,7 @@
 import './RouterSwitch.css';
 import MobileNavigationBars from './components/MobileNavigationBars.js'
 import React, { useEffect, useState, useRef } from "react";
-import { BrowserRouter, Route, Routes, Link, } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Link, useParams, } from "react-router-dom";
 import Homepage from "./pages/Homepage";
 import LogIn from "./pages/LogIn";
 import SignUp from "./pages/SignUp";
@@ -14,7 +14,7 @@ import Profile from "./pages/Profile";
 import defaultProfileImage from "./images/default-profile-image.jpg";
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import EditProfile from './pages/EditProfile';
-import { getFirestore, setDoc, doc, getDoc, query, collection, where, getDocs } from 'firebase/firestore';
+import { getFirestore, setDoc, doc, getDoc, query, collection, where, getDocs, orderBy } from 'firebase/firestore';
 import UploadPhotoMobile from './pages/UploadPhotoMobile';
 import UploadPhotoMobileDetails from './pages/UploadPhotoMobileDetails';
 import UploadPhotoModal from './components/UploadPhotoModal';
@@ -41,6 +41,9 @@ const RouterSwitch = () => {
   const [profileData, setProfileData] = useState([]);
   const [profileImages, setProfileImages] = useState([]);
   const [currentPath, setCurrentPath] = useState('');
+  const [profileUsername, setProfileUsername] = useState('');
+  const [profileNavigate, setProfileNavigate] = useState('');
+  const [usernameLink, setUsernameLink] = useState('');
 
   // Profile Upload //
 
@@ -84,7 +87,9 @@ const RouterSwitch = () => {
   const shortestImageRatio = 1080/565;
   const widestImageRatio = 1080/1350;
 
-  // DESKTOP IMAGE UPLOAD //
+  // PROFILE //
+
+  const [photosArray, setPhotosArray] = useState([]);
 
   // MOBILE IMAGE UPLOAD //
 
@@ -800,36 +805,77 @@ const RouterSwitch = () => {
     const { href } = event.target;
     const hrefArray = href.split('/')
     const username = hrefArray[3];
-    getUserProfileData(username)
+    setUsernameLink(username)
   };
 
-  const getUserProfileData = async (username) => {
+  useEffect(() => {
+    console.log(isLoadingPage)
+    if (isLoadingPage) {
+      getUserProfileData(usernameLink)
+    }
+  },[isLoadingPage])
+
+  const getPhotoURLs = async (document) => {
+    const { photos } = document
+    let urlArray = [document];
+    for (let i = 0; i < photos.length; i++) {
+      const photoURLs = doc(db, 'photoUploads', photos[i]);
+      const photoURLSnap = await getDoc(photoURLs);
+      if (photoURLSnap.exists()) {
+        urlArray.push(photoURLSnap.data());
+      }
+    }
+    console.log(urlArray);
+    return urlArray
+  }
+
+  useEffect(() => {
+    console.log(photosArray);
+  }, [photosArray]);
+
+  const getUserProfileData = async (username, page) => {
     console.log('current user:', userData.uid);
     const displayNameRef = doc(db, 'displayNames', username);
     const docSnap = await getDoc(displayNameRef);
     if (docSnap.exists()) {
       const { uid } = docSnap.data();
-      setProfileExists(true)
-      if (uid === userData.uid) {
-        setCurrentUsersPage(true);
-      } else {
-        setCurrentUsersPage(false);
-      };
       let imageArray = [];
+      let urlArray = []
       const profileImageData = query(collection(db, 'postUploads'), 
-        where('uid', '==', uid));
+        where('uid', '==', uid), orderBy('uploadDate', 'desc'));
       const profileImageDataSnap = await getDocs(profileImageData);
       profileImageDataSnap.forEach((doc) => {
         imageArray.push(doc.data());
+        let newPost = getPhotoURLs(doc.data());
+        urlArray.push(newPost);
       });
+      console.log(urlArray);
+      Promise.all(urlArray).then((values) => {
+        setPhotosArray(values);
+      })
       setProfileImages(imageArray);
       console.log(imageArray);
-
       const profileDataRef = doc(db, 'users', uid);
       const profileDataSnap = await getDoc(profileDataRef);
       if (profileDataSnap.exists()) {
+        console.log("page:", page);
+        if (page === 'feed' || page === 'tagged' || page === undefined) {
+          setProfileExists(true);
+        } else if (page === 'saved' && uid === userData.uid){
+          setProfileExists(true);
+        } else {
+          setProfileExists(false);
+        }
+        if (uid === userData.uid) {
+          setCurrentUsersPage(true);
+        } else {
+          setCurrentUsersPage(false);
+        };
         setProfileData(profileDataSnap.data());
         setIsLoadingPage(false);
+        if (isLoadingPage) {
+          setProfileNavigate(username);
+        }
         setDataLoading(false);
       } else {
         console.log('no profile data document')
@@ -845,6 +891,10 @@ const RouterSwitch = () => {
     getProfilePhotoURL();
     checkForMobile();
   }, []);
+
+  useEffect(() => {
+    console.log('navigate:', profileNavigate);
+  }, [profileNavigate]);
 
   return (
     <BrowserRouter>
@@ -881,6 +931,10 @@ const RouterSwitch = () => {
         }
         {(userLoggedIn && isMobile && !photoUploadOpen) &&
           <MobileNavigationBars
+            setProfileNavigate={setProfileNavigate}
+            profileNavigate={profileNavigate}
+            isLoadingPage={isLoadingPage}
+            profileUsername={profileUsername}
             profileExists={profileExists} 
             getProfileDataFromLink={getProfileDataFromLink}
             profileData={profileData}
@@ -976,12 +1030,41 @@ const RouterSwitch = () => {
           }
           <Route path='/:username' element={
             <Profile
+              photosArray={photosArray}
+              setProfileUsername={setProfileUsername}
               isMobile={isMobile}
               setCurrentPath={setCurrentPath}
               setPhotoUploadModalOpen={setPhotoUploadModalOpen}
               isProfilePhotoUploading={isProfilePhotoUploading}
               setDataLoading={setDataLoading}
               getUserProfileData={getUserProfileData}
+              profileExists={profileExists}
+              setProfileExists={setProfileExists}
+              currentUsersPage={currentUsersPage}
+              profileData={profileData}
+              profileImages={profileImages}
+              toggleTopNavigation={toggleTopNavigation}
+              profilePhotoModal={profilePhotoModal} 
+              profilePhotoModalToggle={profilePhotoModalToggle} 
+              removeProfilePhoto={removeProfilePhoto} 
+              uploadHandler={uploadHandler} 
+              uploadClick={uploadClick} 
+              getProfilePhotoURL={getProfilePhotoURL} 
+              profilePhotoURL={profilePhotoURL} 
+              userData={userData}
+            />} 
+          />
+          <Route path='/:username/:page' element={
+            <Profile
+              photosArray={photosArray}
+              setProfileUsername={setProfileUsername}
+              isMobile={isMobile}
+              setCurrentPath={setCurrentPath}
+              setPhotoUploadModalOpen={setPhotoUploadModalOpen}
+              isProfilePhotoUploading={isProfilePhotoUploading}
+              setDataLoading={setDataLoading}
+              getUserProfileData={getUserProfileData}
+              setProfileExists={setProfileExists}
               profileExists={profileExists}
               currentUsersPage={currentUsersPage}
               profileData={profileData}
