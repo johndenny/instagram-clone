@@ -1,11 +1,16 @@
 import "./ProfilePhotoModal.css"
 
 const ProfilePhotoModal = (props) => {
-  const { profilePhotoModalToggle, removeProfilePhoto, uploadClick, uploadHandler } = props;
+  const { 
+    profilePhotoModalToggle, 
+    removeProfilePhoto, 
+    uploadClick, 
+    uploadHandler 
+  } = props;
 
   const stopBubbles = (event) => {
     event.stopPropagation();
-  }
+  };
 
   return (
     <div className="profile-photo-modal" onClick={profilePhotoModalToggle}>
@@ -31,7 +36,7 @@ const ProfilePhotoModal = (props) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default ProfilePhotoModal;

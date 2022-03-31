@@ -783,7 +783,7 @@ const UploadPhotoModal = (props) => {
       setCurrentPath(location.pathname);
   }, []);
 
-  const uploadPhotos = async (photo, arrayID, postID) => {
+  const uploadPhotos = async (photo, index, arrayID, postID) => {
     console.log(photo);
     const {
       photoID,
@@ -853,6 +853,8 @@ const UploadPhotoModal = (props) => {
     const photoURLS = {
       photoID: photoID,
       aspectRatio: croppedAspectRatio,
+      postID: postID,
+      index: index,
       w1080: w1080URL,
       w750: w750URL,
       w640: w640URL,
@@ -867,7 +869,10 @@ const UploadPhotoModal = (props) => {
       postID: postID,
       photos: arrayID,
       postCaption: captionText,
+      comments: [],
       uid: userData.uid,
+      username: userData.displayName,
+      photoURL: userData.photoURL,
       uploadDate: Date.now(),
     });
     console.log('photo uploaded', w1080URL);
@@ -957,7 +962,7 @@ const UploadPhotoModal = (props) => {
   const sharePost = () => {
     setSelectedPhoto('');
     setCurrentPage('sharing');
-    resizedPhotos.map( async (image) => await uploadPhotos(image, IDArray, postID));
+    resizedPhotos.map( async (image, index) => await uploadPhotos(image, index, IDArray, postID));
   }
 
   const canvasCrop = (image, index, width, result) => {

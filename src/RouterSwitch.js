@@ -14,10 +14,13 @@ import Profile from "./pages/Profile";
 import defaultProfileImage from "./images/default-profile-image.jpg";
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import EditProfile from './pages/EditProfile';
-import { getFirestore, setDoc, doc, getDoc, query, collection, where, getDocs, orderBy } from 'firebase/firestore';
+import { getFirestore, setDoc, doc, getDoc, query, collection, where, getDocs, orderBy, arrayUnion } from 'firebase/firestore';
 import UploadPhotoMobile from './pages/UploadPhotoMobile';
 import UploadPhotoMobileDetails from './pages/UploadPhotoMobileDetails';
 import UploadPhotoModal from './components/UploadPhotoModal';
+import PostLinksModal from './components/PostLinksModal';
+import MobilePhotoPost from './pages/MobilePhotoPost';
+import MobileComments from './pages/MobileComments';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -44,6 +47,8 @@ const RouterSwitch = () => {
   const [profileUsername, setProfileUsername] = useState('');
   const [profileNavigate, setProfileNavigate] = useState('');
   const [usernameLink, setUsernameLink] = useState('');
+  const [isPostLinksOpen, setIsPostLinkOpen] = useState(false);
+  const [selectedPost, setSelectedPost] = useState('');
 
   // Profile Upload //
 
@@ -86,6 +91,42 @@ const RouterSwitch = () => {
   const canvasRef = useRef(null);
   const shortestImageRatio = 1080/565;
   const widestImageRatio = 1080/1350;
+
+  // POSTS //
+
+  const postLinksModalHandler = (index) => {
+    if (isPostLinksOpen) {
+    setIsPostLinkOpen(false);
+    setSelectedPost('');
+    } else {
+    setIsPostLinkOpen(true);
+    setSelectedPost(photosArray[index])     
+    };
+  };
+  
+  useEffect(() => {
+    console.log(selectedPost);
+  },[selectedPost]);
+
+  const getPostData = async (postID) => {
+    setIsLoadingPage(true);
+    const photoArray = [];
+    const profilePhotoData = query(collection(db, 'photoUploads'), 
+    where('postID', '==', postID), orderBy('index', 'desc'));
+    const profileImageDataSnap = await getDocs(profilePhotoData);
+    profileImageDataSnap.forEach((doc) => {
+      photoArray.push(doc.data());
+    });
+    const profilePostDocument = doc(db, 'postUploads', postID);
+    const postSnap = await getDoc(profilePostDocument);
+
+    console.log([postSnap.data(), ...photoArray]);
+    setSelectedPost([postSnap.data(), ...photoArray]);
+  };
+
+  useEffect(() => {
+    console.log(selectedPost);
+  }, [selectedPost])
 
   // PROFILE //
 
@@ -841,20 +882,7 @@ const RouterSwitch = () => {
       const { uid } = docSnap.data();
       let imageArray = [];
       let urlArray = []
-      const profileImageData = query(collection(db, 'postUploads'), 
-        where('uid', '==', uid), orderBy('uploadDate', 'desc'));
-      const profileImageDataSnap = await getDocs(profileImageData);
-      profileImageDataSnap.forEach((doc) => {
-        imageArray.push(doc.data());
-        let newPost = getPhotoURLs(doc.data());
-        urlArray.push(newPost);
-      });
-      console.log(urlArray);
-      Promise.all(urlArray).then((values) => {
-        setPhotosArray(values);
-      })
-      setProfileImages(imageArray);
-      console.log(imageArray);
+
       const profileDataRef = doc(db, 'users', uid);
       const profileDataSnap = await getDoc(profileDataRef);
       if (profileDataSnap.exists()) {
@@ -879,7 +907,23 @@ const RouterSwitch = () => {
         setDataLoading(false);
       } else {
         console.log('no profile data document')
-      }
+      }      
+
+      const profileImageData = query(collection(db, 'postUploads'), 
+        where('uid', '==', uid), orderBy('uploadDate', 'desc'));
+      const profileImageDataSnap = await getDocs(profileImageData);
+      profileImageDataSnap.forEach((doc) => {
+        imageArray.push(doc.data());
+        let newPost = getPhotoURLs(doc.data());
+        urlArray.push(newPost);
+      });
+      console.log(urlArray);
+      Promise.all(urlArray).then((values) => {
+        setPhotosArray(values);
+      })
+      setProfileImages(imageArray);
+      console.log(imageArray);
+
     } else {
       console.log('no displayName document');
       setProfileExists(false);
@@ -898,6 +942,13 @@ const RouterSwitch = () => {
 
   return (
     <BrowserRouter>
+      {isPostLinksOpen &&
+        <PostLinksModal
+          selectedPost={selectedPost}
+          setIsPostLinkOpen={setIsPostLinkOpen} 
+          postLinksModalHandler={postLinksModalHandler}
+        />
+      }
       {photoUploadModalOpen &&
         <UploadPhotoModal
           userData={userData}
@@ -1030,6 +1081,9 @@ const RouterSwitch = () => {
           }
           <Route path='/:username' element={
             <Profile
+              setIsLoadingPage={setIsLoadingPage}
+              getPostData={getPostData}
+              postLinksModalHandler={postLinksModalHandler}
               photosArray={photosArray}
               setProfileUsername={setProfileUsername}
               isMobile={isMobile}
@@ -1056,6 +1110,9 @@ const RouterSwitch = () => {
           />
           <Route path='/:username/:page' element={
             <Profile
+              setIsLoadingPage={setIsLoadingPage}
+              getPostData={getPostData}
+              postLinksModalHandler={postLinksModalHandler}
               photosArray={photosArray}
               setProfileUsername={setProfileUsername}
               isMobile={isMobile}
@@ -1079,6 +1136,18 @@ const RouterSwitch = () => {
               profilePhotoURL={profilePhotoURL} 
               userData={userData}
             />} 
+          />
+          <Route path='/p/:postID' element={
+            <MobilePhotoPost 
+              selectedPost={selectedPost}
+              setSelectedPost={setSelectedPost}
+            />} 
+          />
+          <Route path='/p/:postID/comments' element={
+            <MobileComments 
+              selectedPost={selectedPost}
+              setSelectedPost={setSelectedPost}
+            />}
           />
           <Route path='*' element={<div className="no-user-profile">
             <h2 className="no-user-header">Sorry, this page isn't availble.</h2>

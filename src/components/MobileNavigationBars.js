@@ -96,6 +96,46 @@ const MobileNavigationBars = (props) => {
         </header>   
       )
     }
+    if (pathname.split('/')[3] === 'comments') {
+      return (
+        <header className="mobile-navigation-header">
+          <div className="mobile-navigation-icon-wrapper">
+            <button className="back-button" onClick={goBack}>
+              <svg aria-label="Back" className="back-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
+              </svg>
+            </button>
+            <h1 className="logo-header">
+              Comments
+            </h1>
+            <div className="message-icon-wrapper">
+              <svg aria-label="Direct" className="messages-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                <line fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2" x1="22" x2="9.218" y1="3" y2="10.083"></line>
+                <polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></polygon>
+              </svg>
+            </div>            
+          </div>
+        </header>   
+      )
+    }    
+    if (pathname.split('/')[1] === 'p') {
+      return (
+        <header className="mobile-navigation-header">
+          <div className="mobile-navigation-icon-wrapper">
+            <button className="back-button" onClick={goBack}>
+              <svg aria-label="Back" className="back-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
+              </svg>
+            </button>
+            <h1 className="logo-header">
+              Photo
+            </h1>
+            <div className="message-icon-wrapper">
+            </div>            
+          </div>
+        </header>   
+      )
+    }
     if (hideTopNavigation) {
       return (
         ''

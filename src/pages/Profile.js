@@ -14,6 +14,7 @@ const auth = getAuth();
 
 const Profile = (props) => {
   const {
+    getPostData,
     photosArray,
     isMobile,
     userData,
@@ -34,6 +35,8 @@ const Profile = (props) => {
     setCurrentPath,
     setPhotoUploadModalOpen,
     setProfileUsername,
+    postLinksModalHandler,
+    setIsLoadingPage,
   } = props;
   const [width, height] = useWindowSize();
   const params = useParams();
@@ -528,6 +531,9 @@ const Profile = (props) => {
             <div className="profile-posts">
               {(pageSelected === 'posts' || pageSelected === 'feed') &&
                 <ProfileImagesLoader
+                  setIsLoadingPage={setIsLoadingPage}
+                  getPostData={getPostData}
+                  postLinksModalHandler={postLinksModalHandler}
                   isMobile={isMobile}
                   pageSelected={pageSelected}
                   profileData={profileData} 
