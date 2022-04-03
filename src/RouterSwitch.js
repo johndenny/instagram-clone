@@ -14,13 +14,15 @@ import Profile from "./pages/Profile";
 import defaultProfileImage from "./images/default-profile-image.jpg";
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import EditProfile from './pages/EditProfile';
-import { getFirestore, setDoc, doc, getDoc, query, collection, where, getDocs, orderBy, arrayUnion } from 'firebase/firestore';
+import { getFirestore, setDoc, doc, getDoc, query, collection, where, getDocs, orderBy, arrayUnion, updateDoc, arrayRemove } from 'firebase/firestore';
 import UploadPhotoMobile from './pages/UploadPhotoMobile';
 import UploadPhotoMobileDetails from './pages/UploadPhotoMobileDetails';
 import UploadPhotoModal from './components/UploadPhotoModal';
 import PostLinksModal from './components/PostLinksModal';
 import MobilePhotoPost from './pages/MobilePhotoPost';
 import MobileComments from './pages/MobileComments';
+import { v4 as uuidv4 } from 'uuid';
+import LikedBy from './pages/LikedBy';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -94,6 +96,37 @@ const RouterSwitch = () => {
 
   // POSTS //
 
+  const likeUploadToggle = async (postID) => {
+    const {
+      photoURL,
+      uid,
+      displayName,
+      fullname
+    } = userData;
+    const postRef = doc(db, 'postUploads', postID);
+    const postSnap = await getDoc(postRef);
+    if (postSnap.exists()) {
+      const { likes } = postSnap.data();
+      const likeIndex = likes.findIndex((like) => like.uid === uid)
+      if (likeIndex === -1) {
+        await updateDoc(postRef, {
+          likes: arrayUnion({
+            likeID: uuidv4(),
+            photoURL: photoURL,
+            uid: uid,
+            uploadDate: Date.now(),
+            username: displayName,
+            fullName: fullname
+          })
+        });          
+      } else {
+        await updateDoc(postRef, {
+          likes: arrayRemove(likes[likeIndex])
+        });        
+      }
+    }
+  };
+
   const postLinksModalHandler = (index) => {
     if (isPostLinksOpen) {
     setIsPostLinkOpen(false);
@@ -112,7 +145,7 @@ const RouterSwitch = () => {
     setIsLoadingPage(true);
     const photoArray = [];
     const profilePhotoData = query(collection(db, 'photoUploads'), 
-    where('postID', '==', postID), orderBy('index', 'desc'));
+    where('postID', '==', postID), orderBy('index'));
     const profileImageDataSnap = await getDocs(profilePhotoData);
     profileImageDataSnap.forEach((doc) => {
       photoArray.push(doc.data());
@@ -815,12 +848,27 @@ const RouterSwitch = () => {
         setUserData(user)
         setUserLoggedIn(true);
         setAuthLoading(false);
+        getUserProfileDoc(user);
       }
       else {
         setUserLoggedIn(false);
       }
     });
   };
+
+  const getUserProfileDoc = async (user) => {
+    const { uid } = user;
+    const profileDataRef = doc(db, 'users', uid);
+    const profileDataSnap = await getDoc(profileDataRef);
+    if (profileDataSnap.exists()) {
+      console.log('success!');
+      setUserData({...user,...profileDataSnap.data()});
+    }
+  }
+
+  useEffect(() => {
+    console.log(userData);
+  },[userData]);
 
   useEffect(() => {
     monitorAuthState();
@@ -840,34 +888,32 @@ const RouterSwitch = () => {
     }
   }
 
-  const getProfileDataFromLink = async (event) => {
-    setIsLoadingPage(true)
-    event.preventDefault();
-    const { href } = event.target;
-    const hrefArray = href.split('/')
-    const username = hrefArray[3];
-    setUsernameLink(username)
-  };
-
-  useEffect(() => {
-    console.log(isLoadingPage)
-    if (isLoadingPage) {
-      getUserProfileData(usernameLink)
-    }
-  },[isLoadingPage])
+  // const getPhotoURLs = async (document) => {
+  //   const { photos } = document
+  //   let urlArray = [document];
+  //   for (let i = 0; i < photos.length; i++) {
+  //     const photoURLs = doc(db, 'photoUploads', photos[i]);
+  //     const photoURLSnap = await getDoc(photoURLs);
+  //     if (photoURLSnap.exists()) {
+  //       urlArray.push(photoURLSnap.data());
+  //     }
+  //   }
+  //   console.log(urlArray);
+  //   return urlArray
+  // }
 
   const getPhotoURLs = async (document) => {
-    const { photos } = document
-    let urlArray = [document];
-    for (let i = 0; i < photos.length; i++) {
-      const photoURLs = doc(db, 'photoUploads', photos[i]);
-      const photoURLSnap = await getDoc(photoURLs);
-      if (photoURLSnap.exists()) {
-        urlArray.push(photoURLSnap.data());
-      }
-    }
-    console.log(urlArray);
-    return urlArray
+    const { postID } = document;
+    const photoArray = [document];
+    const profilePhotoData = query(collection(db, 'photoUploads'), 
+      where('postID', '==', postID), orderBy('index'));
+    const profileImageDataSnap = await getDocs(profilePhotoData);
+    profileImageDataSnap.forEach((doc) => {
+      photoArray.push(doc.data());
+    });
+
+    console.log([document, ...photoArray]);
+    return photoArray
   }
 
   useEffect(() => {
@@ -901,9 +947,6 @@ const RouterSwitch = () => {
         };
         setProfileData(profileDataSnap.data());
         setIsLoadingPage(false);
-        if (isLoadingPage) {
-          setProfileNavigate(username);
-        }
         setDataLoading(false);
       } else {
         console.log('no profile data document')
@@ -923,6 +966,7 @@ const RouterSwitch = () => {
       })
       setProfileImages(imageArray);
       console.log(imageArray);
+      
 
     } else {
       console.log('no displayName document');
@@ -985,9 +1029,10 @@ const RouterSwitch = () => {
             setProfileNavigate={setProfileNavigate}
             profileNavigate={profileNavigate}
             isLoadingPage={isLoadingPage}
+            setIsLoadingPage={setIsLoadingPage}
             profileUsername={profileUsername}
             profileExists={profileExists} 
-            getProfileDataFromLink={getProfileDataFromLink}
+            getUserProfileData={getUserProfileData}
             profileData={profileData}
             profileImages={profileImages}
             currentUsersPage={currentUsersPage}
@@ -1081,6 +1126,8 @@ const RouterSwitch = () => {
           }
           <Route path='/:username' element={
             <Profile
+              likeUploadToggle={likeUploadToggle}
+              setPhotosArray={setPhotosArray}
               setIsLoadingPage={setIsLoadingPage}
               getPostData={getPostData}
               postLinksModalHandler={postLinksModalHandler}
@@ -1110,6 +1157,8 @@ const RouterSwitch = () => {
           />
           <Route path='/:username/:page' element={
             <Profile
+              likeUploadToggle={likeUploadToggle}
+              setPhotosArray={setPhotosArray}
               setIsLoadingPage={setIsLoadingPage}
               getPostData={getPostData}
               postLinksModalHandler={postLinksModalHandler}
@@ -1138,17 +1187,28 @@ const RouterSwitch = () => {
             />} 
           />
           <Route path='/p/:postID' element={
-            <MobilePhotoPost 
+            <MobilePhotoPost
+              setIsLoadingPage={setIsLoadingPage}
+              likeUploadToggle={likeUploadToggle}
+              userData={userData}
+              profileData={profileData} 
+              setDataLoading={setDataLoading}
               selectedPost={selectedPost}
               setSelectedPost={setSelectedPost}
             />} 
           />
           <Route path='/p/:postID/comments' element={
-            <MobileComments 
+            <MobileComments
+              setDataLoading={setDataLoading}
               selectedPost={selectedPost}
               setSelectedPost={setSelectedPost}
             />}
           />
+          <Route path='/p/:postID/liked_by' element={
+            <LikedBy 
+              selectedPost={selectedPost}
+            />
+          } />
           <Route path='*' element={<div className="no-user-profile">
             <h2 className="no-user-header">Sorry, this page isn't availble.</h2>
             <div className="no-user-text">The link you followed may be broken, or the page may have been removed. <Link to='/'>Go Back to Instagram.</Link></div>

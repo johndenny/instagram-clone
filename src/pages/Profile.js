@@ -14,6 +14,8 @@ const auth = getAuth();
 
 const Profile = (props) => {
   const {
+    likeUploadToggle,
+    setPhotosArray,
     getPostData,
     photosArray,
     isMobile,
@@ -531,6 +533,8 @@ const Profile = (props) => {
             <div className="profile-posts">
               {(pageSelected === 'posts' || pageSelected === 'feed') &&
                 <ProfileImagesLoader
+                  likeUploadToggle={likeUploadToggle}
+                  userData={userData}
                   setIsLoadingPage={setIsLoadingPage}
                   getPostData={getPostData}
                   postLinksModalHandler={postLinksModalHandler}
@@ -538,6 +542,7 @@ const Profile = (props) => {
                   pageSelected={pageSelected}
                   profileData={profileData} 
                   photosArray={photosArray}
+                  setPhotosArray={setPhotosArray}
                 />              
               }
               {currentUsersPage && photosArray.length === 0 && (pageSelected === 'posts' || pageSelected === 'feed') &&

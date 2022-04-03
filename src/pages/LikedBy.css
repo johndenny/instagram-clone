@@ -1,0 +1,57 @@
+.liked-by-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.profile-photo-frame.liked-by {
+  height: 44px;
+  width: 44px;
+  margin: 0;
+  margin-right: 12px;
+}
+
+.user-profile-photo {
+  height: 100%;
+  width: 100%;
+}
+
+.liked-by-user-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+}
+
+.name-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.liked-by-username-text {
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.full-name-text {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: rgba(142, 142, 142, 1);
+}
+
+.liked-by-follow-button {
+  margin-left: auto;
+  background-color: rgba(0, 149, 246, 1);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 1);
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  cursor: pointer;
+  padding: 5px 9px;
+  font-size: 14px;
+  line-height: 18px;
+}

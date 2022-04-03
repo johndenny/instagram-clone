@@ -11,7 +11,8 @@ const MobileNavigationBars = (props) => {
   const location = useLocation();
   const [currentPath, setCurrentPath] = useState('');
   const {
-    setProfileNavigate,
+    setIsLoadingPage,
+    getUserProfileData,
     profileNavigate,
     isLoadingPage,
     profileUsername,
@@ -96,6 +97,25 @@ const MobileNavigationBars = (props) => {
         </header>   
       )
     }
+    if (pathname.split('/')[3] === 'liked_by') {
+      return (
+        <header className="mobile-navigation-header">
+          <div className="mobile-navigation-icon-wrapper">
+            <button className="back-button" onClick={goBack}>
+              <svg aria-label="Close" className="close-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="21" x2="3" y1="3" y2="21"></line>
+                <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="21" x2="3" y1="21" y2="3"></line>
+              </svg>
+            </button>
+            <h1 className="logo-header">
+              Likes
+            </h1>
+            <div className="message-icon-wrapper">
+            </div>            
+          </div>
+        </header>   
+      )
+    } 
     if (pathname.split('/')[3] === 'comments') {
       return (
         <header className="mobile-navigation-header">
@@ -196,13 +216,13 @@ const MobileNavigationBars = (props) => {
     getProfilePhotoURL();
   },[]);
 
-  useEffect(() => {
-    if (profileNavigate !== '') {
-      console.log('navigate:', profileNavigate);
-      navigate(`/${profileNavigate}`);
-      setProfileNavigate('');
-    }
-  }, [profileNavigate]);
+  const navigateUserProfile = async () => {
+    const { displayName } = userData;
+    setIsLoadingPage(true);
+    await getUserProfileData(displayName);
+    navigate(`/${displayName}`);
+    setIsLoadingPage(false);
+  }
 
   return (
     <React.Fragment>
@@ -252,7 +272,7 @@ const MobileNavigationBars = (props) => {
                 <path d="M34.6 3.1c-4.5 0-7.9 1.8-10.6 5.6-2.7-3.7-6.1-5.5-10.6-5.5C6 3.1 0 9.6 0 17.6c0 7.3 5.4 12 10.6 16.5.6.5 1.3 1.1 1.9 1.7l2.3 2c4.4 3.9 6.6 5.9 7.6 6.5.5.3 1.1.5 1.6.5s1.1-.2 1.6-.5c1-.6 2.8-2.2 7.8-6.8l2-1.8c.7-.6 1.3-1.2 2-1.7C42.7 29.6 48 25 48 17.6c0-8-6-14.5-13.4-14.5z"></path>
               </svg> */}
             </div>
-            <Link to={`/${userData.displayName}/`} onClick={getProfileDataFromLink} className='profile-picture icon'>
+            <button onClick={navigateUserProfile} className='profile-picture icon'>
               {currentPath === `/${userData.displayName}/` &&
                 <div className='profile-ring'></div>
               }
@@ -262,7 +282,7 @@ const MobileNavigationBars = (props) => {
                   : <img className="navigation-profile-photo" alt='' src={profilePhotoURL} />
                 }
               </div>
-            </Link> 
+            </button> 
         </div>
         <form className="mobile-add-photo-form">
           <input type="file" accept="image/jpeg" className="mobile-add-photo-input" id="mobile-add-photo-input" onChange={handleRouteAndUpload}/>
