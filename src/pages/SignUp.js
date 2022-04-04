@@ -43,7 +43,10 @@ const SignUp = () => {
       website: '',
       bio: '',
       gender: '',
-      suggestions: true
+      suggestions: true,
+      followers: [],
+      following: [],
+      photoURL: ''
       });
       console.log(userCredential.user);
       navigate('/');

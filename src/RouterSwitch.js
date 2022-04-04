@@ -23,6 +23,7 @@ import MobilePhotoPost from './pages/MobilePhotoPost';
 import MobileComments from './pages/MobileComments';
 import { v4 as uuidv4 } from 'uuid';
 import LikedBy from './pages/LikedBy';
+import UnfollowModal from './components/UnfollowModal';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -51,14 +52,18 @@ const RouterSwitch = () => {
   const [usernameLink, setUsernameLink] = useState('');
   const [isPostLinksOpen, setIsPostLinkOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState('');
+  const [photosArray, setPhotosArray] = useState([]);
+  const [selectedListProfile, setSelectedListProfile] = useState('');
 
-  // Profile Upload //
+  // Profile //
 
   const [profilePhotoURL, setProfilePhotoURL] = useState('');
   const [profileUpload, setProfileUpload] = useState('');
   const profileImageRef = ref(storage, `profilePhotos/${userData.uid}.jpg`);
   const [profilePhotoModal, setProfilePhotoModal] = useState(false);
   const [isProfilePhotoUploading, setIsProfilePhotoUploading] = useState(false);
+  const [isUnfollowModalOpen, setIsUnfollowModalOpen] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   // DESKTOP IMAGE UPLOAD //
 
@@ -163,7 +168,61 @@ const RouterSwitch = () => {
 
   // PROFILE //
 
-  const [photosArray, setPhotosArray] = useState([]);
+  const followHandler = async (userProfile) => {
+    setIsFollowLoading(true);
+    setIsUnfollowModalOpen(false);
+    console.log(userProfile);
+    const followingRef = doc(db, 'users', userData.uid);
+    const followersRef = doc(db, 'users', userProfile.uid);
+    const followingSnap = await getDoc(followingRef);
+    if (followingSnap.exists()) {
+      const { following } = followingSnap.data();
+      const followingIndex = following.findIndex((user) => user.uid === userProfile.uid);
+      if (followingIndex === -1) {
+        await updateDoc(followingRef, {
+          following: arrayUnion({
+            uid: userProfile.uid,
+            photoURL: userProfile.photoURL,
+            username: userProfile.username,
+            fullName: userProfile.fullName || userProfile.fullname,
+          })
+        });        
+      } else {
+        await updateDoc(followingRef, {
+          following: arrayRemove(following[followingIndex])
+        });
+      };
+    };
+    const followerSnap = await getDoc(followersRef);
+    if (followerSnap.exists()) {
+      const { followers } = followerSnap.data();
+      const followersIndex = followers.findIndex((user) => user.uid === userData.uid);
+      if (followersIndex === -1) {
+        await updateDoc(followersRef, {
+          followers: arrayUnion({
+            uid: userData.uid,
+            photoURL: userData.photoURL,
+            username: userData.displayName,
+            fullName: userData.fullname,
+          })
+        });        
+      } else {
+        await updateDoc(followersRef, {
+          followers: arrayRemove(followers[followersIndex])
+        });
+      };
+    };
+    setIsFollowLoading(false); 
+    getUserProfileDoc(auth.currentUser);
+    getUserProfileData(profileData.username);
+  };
+
+  const unfollowModalHandler = (user) => {
+    setSelectedListProfile(user);
+    isUnfollowModalOpen
+      ? setIsUnfollowModalOpen(false)
+      : setIsUnfollowModalOpen(true);
+  }
 
   // MOBILE IMAGE UPLOAD //
 
@@ -760,7 +819,9 @@ const RouterSwitch = () => {
       photoURL: ''
     });
     await setDoc(doc(db, 'users', userData.uid), {photoURL: ''}, {merge: true});
-    getProfilePhotoURL();
+    setUserData({...userData, photoURL: ''});
+    setProfileData({...profileData, photoURL: ''});
+    showNotification('Profile photo removed.')
     setIsProfilePhotoUploading(false);
   }
 
@@ -779,12 +840,10 @@ const RouterSwitch = () => {
     const photoURL = await getDownloadURL(ref(storage, photoUpload.metadata.fullPath))
     setProfileUpload('');
     console.log(photoUpload);
-    await updateProfile(auth.currentUser, {
-      photoURL: photoURL
-    });
     await setDoc(doc(db, 'users', userData.uid), {photoURL: photoURL}, {merge: true});
+    setUserData({...userData, photoURL: photoURL});
+    setProfileData({...profileData, photoURL: photoURL});
     showNotification('Profile photo added.')
-    getProfilePhotoURL()
     setIsProfilePhotoUploading(false);
   }
 
@@ -845,13 +904,13 @@ const RouterSwitch = () => {
     onAuthStateChanged(auth, user => {
       if (user) {
         console.log(user);
-        setUserData(user)
         setUserLoggedIn(true);
         setAuthLoading(false);
         getUserProfileDoc(user);
       }
       else {
         setUserLoggedIn(false);
+        setAuthLoading(false);
       }
     });
   };
@@ -873,13 +932,6 @@ const RouterSwitch = () => {
   useEffect(() => {
     monitorAuthState();
   }, []);
-
-  const getProfilePhotoURL = () => {
-    const { photoURL } = userData;
-    photoURL === '' 
-    ? setProfilePhotoURL(defaultProfileImage)
-    : setProfilePhotoURL(userData.photoURL);
-  }
 
   const checkForMobile = () => {
     if (/Mobi|Andriod/i.test(navigator.userAgent)) {
@@ -932,6 +984,7 @@ const RouterSwitch = () => {
       const profileDataRef = doc(db, 'users', uid);
       const profileDataSnap = await getDoc(profileDataRef);
       if (profileDataSnap.exists()) {
+        setProfileData(profileDataSnap.data());
         console.log("page:", page);
         if (page === 'feed' || page === 'tagged' || page === undefined) {
           setProfileExists(true);
@@ -945,7 +998,6 @@ const RouterSwitch = () => {
         } else {
           setCurrentUsersPage(false);
         };
-        setProfileData(profileDataSnap.data());
         setIsLoadingPage(false);
         setDataLoading(false);
       } else {
@@ -976,7 +1028,6 @@ const RouterSwitch = () => {
   };
 
   useEffect(() => {
-    getProfilePhotoURL();
     checkForMobile();
   }, []);
 
@@ -986,6 +1037,14 @@ const RouterSwitch = () => {
 
   return (
     <BrowserRouter>
+      {isUnfollowModalOpen &&
+        <UnfollowModal
+          followHandler={followHandler} 
+          profileData={profileData}
+          unfollowModalHandler={unfollowModalHandler}
+          selectedListProfile={selectedListProfile}
+        />
+      }
       {isPostLinksOpen &&
         <PostLinksModal
           selectedPost={selectedPost}
@@ -1018,7 +1077,6 @@ const RouterSwitch = () => {
             setCurrentPath={setCurrentPath}
             photoUploadModalOpen={photoUploadModalOpen}
             setPhotoUploadModalOpen={setPhotoUploadModalOpen}
-            getProfilePhotoURL={getProfilePhotoURL} 
             profilePhotoURL={profilePhotoURL} 
             userData={userData}
           />
@@ -1038,8 +1096,7 @@ const RouterSwitch = () => {
             currentUsersPage={currentUsersPage}
             mobilePhotoUploadHandler={mobilePhotoUploadHandler} 
             toggleTopNavigation={toggleTopNavigation} 
-            hideTopNavigation={hideTopNavigation} 
-            getProfilePhotoURL={getProfilePhotoURL} 
+            hideTopNavigation={hideTopNavigation}  
             profilePhotoURL={profilePhotoURL} 
             userData={userData}/>
         }
@@ -1069,7 +1126,6 @@ const RouterSwitch = () => {
                   removeProfilePhoto={removeProfilePhoto} 
                   uploadHandler={uploadHandler} 
                   uploadClick={uploadClick} 
-                  getProfilePhotoURL={getProfilePhotoURL} 
                   profilePhotoURL={profilePhotoURL} 
                   userData={userData}
                 />
@@ -1126,6 +1182,9 @@ const RouterSwitch = () => {
           }
           <Route path='/:username' element={
             <Profile
+              isFollowLoading={isFollowLoading}
+              unfollowModalHandler={unfollowModalHandler}
+              followHandler={followHandler}
               likeUploadToggle={likeUploadToggle}
               setPhotosArray={setPhotosArray}
               setIsLoadingPage={setIsLoadingPage}
@@ -1149,14 +1208,16 @@ const RouterSwitch = () => {
               profilePhotoModalToggle={profilePhotoModalToggle} 
               removeProfilePhoto={removeProfilePhoto} 
               uploadHandler={uploadHandler} 
-              uploadClick={uploadClick} 
-              getProfilePhotoURL={getProfilePhotoURL} 
+              uploadClick={uploadClick}  
               profilePhotoURL={profilePhotoURL} 
               userData={userData}
             />} 
           />
           <Route path='/:username/:page' element={
             <Profile
+              isFollowLoading={isFollowLoading}
+              unfollowModalHandler={unfollowModalHandler}
+              followHandler={followHandler}
               likeUploadToggle={likeUploadToggle}
               setPhotosArray={setPhotosArray}
               setIsLoadingPage={setIsLoadingPage}
@@ -1181,7 +1242,6 @@ const RouterSwitch = () => {
               removeProfilePhoto={removeProfilePhoto} 
               uploadHandler={uploadHandler} 
               uploadClick={uploadClick} 
-              getProfilePhotoURL={getProfilePhotoURL} 
               profilePhotoURL={profilePhotoURL} 
               userData={userData}
             />} 
@@ -1199,13 +1259,18 @@ const RouterSwitch = () => {
           />
           <Route path='/p/:postID/comments' element={
             <MobileComments
+              userData={userData}
               setDataLoading={setDataLoading}
               selectedPost={selectedPost}
               setSelectedPost={setSelectedPost}
             />}
           />
           <Route path='/p/:postID/liked_by' element={
-            <LikedBy 
+            <LikedBy
+              unfollowModalHandler={unfollowModalHandler}
+              followHandler={followHandler}
+              isFollowLoading={isFollowLoading}
+              userData={userData} 
               selectedPost={selectedPost}
             />
           } />

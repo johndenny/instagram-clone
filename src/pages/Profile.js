@@ -14,6 +14,9 @@ const auth = getAuth();
 
 const Profile = (props) => {
   const {
+    isFollowLoading,
+    unfollowModalHandler,
+    followHandler,
     likeUploadToggle,
     setPhotosArray,
     getPostData,
@@ -68,7 +71,7 @@ const Profile = (props) => {
 
   useEffect(() => {
     console.log(profileData);
-  },[]);
+  },[profileData]);
 
   useEffect(() => {
     console.log(pageSelected)
@@ -223,9 +226,9 @@ const Profile = (props) => {
                               </rect>
                             </svg>    
                           </div>
-                          <label htmlFor="profile-image-upload" className={profilePhotoURL === null ? "upload-profile-image" : ["upload-profile-image", "hidden"].join(' ')}>
-                            {profilePhotoURL !== null
-                              ? <img alt="" src={profilePhotoURL}/>
+                          <label htmlFor="profile-image-upload" className={profileData.photoURL === '' ? "upload-profile-image" : ["upload-profile-image", "hidden"].join(' ')}>
+                            {profileData.photoURL !== ''
+                              ? <img alt="" src={profileData.photoURL}/>
                               : <img alt="" src={defaultProfileImage}/>
                             }
                           </label>
@@ -236,7 +239,7 @@ const Profile = (props) => {
                       </div>
                     : <div className="profile-image">
                         <div className="profile-image-wrapper">
-                            {profileData.photoURL !== null
+                            {profileData.photoURL !== ''
                               ? <img alt="" src={profileData.photoURL}/>
                               : <img alt="" src={defaultProfileImage}/>
                             }
@@ -291,13 +294,17 @@ const Profile = (props) => {
                         </li>
                         <li className="followers-number-wrapper">
                           <div className="followers-link">
-                            <span className="followers">11</span>
+                            <span className="followers">
+                              {profileData.followers.length}
+                            </span>
                             {' followers'}
                           </div>
                         </li>
                         <li className="following-number-wrapper">
                           <div className="following-link">
-                            <span className="following-number">45</span>
+                            <span className="following-number">
+                              {profileData.followers.length}
+                            </span>
                             {' following'}
                           </div>
                         </li>
@@ -375,9 +382,145 @@ const Profile = (props) => {
                 {currentUsersPage
                     ? <div className="profile-image">
                         <button className="profile-image-button" onClick={profilePhotoModalToggle}>
-                          <label htmlFor="profile-image-upload" className={profilePhotoURL === null ? "upload-profile-image" : ["upload-profile-image", "hidden"].join(' ')}>
-                            {profilePhotoURL !== null
-                              ? <img alt="" src={profilePhotoURL}/>
+                          <div className={isProfilePhotoUploading ? "profile-photo-spinner" : ["profile-photo-spinner", 'hidden'].join(' ')}>
+                            <svg aria-label="Loading..." className='spinner' viewBox="0 0 100 100">
+                              <rect fill="#555555" height="6" opacity="0" rx="3" ry="3" transform="rotate(-90 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim1" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin="0s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.08333333333333333" rx="3" ry="3" transform="rotate(-60 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim2" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".1s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.16666666666666666" rx="3" ry="3" transform="rotate(-30 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim3" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".2s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.25" rx="3" ry="3" transform="rotate(0 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim4" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".3s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.3333333333333333" rx="3" ry="3" transform="rotate(30 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim5" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".4s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.4166666666666667" rx="3" ry="3" transform="rotate(60 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim6" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".5s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.5" rx="3" ry="3" transform="rotate(90 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim7" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".6s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.5833333333333334" rx="3" ry="3" transform="rotate(120 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim8" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".7s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.6666666666666666" rx="3" ry="3" transform="rotate(150 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim9" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".8s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.75" rx="3" ry="3" transform="rotate(180 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim10" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".9s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.8333333333333334" rx="3" ry="3" transform="rotate(210 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim11" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin="1s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.9166666666666666" rx="3" ry="3" transform="rotate(240 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim12" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin="1.1s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                            </svg>    
+                          </div>
+                          <label htmlFor="profile-image-upload" className={profileData.photoURL === '' ? "upload-profile-image" : ["upload-profile-image", "hidden"].join(' ')}>
+                            {profileData.photoURL !== ''
+                              ? <img alt="" src={profileData.photoURL}/>
                               : <img alt="" src={defaultProfileImage}/>
                             }
                           </label>
@@ -419,17 +562,311 @@ const Profile = (props) => {
                         }
                       </div>
                     </div>
-                    {currentUsersPage
-                      ? <Link to="/accounts/edit/" className="edit-profile-button-wrapper">
-                          <div className="edit-profile-button">
-                            Edit Profile
-                          </div>
-                        </Link>
-                      : <div className="follow-profile-button-wrapper">
-                          <button className="follow-profile-button">
-                            Follow
-                          </button>
+                    {currentUsersPage &&
+                      <Link to="/accounts/edit/" className="edit-profile-button-wrapper">
+                        <div className="edit-profile-button">
+                          Edit Profile
                         </div>
+                      </Link>
+                    }
+                    {!currentUsersPage && profileData.followers.findIndex((follower) => follower.uid === userData.uid) === -1 &&
+                      <div className="follow-profile-button-wrapper">
+                        <button 
+                          className="follow-profile-button"
+                          onClick={() => followHandler(profileData)}  
+                        >
+                          <div 
+                            className={isFollowLoading ? 'follow-spinner' : 'follow-spinner hidden'}
+                          >
+                            <svg aria-label="Loading..." className='follow-spinner-svg' viewBox="0 0 100 100">
+                              <rect fill="#555555" height="6" opacity="0" rx="3" ry="3" transform="rotate(-90 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim1" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin="0s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.08333333333333333" rx="3" ry="3" transform="rotate(-60 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim2" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".1s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.16666666666666666" rx="3" ry="3" transform="rotate(-30 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim3" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".2s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.25" rx="3" ry="3" transform="rotate(0 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim4" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".3s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.3333333333333333" rx="3" ry="3" transform="rotate(30 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim5" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".4s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.4166666666666667" rx="3" ry="3" transform="rotate(60 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim6" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".5s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.5" rx="3" ry="3" transform="rotate(90 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim7" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".6s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.5833333333333334" rx="3" ry="3" transform="rotate(120 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim8" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".7s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.6666666666666666" rx="3" ry="3" transform="rotate(150 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim9" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".8s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.75" rx="3" ry="3" transform="rotate(180 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim10" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".9s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.8333333333333334" rx="3" ry="3" transform="rotate(210 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim11" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin="1s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.9166666666666666" rx="3" ry="3" transform="rotate(240 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim12" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin="1.1s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                            </svg>    
+                          </div>
+                          Follow
+                        </button>
+                      </div>
+                    }
+                    {profileData.followers.findIndex((follower) => follower.uid === userData.uid) !== -1 &&
+                      <div className="unfollow-button-wrapper">
+                        <button className="message-button">
+                          Message
+                        </button>
+                        <button 
+                          className="unfollow-button"
+                          onClick={unfollowModalHandler}
+                        >
+                          <div 
+                            className={isFollowLoading ? 'follow-spinner' : 'follow-spinner hidden'}
+                          >
+                            <svg aria-label="Loading..." className='follow-spinner-svg' viewBox="0 0 100 100">
+                              <rect fill="#555555" height="6" opacity="0" rx="3" ry="3" transform="rotate(-90 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim1" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin="0s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.08333333333333333" rx="3" ry="3" transform="rotate(-60 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim2" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".1s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.16666666666666666" rx="3" ry="3" transform="rotate(-30 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim3" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".2s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.25" rx="3" ry="3" transform="rotate(0 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim4" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".3s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.3333333333333333" rx="3" ry="3" transform="rotate(30 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim5" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".4s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.4166666666666667" rx="3" ry="3" transform="rotate(60 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim6" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".5s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.5" rx="3" ry="3" transform="rotate(90 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim7" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".6s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.5833333333333334" rx="3" ry="3" transform="rotate(120 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim8" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".7s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.6666666666666666" rx="3" ry="3" transform="rotate(150 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim9" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".8s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.75" rx="3" ry="3" transform="rotate(180 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim10" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin=".9s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.8333333333333334" rx="3" ry="3" transform="rotate(210 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim11" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin="1s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                              <rect fill="#555555" height="6" opacity="0.9166666666666666" rx="3" ry="3" transform="rotate(240 50 50)" width="25" x="72" y="47">
+                                <animate 
+                                  id="anim12" 
+                                  attributeType="xml"
+                                  attributeName="opacity" 
+                                  begin="1.1s" 
+                                  values="1;0;" 
+                                  dur="1.2s"
+                                  repeatCount="indefinite" 
+                                />
+                              </rect>
+                            </svg>    
+                          </div>
+                          <div className="unfollow-glyph-sprite"></div>
+                        </button>
+                      </div>
                     }
                   </section>
                 </header>
@@ -449,13 +886,17 @@ const Profile = (props) => {
                   </li>
                   <li className="followers-number-wrapper">
                     <div className="followers-link">
-                      <span className="followers">11</span>
+                      <span className="followers">
+                        {profileData.followers.length}
+                      </span>
                       {' followers'}
                     </div>
                   </li>
                   <li className="following-number-wrapper">
                     <div className="following-link">
-                      <span className="following-number">45</span>
+                      <span className="following-number">
+                        {profileData.following.length}
+                      </span>
                       {' following'}
                     </div>
                   </li>
@@ -611,7 +1052,7 @@ const Profile = (props) => {
                   </div>
                 </article>
               }
-              {!currentUsersPage && width < 736 && (pageSelected === 'posts' || pageSelected === 'feed') &&
+              {!currentUsersPage && width < 736 && (pageSelected === 'posts' || pageSelected === 'feed') && photosArray.length === 0 &&
                 <article className="no-posts-yet">
                   <div className="no-posts-yet-content">
                     <div className="camera-sprite-wrapper">

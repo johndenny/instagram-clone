@@ -9,6 +9,7 @@ const db = getFirestore();
 
 const MobileComments = (props) => {
   const {
+    userData,
     setDataLoading, 
     setSelectedPost,
     selectedPost,
@@ -67,14 +68,15 @@ const MobileComments = (props) => {
   if (selectedPost !== '') {
     const {
       postID,
-      username,
-      photoURL,
       comments,
-      uid,
       postCaption,
       uploadDate
     } = selectedPost[0];
-
+    const {
+      username,
+      photoURL,
+      uid,
+    } = userData;
     const postComment = async (event) => {
       if (event !== undefined) {
         event.preventDefault();
@@ -291,15 +293,15 @@ const MobileComments = (props) => {
             <li className='comment-wrapper'>
               <div className='comment-profile-photo-frame'>
                 <img 
-                  alt={`${username}'s profile`} 
-                  src={photoURL} 
+                  alt={`${selectedPost[0].username}'s profile`} 
+                  src={selectedPost[0].photoURL} 
                   className="comments-profile-photo"
                 /> 
               </div>
               <div className='comment-text-time-wrapper'>
                 <div className='comment-text-wrapper'>
                   <h2 className='comment-username'>
-                    {username}
+                    {selectedPost[0].username}
                   </h2>
                   <span className='comment-text'>
                     {postCaption}

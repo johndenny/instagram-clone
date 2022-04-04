@@ -36,7 +36,9 @@ const ProfileImagesLoader = (props) => {
     const DOUBLE_PRESS_DELAY = 400;
     if (delta < DOUBLE_PRESS_DELAY) {
         console.log('double press');
-        setIsLiked(true);
+        const newIsLiked = [...isLiked];
+        newIsLiked.splice(index, 1, true);
+        setIsLiked(newIsLiked);
         const alreadyLiked = photosArray[index][0].likes.findIndex((like) => like.uid === userData.uid);
         if (alreadyLiked === -1) {
         likeHandler(index);
@@ -46,6 +48,12 @@ const ProfileImagesLoader = (props) => {
     }
     lastPress = time;
   };
+
+  const setIsLikedFalse = (index) => {
+    const newIsLiked = [...isLiked];
+    newIsLiked.splice(index, 1, false);
+    setIsLiked(newIsLiked);
+  }
 
   const likeHandler = async (index) => {
     const {
@@ -160,6 +168,7 @@ const ProfileImagesLoader = (props) => {
   useEffect(() => {
     setGalleryIndex(new Array(12).fill(0));
     setMovement(new Array(12).fill(0));
+    setIsLiked(new Array(12).fill(false));
   },[]);
 
   useEffect(() => {
@@ -335,11 +344,11 @@ const ProfileImagesLoader = (props) => {
                       }
                     })}
                   </div>
-                  {isLiked &&
+                  {isLiked[index] &&
                     <div className='double-click-heart'>
                       <div 
                         className='double-click-heart-sprite'
-                        onAnimationEnd={() => setIsLiked(false)}  
+                        onAnimationEnd={() => setIsLikedFalse(index)}  
                       >
                       </div>
                     </div>                  

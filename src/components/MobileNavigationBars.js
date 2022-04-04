@@ -25,7 +25,6 @@ const MobileNavigationBars = (props) => {
     toggleTopNavigation,
     hideTopNavigation, 
     userData, 
-    getProfilePhotoURL, 
     profilePhotoURL,
   } = props;
 
@@ -212,10 +211,6 @@ const MobileNavigationBars = (props) => {
     setCurrentPath(location.pathname);
   },[location]);
 
-  useEffect(() => {
-    getProfilePhotoURL();
-  },[]);
-
   const navigateUserProfile = async () => {
     const { displayName } = userData;
     setIsLoadingPage(true);
@@ -277,9 +272,9 @@ const MobileNavigationBars = (props) => {
                 <div className='profile-ring'></div>
               }
               <div className='profile-picture-wrapper'>
-                {profilePhotoURL === null
+                {userData.photoURL === ''
                   ? <img className="navigation-profile-photo" alt='' src={defaultProfileImage}/>
-                  : <img className="navigation-profile-photo" alt='' src={profilePhotoURL} />
+                  : <img className="navigation-profile-photo" alt='' src={userData.photoURL} />
                 }
               </div>
             </button> 
