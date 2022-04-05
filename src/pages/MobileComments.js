@@ -77,6 +77,7 @@ const MobileComments = (props) => {
       photoURL,
       uid,
     } = userData;
+    
     const postComment = async (event) => {
       if (event !== undefined) {
         event.preventDefault();

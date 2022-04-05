@@ -213,7 +213,7 @@ const EditProfile = (props) => {
         bio: bioValue,
         gender: genderValue,
         suggestions: suggestionValue
-        });
+        }, {merge: true});
       showNotification('Profile saved.')
       setSubmitDisabled(true);
     } catch(error) {

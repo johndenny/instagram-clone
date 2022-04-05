@@ -99,6 +99,36 @@ const RouterSwitch = () => {
   const shortestImageRatio = 1080/565;
   const widestImageRatio = 1080/1350;
 
+  // HOMEPAGE //
+
+  const getFollowingPosts = async (user) => {
+    const { following } = user;
+    console.log(user);
+    const followingPosts = Array.from({length: following.length}, async (_, i) => {
+      const postData = query(collection(db, 'postUploads'), where('uid', '==', following[i].uid));
+      return new Promise( async (resolve) => {
+        const postArray = [];
+        const followingPostsSnap = await getDocs(postData);
+        followingPostsSnap.forEach((post) => {
+          let newPost = getPhotoURLs(post.data());
+          postArray.push(newPost);
+        })
+        Promise.all(postArray).then((posts) => {
+          resolve(posts);
+        })
+      })
+    })
+    Promise.all(followingPosts).then((posts) => {
+      const allPosts = [];
+      posts.forEach((post) => allPosts.push(...post));
+      allPosts.sort((a, b) => {
+        return b[0].uploadDate - a[0].uploadDate;
+      });
+      console.log(allPosts);
+      setPhotosArray(allPosts);
+    })
+  }
+
   // POSTS //
 
   const likeUploadToggle = async (postID) => {
@@ -171,7 +201,6 @@ const RouterSwitch = () => {
   const followHandler = async (userProfile) => {
     setIsFollowLoading(true);
     setIsUnfollowModalOpen(false);
-    console.log(userProfile);
     const followingRef = doc(db, 'users', userData.uid);
     const followersRef = doc(db, 'users', userProfile.uid);
     const followingSnap = await getDoc(followingRef);
@@ -922,6 +951,8 @@ const RouterSwitch = () => {
     if (profileDataSnap.exists()) {
       console.log('success!');
       setUserData({...user,...profileDataSnap.data()});
+      console.log(profileDataSnap.data());
+      getFollowingPosts(profileDataSnap.data());
     }
   }
 
@@ -963,8 +994,6 @@ const RouterSwitch = () => {
     profileImageDataSnap.forEach((doc) => {
       photoArray.push(doc.data());
     });
-
-    console.log([document, ...photoArray]);
     return photoArray
   }
 
@@ -1110,12 +1139,29 @@ const RouterSwitch = () => {
           {!userLoggedIn &&
             <React.Fragment>
               <Route path='/' element={<LogIn />} />
-              <Route path='/accounts/emailsignup' element={<SignUp />} />
+              <Route path='/accounts/emailsignup' element={
+                <SignUp
+                  setUserData={setUserData} 
+                />
+              } />
             </React.Fragment>
           }
           {userLoggedIn &&
             <React.Fragment>
-              <Route path='/' element={<Homepage/>} />
+              <Route path='/' element={
+                <Homepage
+                  getFollowingPosts={getFollowingPosts}
+                  likeUploadToggle={likeUploadToggle}
+                  userData={userData}
+                  setIsLoadingPage={setIsLoadingPage}
+                  getPostData={getPostData}
+                  postLinksModalHandler={postLinksModalHandler}
+                  isMobile={isMobile}
+                  profileData={profileData} 
+                  photosArray={photosArray}
+                  setPhotosArray={setPhotosArray}
+                />
+              } />
               <Route path='/direct/inbox' element={<Inbox />} />
               <Route path='/explore/' element={<Explore />} />
               <Route path='/accounts/edit' element={

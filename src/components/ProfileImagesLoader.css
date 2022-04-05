@@ -3,6 +3,7 @@
   flex-direction: column;
   align-items: stretch;
   width: 100%;
+  max-width: 614px;
 }
 
 .profile-images-wrapper {
@@ -18,6 +19,10 @@
 }
 
 @media screen and (min-width: 737px) {
+  .profile-images {
+    margin: 24px 0;
+  }
+
   .profile-images-wrapper {
     gap: 28px;
   }
@@ -25,6 +30,15 @@
   .photo-post {
     width: min(calc((100vw - 96px) / 3), 293px);
     height: min(calc((100vw - 96px) / 3), 293px);
+  }
+
+  .photo-post-feed {
+    border: 1px solid rgba(219, 219, 219, 1);
+    border-radius: 3px;
+  }
+
+  .profile-images-wrapper-feed {
+    gap: 24px;
   }
 }
 
@@ -102,6 +116,7 @@
 .post-links-modal {
   margin-left: auto;
   padding: 8px;
+  cursor: pointer;
 }
 
 .feed-photo-frame {
@@ -125,6 +140,7 @@
   flex-direction: column;
   padding: 0 8px;
   z-index: 3;
+  position: relative;
 }
 
 .feed-footer-buttons-wrapper {
@@ -132,7 +148,12 @@
   display: flex;
 }
 
+.feed-footer-buttons-wrapper.gallery {
+  margin-top: -36px;
+}
+
 .feed-footer-buttons-wrapper > button {
+  cursor: pointer;
   padding: 8px;
 }
 

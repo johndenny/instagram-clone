@@ -37,7 +37,7 @@ div {
   top: 0;
   height: 60px;
   width: 100%;
-  z-index: 3;
+  z-index: 4;
   border-bottom: 1px solid rgba(219, 219, 219, 1);
   background-color: rgba(255, 255, 255, 1);
 }

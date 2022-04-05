@@ -39,10 +39,6 @@ const NavigationBar = (props) => {
     setCurrentPath('');
   }
 
-  useEffect(() => {
-    getProfilePhotoURL();
-  }, []);
-
   return (
     <nav className='navigation-bar-spacer-wrapper'>
       <div className='navigation-bar-spacer'></div>
@@ -132,9 +128,9 @@ const NavigationBar = (props) => {
                 <div className='profile-ring'></div>
               }
               <div className='profile-picture-wrapper'>
-                {profilePhotoURL === null
+                {userData.photoURL === ''
                   ? <img alt='' src={defaultProfileImage}/>
-                  : <img alt='' src={profilePhotoURL} />
+                  : <img alt='' src={userData.photoURL} />
                 }
               </div>
               <div className='drop-down-menu-container'>

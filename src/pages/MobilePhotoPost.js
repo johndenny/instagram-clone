@@ -5,18 +5,23 @@ import { useNavigate, useParams } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
 import { v4 as uuidv4 } from 'uuid';
+import PostComments from '../components/PostComments';
 
 const db = getFirestore()
 let lastPress = 0;
 
 const MobilePhotoPost = (props) => {
   const {
+    index,
+    getFollowingPosts,
     setIsLoadingPage,
     likeUploadToggle,
     setDataLoading, 
     selectedPost,
     setSelectedPost,
-    userData, 
+    userData,
+    photosArray,
+    setPhotosArray, 
   } = props;
   const [width, height] = useWindowSize();
   const params = useParams();
@@ -27,7 +32,7 @@ const MobilePhotoPost = (props) => {
   const [movement, setMovement] = useState(0);
   const [isMoving, setIsMoving] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [isButtonLiked, setIsButtonLiked] = useState(false);
+  const [isButtonLiked, setIsButtonLiked] = useState();
 
   const onDoublePress = (event) => {
     const time = new Date().getTime();
@@ -61,7 +66,8 @@ const MobilePhotoPost = (props) => {
       setIsButtonLiked(true);
       const newLikes = [...selectedPost[0].likes];
       const newPost = {...selectedPost[0], likes: newLikes};
-      const newArray = [...selectedPost]
+      const newArray = [...selectedPost];
+      const allPost = [...photosArray];
       newLikes.push({
         likeID: uuidv4(),
         photoURL: photoURL,
@@ -71,17 +77,22 @@ const MobilePhotoPost = (props) => {
         fullName: fullname
       })
       newArray.splice(0, 1, newPost);
-      setSelectedPost(newArray);
+      allPost.splice(index, 1, newArray);
+      setPhotosArray(allPost);
     } else {
       setIsButtonLiked(false);
       const newLikes = [...selectedPost[0].likes];
       const newPost = {...selectedPost[0], likes: newLikes};
-      const newArray = [...selectedPost]
+      const newArray = [...selectedPost];
+      const allPost = [...photosArray];
+
       newLikes.splice(alreadyLiked, 1);
       newArray.splice(0, 1, newPost);
-      setSelectedPost(newArray);
+      allPost.splice(index, 1, newArray);
+      setPhotosArray(allPost);
     }
-    await likeUploadToggle(postID);   
+    await likeUploadToggle(postID);
+    getFollowingPosts(userData);   
   }
 
   const navigateLikedBy = async (postID) => {
@@ -154,7 +165,7 @@ const MobilePhotoPost = (props) => {
 
   useEffect(() => {
     if (selectedPost === '') {
-      getPostData()
+      getPostData();
     }
   }, []);
 
@@ -188,9 +199,12 @@ const MobilePhotoPost = (props) => {
     }
     
     return (
-      <article className="post-images">
+      <article 
+        key={postID} 
+        className="post-images"
+      >
         <div className='profile-images-wrapper-feed'>
-          <div key={postID} className='photo-post-feed'>
+          <div className='photo-post-feed'>
             <header className='feed-post-header'>
               <div className='profile-photo-username-wrapper'>
                 <div className='feed-profile-photo-wrapper'>
@@ -210,7 +224,6 @@ const MobilePhotoPost = (props) => {
             <div 
               className='photo-navigation-wrapper'
               style={{ 
-                height: `${width / selectedPost[1].aspectRatio}px`, 
                 paddingBottom: `${100 / selectedPost[1].aspectRatio}%`
               }}
               onTouchStart={onDoublePress}
@@ -220,7 +233,7 @@ const MobilePhotoPost = (props) => {
               <div 
                 className='photo-frames-wrapper'
                 style={{
-                  width: `${(width / selectedPost[1].aspectRatio) * photos.length}px`,
+                  width: `min(${(width / selectedPost[1].aspectRatio) * photos.length}px, 614px)`,
                   transform: `translateX(-${movement}px)`,
                   transition: `${isMoving ? 'all .2s ease-in-out' : ''}`
                 }}
@@ -238,7 +251,7 @@ const MobilePhotoPost = (props) => {
                         <img 
                           alt={postCaption} 
                           className='feed-photo-post-image' 
-                          sizes='100vw'
+                          sizes='min(100vw, 614px)'
                           srcSet={`
                             ${photo.w1080} 1080w,
                             ${photo.w750} 750w,
@@ -282,19 +295,23 @@ const MobilePhotoPost = (props) => {
                       <div className='left-chevron-sprite'>
                       </div>  
                     </button>                    
-                  }
-                  <div className='slide-indicator-wrapper'>
-                    {photos.map((photo, index) => {
-                      return (
-                        <div key={photo} className={galleryIndex === index ? 'slide-indicator selected' : 'slide-indicator'}></div>
-                      )
-                    })}
-                  </div>                       
+                  }                      
                 </React.Fragment>
               }     
             </div>
             <footer className='feed-post-footer'>
-              <div className='feed-footer-buttons-wrapper'>
+              {photos.length > 1 && 
+                <div className='slide-indicator-wrapper'>
+                  {photos.map((photo, index) => {
+                    return (
+                      <div key={photo} className={galleryIndex === index ? 'slide-indicator selected' : 'slide-indicator'}></div>
+                    )
+                  })}
+                </div>                                         
+              }
+              <div 
+                className={photos.length > 1 ? 'feed-footer-buttons-wrapper gallery' : 'feed-footer-buttons-wrapper'}
+              >
                 <button 
                   className='feed-like-button'
                   onClick={likeHandler}
@@ -424,6 +441,12 @@ const MobilePhotoPost = (props) => {
                 </time>
               </div>
             </footer>
+            {width > 736 &&
+              <PostComments
+                userData={userData}
+                postID = {postID} 
+              />
+            }
           </div>
         </div>
       </article>

@@ -1,1 +1,25 @@
+.homepage-sidebar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100vw;
+}
 
+@media screen and (max-width: 736px) {
+  .homepage-sidebar-wrapper {
+    align-items: stretch;
+  }
+}
+
+@media screen and (min-width: 737px) {
+  .homepage-posts-wrapper {
+    gap: 24px;
+    margin: 24px 0;
+  }
+}
+
+.homepage-posts-wrapper {
+  display: flex;
+  flex-direction: column;
+  max-width: 614px;
+}

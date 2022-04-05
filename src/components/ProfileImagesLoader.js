@@ -1,8 +1,9 @@
 import './ProfileImagesLoader.css'
 import useWindowSize from '../hooks/useWindowSize';
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {v4 as uuidv4} from 'uuid';
+import PostComments from './PostComments';
 
 let lastPress = 0;
 
@@ -20,6 +21,7 @@ const ProfileImagesLoader = (props) => {
     photosArray,
   } = props;
   const navigate = useNavigate();
+  const location = useLocation();
   const [width, height] = useWindowSize();
   const [photoWidth, setPhotoWidth] = useState(0);
   const [fullText, setFullText] = useState([]);
@@ -210,7 +212,7 @@ const ProfileImagesLoader = (props) => {
 
   return (
     <article className="profile-images">
-      {pageSelected !== 'feed' &&
+      {pageSelected !== 'feed' && location.pathname !== '/' &&
         <div className="profile-images-wrapper">
           {photosArray.map((post) => {
             const {
@@ -260,7 +262,7 @@ const ProfileImagesLoader = (props) => {
           })}
         </div>      
       }
-      {pageSelected === 'feed' &&
+      {(pageSelected === 'feed' || location.pathname === '/') &&
         <div className='profile-images-wrapper-feed'>
           {photosArray.map((post, index) => {
             const postIndex = index
@@ -270,13 +272,13 @@ const ProfileImagesLoader = (props) => {
               uploadDate,
               likes,
               comments,
-              photos
+              photos,
+              username
             } = post[0]
             const {
               aspectRatio
             } = post[1]
             const {
-              username,
               photoURL
             } = profileData
             let postHidden;
@@ -308,7 +310,7 @@ const ProfileImagesLoader = (props) => {
                 <div 
                   className='photo-navigation-wrapper'
                   style={{ 
-                    height: `${width / aspectRatio}px`, 
+                    // height: `min(${width / aspectRatio}px, 614px)`, 
                     paddingBottom: `${100 / aspectRatio}%`
                   }}
                   onTouchStart={onDoublePress.bind(null, index)}
@@ -318,7 +320,7 @@ const ProfileImagesLoader = (props) => {
                   <div 
                     className='photo-frames-wrapper'
                     style={{
-                      width: `${(width / aspectRatio) * photos.length}px`,
+                      width: `min(${(width / aspectRatio) * photos.length}px, 614px)`,
                       transform: `translateX(-${movement[postIndex]}px)`,
                       transition: `${isMoving ? 'all .2s ease-in-out' : ''}`
                     }}
@@ -336,7 +338,7 @@ const ProfileImagesLoader = (props) => {
                               <img 
                                 alt={postCaption} 
                                 className='feed-photo-post-image' 
-                                sizes='100vw'
+                                sizes='min(100vw, 614px)'
                                 srcSet={`
                                   ${photo.w1080} 1080w,
                                   ${photo.w750} 750w,
@@ -381,18 +383,24 @@ const ProfileImagesLoader = (props) => {
                           </div>  
                         </button>                    
                       }
-                      <div className='slide-indicator-wrapper'>
-                        {photos.map((photo, index) => {
-                          return (
-                            <div key={photo} className={galleryIndex[postIndex] === index ? 'slide-indicator selected' : 'slide-indicator'}></div>
-                          )
-                        })}
-                      </div>                       
+
                     </React.Fragment>
                   }     
                 </div>
                 <footer className='feed-post-footer'>
-                  <div className='feed-footer-buttons-wrapper'>
+                  {photos.length > 1 && 
+                    <div className='slide-indicator-wrapper'>
+                      {photos.map((photo, index) => {
+                        return (
+                          <div key={photo} className={galleryIndex[postIndex] === index ? 'slide-indicator selected' : 'slide-indicator'}></div>
+                        )
+                      })}
+                    </div>                                         
+                  }
+                  <div 
+                    className={photos.length > 1 ? 'feed-footer-buttons-wrapper gallery' : 'feed-footer-buttons-wrapper'}
+                  
+                  >
                     <button 
                       className='feed-like-button'
                       onClick={() => likeHandler(index)}  
@@ -494,6 +502,12 @@ const ProfileImagesLoader = (props) => {
                     </time>
                   </div>
                 </footer>
+                {width > 736 &&
+                  <PostComments
+                    userData={userData}
+                    postID = {postID} 
+                  />
+                }
               </div>
             )
           })}

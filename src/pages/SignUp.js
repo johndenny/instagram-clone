@@ -1,14 +1,15 @@
 import "./SignUp.css";
 import React, { useEffect, useState } from "react";
 import firebaseApp from "../Firebase";
-import { getAuth, createUserWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail} from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail, signInWithEmailAndPassword} from "firebase/auth";
 import { getFirestore, setDoc, doc, addDoc, collection, getDoc, connectFirestoreEmulator } from 'firebase/firestore'
 import { useNavigate } from "react-router-dom";
 
 const db = getFirestore(firebaseApp);
 const auth = getAuth(firebaseApp);
 
-const SignUp = () => {
+const SignUp = (props) => {
+  const { setUserData } = props; 
   const [emailValue, setEmailValue] = useState('');
   const [emailValidity, setEmailValidity] = useState('');
   const [fullNameValue, setFullNameValue] = useState('');
@@ -30,7 +31,7 @@ const SignUp = () => {
     try {
       if (usernameValidity.state === false) throw usernameValidity.error;
       if (fullNameValidity.state === false) throw fullNameValidity.error;
-      const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, loginPassword);
+      const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, loginPassword)
       await updateProfile(userCredential.user, {displayName: usernameValue});
       const { displayName, uid } = userCredential.user;
       await setDoc(doc(db, 'displayNames', displayName), {
@@ -48,7 +49,20 @@ const SignUp = () => {
       following: [],
       photoURL: ''
       });
+      setUserData({...userCredential.user, ...{
+        uid: uid,
+        username: displayName,
+        fullname: fullNameValue,
+        website: '',
+        bio: '',
+        gender: '',
+        suggestions: true,
+        followers: [],
+        following: [],
+        photoURL: ''
+        }});
       console.log(userCredential.user);
+      signInWithEmailAndPassword(auth, loginEmail, loginPassword);
       navigate('/');
     }
     catch(error) {
