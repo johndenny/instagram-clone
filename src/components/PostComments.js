@@ -3,18 +3,23 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import firebaseApp from '../Firebase';
 import { getFirestore, doc, updateDoc, arrayUnion, query, collection, where, orderBy, getDocs, getDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid'
+import { useParams } from 'react-router-dom';
 
 const db = getFirestore();
 
 const PostComments = (props) => {
   const {
+    postCommentsRef,
+    setSelectedPost,
+    newComments,
+    setNewComments,
     userData,
     postID,
   } = props;
+  const params = useParams();
   const [commentText, setCommentText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const textareaRef = useRef(null);
-  const commentsListRef = useRef(null);
 
   const commentTextHandler = (event) => {
     const { value } = event.target;
@@ -47,30 +52,35 @@ const PostComments = (props) => {
     }
     setIsSaving(true);
     const postRef = doc(db, 'postUploads', postID);
+    const commentDoc = {
+      commentID: uuidv4(),
+      photoURL: photoURL,
+      text: commentText,
+      uid: uid,
+      uploadDate: Date.now(),
+      username: username
+    }
     await updateDoc(postRef, {
-      comments: arrayUnion({
-        commentID: uuidv4(),
-        photoURL: photoURL,
-        text: commentText,
-        uid: uid,
-        uploadDate: Date.now(),
-        username: username
-      })
+      comments: arrayUnion(commentDoc)
     });
-    const photoArray = [];
-    const profilePhotoData = query(collection(db, 'photoUploads'), 
-      where('postID', '==', postID), orderBy('index'));
-    const profileImageDataSnap = await getDocs(profilePhotoData);
-    profileImageDataSnap.forEach((doc) => {
-      photoArray.push(doc.data());
-    });
-    const profilePostDocument = doc(db, 'postUploads', postID);
-    const postSnap = await getDoc(profilePostDocument);
+    if (params.postID === undefined) {
+      setNewComments([...newComments, commentDoc])      
+    } else {
+      const photoArray = [];
+      const profilePhotoData = query(collection(db, 'photoUploads'), 
+        where('postID', '==', postID), orderBy('index'));
+      const profileImageDataSnap = await getDocs(profilePhotoData);
+      profileImageDataSnap.forEach((doc) => {
+        photoArray.push(doc.data());
+      });
+      const profilePostDocument = doc(db, 'postUploads', postID);
+      const postSnap = await getDoc(profilePostDocument);
 
-    console.log([postSnap.data(), ...photoArray]);
+      setSelectedPost([postSnap.data(), ...photoArray]);
+      postCommentsRef.current.scrollTop = postCommentsRef.current.scrollHeight;
+    }
     setCommentText('');
     setIsSaving(false);
-    commentsListRef.current.scrollTop = commentsListRef.current.scrollHeight;
   };
 
   const enterKeyHandler = (event) => {

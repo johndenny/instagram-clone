@@ -1,7 +1,7 @@
 import './RouterSwitch.css';
 import MobileNavigationBars from './components/MobileNavigationBars.js'
 import React, { useEffect, useState, useRef } from "react";
-import { BrowserRouter, Route, Routes, Link, useParams, } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Link, useParams, useLocation} from "react-router-dom";
 import Homepage from "./pages/Homepage";
 import LogIn from "./pages/LogIn";
 import SignUp from "./pages/SignUp";
@@ -24,6 +24,8 @@ import MobileComments from './pages/MobileComments';
 import { v4 as uuidv4 } from 'uuid';
 import LikedBy from './pages/LikedBy';
 import UnfollowModal from './components/UnfollowModal';
+import LikedByModal from './components/LikedByModal';
+import PhotoPostModal from './components/PhotoPostModal';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -53,7 +55,11 @@ const RouterSwitch = () => {
   const [isPostLinksOpen, setIsPostLinkOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState('');
   const [photosArray, setPhotosArray] = useState([]);
+  const [profilePosts, setProfilePosts] = useState([]);
   const [selectedListProfile, setSelectedListProfile] = useState('');
+  const [isLikedByModalOpen, setIsLikedByModalOpen] = useState(false);
+  const [backgroundLocation, setBackgroundLocation] = useState(null);
+  const [allUserProfiles, setAllUserProfiles] = useState([]);
 
   // Profile //
 
@@ -100,6 +106,16 @@ const RouterSwitch = () => {
   const widestImageRatio = 1080/1350;
 
   // HOMEPAGE //
+
+  const getUserProfiles = async () => {
+    const allUsers = [];
+    const usersRef = collection(db, 'users');
+    const usersSnap = await getDocs(usersRef);
+    usersSnap.forEach((doc) => {
+      allUsers.push(doc.data());
+    });
+    setAllUserProfiles(allUsers);
+  }
 
   const getFollowingPosts = async (user) => {
     const { following } = user;
@@ -1027,8 +1043,7 @@ const RouterSwitch = () => {
         } else {
           setCurrentUsersPage(false);
         };
-        setIsLoadingPage(false);
-        setDataLoading(false);
+
       } else {
         console.log('no profile data document')
       }      
@@ -1043,12 +1058,12 @@ const RouterSwitch = () => {
       });
       console.log(urlArray);
       Promise.all(urlArray).then((values) => {
-        setPhotosArray(values);
+        setProfilePosts(values);
+        setIsLoadingPage(false);
+        setDataLoading(false);  
       })
       setProfileImages(imageArray);
       console.log(imageArray);
-      
-
     } else {
       console.log('no displayName document');
       setProfileExists(false);
@@ -1066,6 +1081,16 @@ const RouterSwitch = () => {
 
   return (
     <BrowserRouter>
+      {isLikedByModalOpen &&
+        <LikedByModal
+          setIsLikedByModalOpen={setIsLikedByModalOpen}
+          unfollowModalHandler={unfollowModalHandler}
+          followHandler={followHandler}
+          isFollowLoading={isFollowLoading}
+          userData={userData} 
+          selectedPost={selectedPost}
+        />
+      }
       {isUnfollowModalOpen &&
         <UnfollowModal
           followHandler={followHandler} 
@@ -1129,7 +1154,7 @@ const RouterSwitch = () => {
             profilePhotoURL={profilePhotoURL} 
             userData={userData}/>
         }
-        <Routes>
+        <Routes location={backgroundLocation}>
           {userLoggedIn === '' &&
             <React.Fragment>
               <Route path='/' element={<div></div>} />
@@ -1150,6 +1175,16 @@ const RouterSwitch = () => {
             <React.Fragment>
               <Route path='/' element={
                 <Homepage
+                  followHandler={followHandler}
+                  isFollowLoading={isFollowLoading}
+                  unfollowModalHandler={unfollowModalHandler}
+                  getUserProfiles={getUserProfiles}
+                  allUserProfiles={allUserProfiles}
+                  getUserProfileData={getUserProfileData}
+                  setBackgroundLocation={setBackgroundLocation}
+                  setIsLikedByModalOpen={setIsLikedByModalOpen}
+                  setSelectedPost={setSelectedPost}
+                  setDataLoading={setDataLoading}
                   getFollowingPosts={getFollowingPosts}
                   likeUploadToggle={likeUploadToggle}
                   userData={userData}
@@ -1228,6 +1263,8 @@ const RouterSwitch = () => {
           }
           <Route path='/:username' element={
             <Profile
+              setSelectedPost={setSelectedPost}
+              setBackgroundLocation={setBackgroundLocation}
               isFollowLoading={isFollowLoading}
               unfollowModalHandler={unfollowModalHandler}
               followHandler={followHandler}
@@ -1237,6 +1274,7 @@ const RouterSwitch = () => {
               getPostData={getPostData}
               postLinksModalHandler={postLinksModalHandler}
               photosArray={photosArray}
+              profilePosts={profilePosts}
               setProfileUsername={setProfileUsername}
               isMobile={isMobile}
               setCurrentPath={setCurrentPath}
@@ -1261,6 +1299,8 @@ const RouterSwitch = () => {
           />
           <Route path='/:username/:page' element={
             <Profile
+              setSelectedPost={setSelectedPost}
+              setBackgroundLocation={setBackgroundLocation}
               isFollowLoading={isFollowLoading}
               unfollowModalHandler={unfollowModalHandler}
               followHandler={followHandler}
@@ -1270,6 +1310,7 @@ const RouterSwitch = () => {
               getPostData={getPostData}
               postLinksModalHandler={postLinksModalHandler}
               photosArray={photosArray}
+              profilePosts={profilePosts}
               setProfileUsername={setProfileUsername}
               isMobile={isMobile}
               setCurrentPath={setCurrentPath}
@@ -1294,6 +1335,10 @@ const RouterSwitch = () => {
           />
           <Route path='/p/:postID' element={
             <MobilePhotoPost
+              setIsLikedByModalOpen={setIsLikedByModalOpen}
+              postLinksModalHandler={postLinksModalHandler}
+              photosArray={photosArray}
+              setPhotosArray={setPhotosArray}
               setIsLoadingPage={setIsLoadingPage}
               likeUploadToggle={likeUploadToggle}
               userData={userData}
@@ -1325,6 +1370,28 @@ const RouterSwitch = () => {
             <div className="no-user-text">The link you followed may be broken, or the page may have been removed. <Link to='/'>Go Back to Instagram.</Link></div>
           </div>} />
         </Routes>
+        {backgroundLocation !== null &&
+        <Routes>
+          <Route path='/p/:postID' element={
+            <PhotoPostModal
+              backgroundLocation={backgroundLocation}
+              setBackgroundLocation={setBackgroundLocation} 
+              setIsLikedByModalOpen={setIsLikedByModalOpen}
+              postLinksModalHandler={postLinksModalHandler}
+              photosArray={photosArray}
+              profilePosts={profilePosts}
+              setPhotosArray={setPhotosArray}
+              setIsLoadingPage={setIsLoadingPage}
+              likeUploadToggle={likeUploadToggle}
+              userData={userData}
+              profileData={profileData} 
+              setDataLoading={setDataLoading}
+              selectedPost={selectedPost}
+              setSelectedPost={setSelectedPost}
+            />} 
+          />
+        </Routes>
+        }
       </section>
       <div className='bottom-notification-bar'>
         <div 

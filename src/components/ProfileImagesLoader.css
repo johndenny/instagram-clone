@@ -56,6 +56,7 @@
 .photo-post {
   overflow: hidden;
   position: relative;
+  cursor: pointer;
 }
 
 .profile-images-wrapper-feed {
@@ -68,6 +69,7 @@
   display: flex;
   align-items: stretch;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .feed-post-header {
@@ -91,6 +93,7 @@
   border-radius: 50%;
   overflow: hidden;
   position: relative;
+  cursor: pointer;
 }
 
 .feed-profile-photo-wrapper::after {
@@ -111,6 +114,7 @@
   margin-left: 12px;
   flex: 1;
   margin-bottom: 3px;
+  cursor: pointer;
 }
 
 .post-links-modal {
@@ -261,4 +265,58 @@
     transform: scale(0);
     opacity: 0;
   }
+}
+
+.photo-post-padding {
+  padding-bottom: 100%;
+}
+
+.photo-hover-details-list {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  list-style: none;
+  color: rgba(255, 255, 255, 1);
+  gap: 24px;
+}
+
+.photo-hover-details-list > li {
+  display: flex;
+  gap: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+  Arial, sans-serif;
+  font-weight: 600;
+}
+
+.photo-hover-details {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  background-color: rgba(0, 0, 0, 0.3);
+  align-items: center;
+  justify-content: center;
+  display: none;
+}
+
+.likes-small-sprite {
+  background-image: url(../images/core-sprites.png);
+  background-position: -340px -333px;
+  background-repeat: no-repeat;
+  width: 19px;
+  height: 19px;
+}
+
+.comments-small-sprite {
+  background-image: url(../images/core-sprites.png);
+  background-position: -382px -333px;
+  background-repeat: no-repeat;
+  width: 19px;
+  height: 19px;
+}
+
+.photo-post:hover .photo-hover-details {
+  display: flex;
 }

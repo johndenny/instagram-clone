@@ -89,6 +89,7 @@
   display: none;
 }
 
+.mobile-post-comment-button,
 .post-comment-button {
   color: rgba(0, 149, 246, 1);
   font-weight: 600;
@@ -98,6 +99,7 @@
     Arial, sans-serif;
 }
 
+.mobile-post-comment-button:disabled,
 .post-comment-button:disabled {
   opacity: 0.3;
   pointer-events: none;
@@ -172,4 +174,5 @@
   flex-direction: column;
   flex-grow: 1;
   align-items: stretch;
+  height: 100vh;
 }

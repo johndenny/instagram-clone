@@ -65,6 +65,10 @@ const MobileComments = (props) => {
     }
   }, []);
 
+  useEffect(() => () => {
+    setSelectedPost('');
+  }, []);
+
   if (selectedPost !== '') {
     const {
       postID,
@@ -277,7 +281,7 @@ const MobileComments = (props) => {
               onKeyDown={enterKeyHandler}
             ></textarea>
             <button 
-              className='post-comment-button'
+              className='mobile-post-comment-button'
               disabled={commentText.length === 0}
               type='button'
               onClick={postComment}

@@ -1,0 +1,30 @@
+.people-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-left: 6px;
+}
+
+.suggestions-user-wrapper {
+  display: flex;
+}
+
+.profile-photo-frame.suggestions {
+  margin: 0;
+}
+
+.suggestions-user-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  margin-left: 16px;
+  gap: 4px;
+}
+
+.suggestions-full-name-text {
+  font-size: 12px;
+  color: rgba(142, 142, 142, 1)
+}

@@ -19,7 +19,7 @@ const NavigationBar = (props) => {
   const [dropDownOpen, setDropDownOpen] = useState(false);
 
   useEffect(() => {
-    console.log(location.pathname)
+    console.log('location:', location)
     setCurrentPath(location.pathname);
     setDropDownOpen(false);
   }, [location]);

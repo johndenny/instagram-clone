@@ -1,0 +1,68 @@
+import './HomepageFixedMenu.css';
+import PeopleList from './PeopleList';
+import useWindowSize from '../hooks/useWindowSize';
+import { useEffect, useState } from 'react';
+
+const HomepageFixedMenu = (props) => {
+  const {
+    userData,
+    allUserProfiles,
+    followHandler,
+    isFollowLoading,
+    unfollowModalHandler
+  } = props;
+  const [width, height] = useWindowSize();
+  const [left, setLeft] = useState(0);
+
+  const leftHandler = () => {
+    const left = (width / 2) + (684 / 4);
+    setLeft(left)
+  }
+
+  useEffect(() => {
+    leftHandler();
+  }, [width]);
+
+  return (
+    <section 
+      className='homepage-sidebar-menu'
+      style={{
+        left: left
+      }}  
+    >
+      <div className='user-profile-header'>
+        <div className='sidebar-profile-photo-frame'>
+          <img alt='' className='user-profile-photo' src={userData.photoURL} />
+        </div>
+        <div className='user-profile-text'>
+          <span className='user-username-text'>
+            {userData.username}
+          </span>
+          <span className='user-fullname-text'>
+            {userData.fullname}
+          </span>
+        </div>
+        <button className='log-out-button'>
+          Log out
+        </button>
+      </div>
+      <header className='profile-suggestions-header'>
+        <h1 className='profile-suggestions-header-text'>
+          Suggestions For You
+        </h1>
+        <button className='see-all-suggestions-button'>
+          See All
+        </button>
+      </header>
+      <PeopleList 
+        allUserProfiles={allUserProfiles}
+        userData={userData}
+        followHandler={followHandler}
+        isFollowLoading={isFollowLoading}
+        unfollowModalHandler={unfollowModalHandler}
+      />
+    </section>
+  )
+}
+
+export default HomepageFixedMenu;
