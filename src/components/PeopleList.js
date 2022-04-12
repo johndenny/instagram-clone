@@ -2,9 +2,11 @@ import { useRef } from 'react';
 import FollowButton from './FollowButton.js';
 import './PeopleList.css'
 import defaultProfile from '../images/default-profile-image.jpg';
+import { Link, useNavigate } from 'react-router-dom';
 
 const PeopleList = (props) => {
   const {
+    setIsMouseHovering,
     onMouseEnter,
     onMouseLeave,
     selectedListProfile,
@@ -14,8 +16,14 @@ const PeopleList = (props) => {
     isFollowLoading,
     unfollowModalHandler,
   } = props;
+  const navigate = useNavigate();
   const usernameRef = useRef([]);
   const photoRef = useRef([]);
+
+  const navigateUserProfile = (username) => {
+    setIsMouseHovering(false);
+    navigate(`/${username}`);
+  }
   
   if (userData && Object.keys(userData).length > 0 && Object.getPrototypeOf(userData) === Object.prototype) {
     console.log(allUserProfiles);
@@ -34,20 +42,24 @@ const PeopleList = (props) => {
               key={uid}
               className='user-wrapper'
             >
-              <div 
+              <div
+                to={`/${username}`}
                 className='profile-photo-frame'
                 ref={(element) => photoRef.current.push(element)}
                 onMouseEnter={() => onMouseEnter(uid, photoRef.current[index])}
-                onMouseLeave={onMouseLeave} 
+                onMouseLeave={onMouseLeave}
+                onClick={() => navigateUserProfile(username)} 
               >
                 <img alt={`${username}'s profile`} className='user-profile-photo' src={photoURL === '' ? defaultProfile : photoURL} />
               </div>
               <div className='user-text-wrapper'>
                 <span 
+                  to={`/${username}`}
                   className='username-text'
                   ref={(element) => usernameRef.current.push(element)}
                   onMouseEnter={() => onMouseEnter(uid, usernameRef.current[index])}
                   onMouseLeave={onMouseLeave} 
+                  onClick={() => navigateUserProfile(username)}
                 >
                   {username}
                 </span>

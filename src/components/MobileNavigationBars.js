@@ -2,7 +2,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import "./MobileNavigationBars.css";
 import instagramLogo from "../images/mobile-logo.png";
 import defaultProfileImage from "../images/default-profile-image.jpg";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const MobileNavigationBars = (props) => {
@@ -11,6 +11,8 @@ const MobileNavigationBars = (props) => {
   const location = useLocation();
   const [currentPath, setCurrentPath] = useState('');
   const {
+    searchString,
+    setSearchString,
     setIsLoadingPage,
     getUserProfileData,
     profileNavigate,
@@ -27,6 +29,15 @@ const MobileNavigationBars = (props) => {
     userData, 
     profilePhotoURL,
   } = props;
+  const searchInputRef = useRef(null);
+
+  const searchInputHandler = (event) => {
+    const { value } = event.target;
+    if (value !== '') {
+      searchInputRef.current.focus();
+    }
+    setSearchString(value);
+  }
 
   const goBack = () => {
     navigate(-1);
@@ -69,11 +80,50 @@ const MobileNavigationBars = (props) => {
         </header>   
       )
     }
-    if (pathname === '/explore/') {
+    if (pathname === '/explore/' || pathname === '/explore/search') {
       return (
         <header className="mobile-navigation-header">
           <div className="mobile-explore-search-wrapper">
-            <input className="mobile-explore-search-input"/>
+            <label className="mobile-search-label">
+              <input 
+                className="mobile-explore-search-input" 
+                type='text' 
+                value={searchString} 
+                onChange={searchInputHandler} 
+                ref={searchInputRef}
+                onClick={() => {
+                  navigate('/explore/search');
+                }}
+              />
+              <div 
+                className={searchString === '' ? "search-explore-placeholder" : 'search-explore-placeholder focused'}
+              >
+                <span className="search-glyph-sprite">
+                </span>
+                {searchString === '' &&
+                  <span className="search-placeholder-text">
+                    Search
+                  </span>                
+                }
+              </div>
+              {searchString !== '' &&
+                <button 
+                  className="clear-search-button"
+                  onClick={() => setSearchString('')}
+                >
+                  <span className="clear-search-glyph-sprite">
+                  </span>
+                </button>              
+              }
+            </label>
+            {pathname === '/explore/search' &&
+              <button 
+                className="search-cancel-button"
+                onClick={() => navigate('/explore/')}
+              >
+                Cancel
+              </button>            
+            }
           </div>
         </header>   
       )

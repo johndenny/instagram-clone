@@ -3,6 +3,7 @@
   flex-direction: column;
   align-items: stretch;
   position: relative;
+  width: 100vw;
 }
 
 .mobile-navigation-header {
@@ -18,6 +19,7 @@
   right: 0;
   top: 0;
   align-items: stretch;
+  justify-content: center;
   background-color: rgba(255, 255, 255, 1);
 }
 
@@ -155,4 +157,103 @@ h1.logo-header {
 .navigation-profile-photo,
 .profile-picture-wrapper {
   pointer-events: none;
+}
+
+.mobile-explore-search-wrapper {
+  width: 100%;
+  padding: 0 16px;
+  display: flex;
+  gap: 12px;
+}
+
+.mobile-explore-search-input {
+  width: 100%;
+  -webkit-appearance: none;
+  line-height: 20px;
+  border: 1px solid rgba(219, 219, 219, 1);
+  border-radius: 6px;
+  padding: 4px 22px;
+  outline: 0;
+}
+
+.mobile-explore-search-input:focus {
+  border: 1px solid rgba(168, 168, 168, 1);
+}
+
+.mobile-explore-search-input:focus ~ .search-explore-placeholder {
+  left: 0;
+  transform: translate(0);
+}
+
+.search-explore-placeholder.focused {
+  left: 0;
+  transform: translate(0);
+}
+
+.mobile-search-label {
+  display: flex;
+  width: 100%;
+  position: relative;
+}
+
+.search-explore-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0 8px;
+  transition: left 0.15s ease-out, transform 0.15s ease-out;
+}
+
+.search-placeholder-text {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 28px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  color: rgba(142, 142, 142, 1);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.search-glyph-sprite {
+  background-image: url(../images/sprite-glyphs-3.png);
+  background-position: -425px -320px;
+  background-size: 528px 523px;
+  height: 10px;
+  width: 10px;
+  background-repeat: no-repeat;
+}
+
+.search-cancel-button {
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  display: flex;
+  align-items: center;
+}
+
+.clear-search-button {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+}
+
+.clear-search-glyph-sprite {
+  background-image: url(../images/sprite-glyphs-3.png);
+  background-position: -493px -319px;
+  background-size: 528px 523px;
+  background-repeat: no-repeat;
+  height: 20px;
+  width: 20px;
 }

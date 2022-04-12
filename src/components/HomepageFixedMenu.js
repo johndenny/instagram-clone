@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 
 const HomepageFixedMenu = (props) => {
   const {
+    setIsMouseHovering,
     onMouseEnter,
     onMouseLeave,
     selectedListProfile,
@@ -60,6 +61,7 @@ const HomepageFixedMenu = (props) => {
       </header>
       <main className='profile-suggestions-content'>
         <PeopleList
+          setIsMouseHovering={setIsMouseHovering}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
           selectedListProfile={selectedListProfile}

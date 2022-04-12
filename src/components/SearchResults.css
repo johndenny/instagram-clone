@@ -1,0 +1,20 @@
+.search-results .profile-photo-frame {
+  height: 44px;
+  width: 44px;
+}
+
+.search-results .following-button {
+  display: none;
+}
+
+.search-results .follow-button {
+  display: none;
+}
+
+.search-results .people-list {
+  padding: 16px 0;
+}
+
+.search-results .user-wrapper {
+  padding: 0 16px;
+}

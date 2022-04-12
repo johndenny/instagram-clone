@@ -78,6 +78,7 @@ const Homepage = (props) => {
         </section>
         {!isMobile && width > 999 &&
           <HomepageFixedMenu
+            setIsMouseHovering={setIsMouseHovering}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
             followHandler={followHandler}

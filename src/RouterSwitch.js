@@ -1,6 +1,6 @@
 import './RouterSwitch.css';
 import MobileNavigationBars from './components/MobileNavigationBars.js'
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
 import { BrowserRouter, Route, Routes, Link, useParams, useLocation} from "react-router-dom";
 import Homepage from "./pages/Homepage";
 import LogIn from "./pages/LogIn";
@@ -32,6 +32,7 @@ import Followers from './pages/Followers';
 import Following from './pages/Following';
 import FollowersModal from './components/FollowersModal';
 import FollowingModal from './components/FollowingModal';
+import SearchResults from './components/SearchResults';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -116,6 +117,36 @@ const RouterSwitch = () => {
   const canvasRef = useRef(null);
   const shortestImageRatio = 1080/565;
   const widestImageRatio = 1080/1350;
+
+  // SEARCH //
+
+  const [searchString, setSearchString] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const searchTimeoutRef = useRef();
+
+  // SEARCH //
+
+  const getSearchResults = async () => {
+    const matchedUsers = [];
+    const searchTerm = searchString.toLowerCase();
+    const users = query(collection(db, 'users'), 
+    where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
+    const usersSnapshot = await getDocs(users);
+    usersSnapshot.forEach((user) => {
+      matchedUsers.push(user.data());
+    });
+    setSearchResults(matchedUsers);
+  }
+
+  useEffect(() => {
+    clearTimeout(searchTimeoutRef.current);
+    setSearchResults([]);
+    if (searchString !== '') {
+      searchTimeoutRef.current = setTimeout(() => {
+        getSearchResults(); 
+      }, 300);     
+    }; 
+  }, [searchString]);
 
   // HOMEPAGE //
 
@@ -1262,6 +1293,8 @@ const RouterSwitch = () => {
         }
         {(userLoggedIn && isMobile && !photoUploadOpen) &&
           <MobileNavigationBars
+            searchString={searchString}
+            setSearchString={setSearchString}
             setProfileNavigate={setProfileNavigate}
             profileNavigate={profileNavigate}
             isLoadingPage={isLoadingPage}
@@ -1276,7 +1309,8 @@ const RouterSwitch = () => {
             toggleTopNavigation={toggleTopNavigation} 
             hideTopNavigation={hideTopNavigation}  
             profilePhotoURL={profilePhotoURL} 
-            userData={userData}/>
+            userData={userData}
+          />
         }
         <Routes location={backgroundLocation}>
           {userLoggedIn === '' &&
@@ -1327,6 +1361,19 @@ const RouterSwitch = () => {
               } />
               <Route path='/direct/inbox' element={<Inbox />} />
               <Route path='/explore/' element={<Explore />} />
+              <Route path='/explore/search' element={
+                <SearchResults
+                  setIsMouseHovering={setIsMouseHovering}
+                  setSearchString={setSearchString}
+                  setSearchResults={setSearchResults} 
+                  searchResults={searchResults}
+                  selectedListProfile={selectedListProfile}
+                  userData={userData}
+                  followHandler={followHandler}
+                  isFollowLoading={isFollowLoading}
+                  unfollowModalHandler={unfollowModalHandler}
+                />
+              }/>
               <Route path='/accounts/edit' element={
                 <EditProfile
                   showNotification={showNotification} 

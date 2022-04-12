@@ -3,6 +3,11 @@ body {
   overflow-x: hidden;
 }
 
+a {
+  color: rgba(39, 39, 39, 1);
+  text-decoration: none;
+}
+
 .entire-wrapper {
   min-height: 100vh;
   flex-direction: column;
