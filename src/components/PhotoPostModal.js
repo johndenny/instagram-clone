@@ -5,21 +5,37 @@ import './PhotoPostModal.css'
 
 const PhotoPostModal = (props) => {
   const {
-    selectedPost,
+    onMouseEnter,
+    onMouseLeave,
+    setProfileModalData,
+    setProfileModalPosts,
+    timerRef,
+    setProfileModalTimeoutID,
+    setProfileModalLocation,
+    isMouseHovering,
+    setIsMouseHovering,
+    getModalProfileData,
+    followHandler,
+    isFollowLoading,
+    unfollowModalHandler,
+    allUserProfiles,
+    selectedListProfile,
+    getUserProfileData,
+    backgroundLocation,
     setBackgroundLocation,
-    setIsLikedByModalOpen,
-    setSelectedPost,
-    setDataLoading,
-    getFollowingPosts,
-    likeUploadToggle,
-    userData,
-    setIsLoadingPage,
-    getPostData,
     postLinksModalHandler,
     isMobile,
-    profileData,
+    setIsLikedByModalOpen,
+    index,
+    getFollowingPosts,
+    setIsLoadingPage,
+    likeUploadToggle,
+    setDataLoading, 
+    selectedPost,
+    setSelectedPost,
+    userData,
     photosArray,
-    setPhotosArray,
+    setPhotosArray, 
   } = props;
   const navigate = useNavigate();
   const isModal = true;
@@ -45,20 +61,37 @@ const PhotoPostModal = (props) => {
       </button>
       <main className='photo-post-modal-content'>
         <MobilePhotoPost
-          isModal={isModal}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          setProfileModalData={setProfileModalData}
+          setProfileModalPosts={setProfileModalPosts}
+          timerRef={timerRef}
+          setProfileModalTimeoutID={setProfileModalTimeoutID}
+          setProfileModalLocation={setProfileModalLocation}
+          isMouseHovering={isMouseHovering}
+          setIsMouseHovering={setIsMouseHovering}
+          getModalProfileData={getModalProfileData}
+          getUserProfileData={getUserProfileData}
           setBackgroundLocation={setBackgroundLocation}
           postLinksModalHandler={postLinksModalHandler}
           isMobile={isMobile}
           setIsLikedByModalOpen={setIsLikedByModalOpen}
           setSelectedPost={setSelectedPost}
           setDataLoading={setDataLoading}
+          index={index}
           setPhotosArray={setPhotosArray}
           photosArray={photosArray}
-          selectedPost={selectedPost}
           getFollowingPosts={getFollowingPosts}
+          selectedPost={selectedPost}
           setIsLoadingPage={setIsLoadingPage}
           likeUploadToggle={likeUploadToggle}
           userData={userData}
+          followHandler={followHandler}
+          isFollowLoading={isFollowLoading}
+          unfollowModalHandler={unfollowModalHandler}
+          allUserProfiles={allUserProfiles}
+          selectedListProfile={selectedListProfile}
+          isModal={isModal}
         />
       </main>
     </div>

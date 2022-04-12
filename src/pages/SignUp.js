@@ -47,6 +47,8 @@ const SignUp = (props) => {
       suggestions: true,
       followers: [],
       following: [],
+      followersUID: [],
+      followingUID: [],
       photoURL: ''
       });
       setUserData({...userCredential.user, ...{
@@ -59,6 +61,8 @@ const SignUp = (props) => {
         suggestions: true,
         followers: [],
         following: [],
+        followersUID: [],
+        followingUID: [],
         photoURL: ''
         }});
       console.log(userCredential.user);

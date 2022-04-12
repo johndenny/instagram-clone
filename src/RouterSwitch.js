@@ -26,6 +26,12 @@ import LikedBy from './pages/LikedBy';
 import UnfollowModal from './components/UnfollowModal';
 import LikedByModal from './components/LikedByModal';
 import PhotoPostModal from './components/PhotoPostModal';
+import ProfileModal from './components/ProfileModal';
+import ExplorePeople from './pages/ExplorePeople';
+import Followers from './pages/Followers';
+import Following from './pages/Following';
+import FollowersModal from './components/FollowersModal';
+import FollowingModal from './components/FollowingModal';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -60,6 +66,12 @@ const RouterSwitch = () => {
   const [isLikedByModalOpen, setIsLikedByModalOpen] = useState(false);
   const [backgroundLocation, setBackgroundLocation] = useState(null);
   const [allUserProfiles, setAllUserProfiles] = useState([]);
+  const [profileModalData, setProfileModalData] = useState(null);
+  const [profileModalPosts, setProfileModalPosts] = useState(null);
+  const [isMouseHovering, setIsMouseHovering] = useState(false);
+  const [profileModalLocation, setProfileModalLocation] = useState(null);
+  const [profileModalTimeoutID, setProfileModalTimeoutID] = useState(null);
+  const timerRef = useRef();
 
   // Profile //
 
@@ -107,11 +119,72 @@ const RouterSwitch = () => {
 
   // HOMEPAGE //
 
+  const onMouseEnter = (uid, ref) => {
+    setProfileModalData(null);
+    setProfileModalPosts(null);
+    console.log(ref);
+    console.log('mouse entered');
+    // clearTimeout(timerRef.current);
+    const location = ref.getBoundingClientRect();
+    const locationHeight = ref.offsetHeight;
+    let locationY = location.y + window.pageYOffset + locationHeight
+    if (window.innerHeight < (location.y + locationHeight + 350)) {
+      locationY = location.y + window.pageYOffset - 346;
+    }
+    setProfileModalLocation({
+      x: location.x,
+      y: locationY
+    });
+    timerRef.current = setTimeout(() => {
+      getModalProfileData(uid);
+      setIsMouseHovering(true);      
+    }, 400);
+  }
+
+  const onMouseLeave = () => {
+    console.log('mouse left');
+    console.log('set:', timerRef.current)
+    clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      setIsMouseHovering(false);
+    }, 400);     
+  }
+
+  const getModalProfileData = async (uid) => {
+    let urlArray = []
+    console.log(uid);
+    const profileDataRef = doc(db, 'users', uid);
+    const profileDataSnap = await getDoc(profileDataRef);
+    const profileImageData = query(collection(db, 'postUploads'), 
+      where('uid', '==', uid), orderBy('uploadDate', 'desc'));
+    const profileImageDataSnap = await getDocs(profileImageData);
+    profileImageDataSnap.forEach((doc) => {
+      let newPost = getPhotoURLs(doc.data());
+      urlArray.push(newPost);
+    });
+    console.log(urlArray);
+    Promise.all(urlArray).then((values) => {
+      setProfileModalData(profileDataSnap.data());
+      setProfileModalPosts(values);    
+    })
+  }
+
+  useEffect(() => {
+    console.log(profileModalData);
+    console.log(isMouseHovering);
+  },[profileModalData]);
+
   const getUserProfiles = async () => {
     const allUsers = [];
     const usersRef = collection(db, 'users');
     const usersSnap = await getDocs(usersRef);
     usersSnap.forEach((doc) => {
+      if (doc.data().uid === userData.uid) {
+        return null
+      }
+      // const followersIndex = doc.data().followers.findIndex((follower) => follower.uid === userData.uid);
+      // if (followersIndex === -1) {
+      // }
       allUsers.push(doc.data());
     });
     setAllUserProfiles(allUsers);
@@ -215,6 +288,7 @@ const RouterSwitch = () => {
   // PROFILE //
 
   const followHandler = async (userProfile) => {
+    setSelectedListProfile(userProfile);
     setIsFollowLoading(true);
     setIsUnfollowModalOpen(false);
     const followingRef = doc(db, 'users', userData.uid);
@@ -231,10 +305,16 @@ const RouterSwitch = () => {
             username: userProfile.username,
             fullName: userProfile.fullName || userProfile.fullname,
           })
+        });
+        await updateDoc(followingRef, {
+          followingUID: arrayUnion(userProfile.uid)
         });        
       } else {
         await updateDoc(followingRef, {
           following: arrayRemove(following[followingIndex])
+        });
+        await updateDoc(followingRef, {
+          followingUID: arrayRemove(userProfile.uid)
         });
       };
     };
@@ -250,19 +330,29 @@ const RouterSwitch = () => {
             username: userData.displayName,
             fullName: userData.fullname,
           })
+        });
+        await updateDoc(followersRef, {
+          followersUID: arrayUnion(userData.uid)
         });        
       } else {
         await updateDoc(followersRef, {
           followers: arrayRemove(followers[followersIndex])
         });
+        await updateDoc(followersRef, {
+          followersUID: arrayRemove(userData.uid)
+        });
       };
     };
-    setIsFollowLoading(false); 
-    getUserProfileDoc(auth.currentUser);
-    getUserProfileData(profileData.username);
+    await getUserProfileDoc(auth.currentUser);
+    if (profileData.length !== 0) {
+      await getUserProfileData(userProfile.username);  
+    }
+    setIsFollowLoading(false);
+    setSelectedListProfile('');
   };
 
   const unfollowModalHandler = (user) => {
+    console.log('user:', user);
     setSelectedListProfile(user);
     isUnfollowModalOpen
       ? setIsUnfollowModalOpen(false)
@@ -1060,7 +1150,7 @@ const RouterSwitch = () => {
       Promise.all(urlArray).then((values) => {
         setProfilePosts(values);
         setIsLoadingPage(false);
-        setDataLoading(false);  
+        setDataLoading(false);
       })
       setProfileImages(imageArray);
       console.log(imageArray);
@@ -1076,13 +1166,45 @@ const RouterSwitch = () => {
   }, []);
 
   useEffect(() => {
+    console.log(profileData);
+  },[profileData]);
+
+  useEffect(() => {
     console.log('navigate:', profileNavigate);
   }, [profileNavigate]);
 
+  useEffect(() => {
+    console.log(profileModalTimeoutID);
+  },[profileModalTimeoutID]);
+
   return (
     <BrowserRouter>
+      {!isMobile && isMouseHovering && profileModalPosts !== null &&
+        <ProfileModal
+          setIsLoadingPage={setIsLoadingPage}
+          getUserProfileData={getUserProfileData}
+          timerRef={timerRef}
+          setProfileModalTimeoutID={setProfileModalTimeoutID}
+          profileModalTimeoutID={profileModalTimeoutID}
+          profileModalLocation={profileModalLocation}
+          setIsMouseHovering={setIsMouseHovering}
+          isMouseHovering={isMouseHovering}
+          selectedListProfile={selectedListProfile}
+          userData={userData}
+          isFollowLoading={isFollowLoading}
+          followHandler={followHandler}
+          unfollowModalHandler={unfollowModalHandler}
+          profileModalData={profileModalData}
+          profileModalPosts={profileModalPosts}
+          setProfileModalData={setProfileModalData}
+          setProfileModalPosts={setProfileModalPosts}
+        />
+      }
       {isLikedByModalOpen &&
         <LikedByModal
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          selectedListProfile={selectedListProfile}
           setIsLikedByModalOpen={setIsLikedByModalOpen}
           unfollowModalHandler={unfollowModalHandler}
           followHandler={followHandler}
@@ -1093,6 +1215,8 @@ const RouterSwitch = () => {
       }
       {isUnfollowModalOpen &&
         <UnfollowModal
+          setIsMouseHovering={setIsMouseHovering}
+          timerRef={timerRef}
           followHandler={followHandler} 
           profileData={profileData}
           unfollowModalHandler={unfollowModalHandler}
@@ -1175,6 +1299,10 @@ const RouterSwitch = () => {
             <React.Fragment>
               <Route path='/' element={
                 <Homepage
+                  onMouseEnter={onMouseEnter}
+                  onMouseLeave={onMouseLeave}
+                  setIsMouseHovering={setIsMouseHovering}
+                  selectedListProfile={selectedListProfile}
                   followHandler={followHandler}
                   isFollowLoading={isFollowLoading}
                   unfollowModalHandler={unfollowModalHandler}
@@ -1263,6 +1391,7 @@ const RouterSwitch = () => {
           }
           <Route path='/:username' element={
             <Profile
+              setProfileData={setProfileData}
               setSelectedPost={setSelectedPost}
               setBackgroundLocation={setBackgroundLocation}
               isFollowLoading={isFollowLoading}
@@ -1299,6 +1428,7 @@ const RouterSwitch = () => {
           />
           <Route path='/:username/:page' element={
             <Profile
+              setProfileData={setProfileData}
               setSelectedPost={setSelectedPost}
               setBackgroundLocation={setBackgroundLocation}
               isFollowLoading={isFollowLoading}
@@ -1335,17 +1465,28 @@ const RouterSwitch = () => {
           />
           <Route path='/p/:postID' element={
             <MobilePhotoPost
-              setIsLikedByModalOpen={setIsLikedByModalOpen}
+              onMouseEnter={onMouseEnter}
+              onMouseLeave={onMouseLeave}
+              setIsMouseHovering={setIsMouseHovering}
+              getUserProfileData={getUserProfileData}
+              setBackgroundLocation={setBackgroundLocation}
               postLinksModalHandler={postLinksModalHandler}
-              photosArray={photosArray}
+              isMobile={isMobile}
+              setIsLikedByModalOpen={setIsLikedByModalOpen}
+              setSelectedPost={setSelectedPost}
+              setDataLoading={setDataLoading}
               setPhotosArray={setPhotosArray}
+              photosArray={photosArray}
+              getFollowingPosts={getFollowingPosts}
+              selectedPost={selectedPost}
               setIsLoadingPage={setIsLoadingPage}
               likeUploadToggle={likeUploadToggle}
               userData={userData}
-              profileData={profileData} 
-              setDataLoading={setDataLoading}
-              selectedPost={selectedPost}
-              setSelectedPost={setSelectedPost}
+              followHandler={followHandler}
+              isFollowLoading={isFollowLoading}
+              unfollowModalHandler={unfollowModalHandler}
+              allUserProfiles={allUserProfiles}
+              selectedListProfile={selectedListProfile}
             />} 
           />
           <Route path='/p/:postID/comments' element={
@@ -1358,6 +1499,7 @@ const RouterSwitch = () => {
           />
           <Route path='/p/:postID/liked_by' element={
             <LikedBy
+              selectedListProfile={selectedListProfile}
               unfollowModalHandler={unfollowModalHandler}
               followHandler={followHandler}
               isFollowLoading={isFollowLoading}
@@ -1365,6 +1507,39 @@ const RouterSwitch = () => {
               selectedPost={selectedPost}
             />
           } />
+          <Route path='/explore/people' element={
+            <ExplorePeople
+              getUserProfiles={getUserProfiles}
+              onMouseEnter={onMouseEnter}
+              onMouseLeave={onMouseLeave}
+              selectedListProfile={selectedListProfile}
+              allUserProfiles={allUserProfiles}
+              userData={userData}
+              followHandler={followHandler}
+              isFollowLoading={isFollowLoading}
+              unfollowModalHandler={unfollowModalHandler}
+            />
+          } />
+          <Route path='/:username/followers' element={
+            <Followers 
+              selectedListProfile={selectedListProfile}
+              profileData={profileData}
+              userData={userData}
+              followHandler={followHandler}
+              isFollowLoading={isFollowLoading}
+              unfollowModalHandler={unfollowModalHandler}
+            />
+          }/>
+          <Route path='/:username/following' element={
+            <Following 
+              selectedListProfile={selectedListProfile}
+              profileData={profileData}
+              userData={userData}
+              followHandler={followHandler}
+              isFollowLoading={isFollowLoading}
+              unfollowModalHandler={unfollowModalHandler}
+            />
+          }/>
           <Route path='*' element={<div className="no-user-profile">
             <h2 className="no-user-header">Sorry, this page isn't availble.</h2>
             <div className="no-user-text">The link you followed may be broken, or the page may have been removed. <Link to='/'>Go Back to Instagram.</Link></div>
@@ -1374,22 +1549,57 @@ const RouterSwitch = () => {
         <Routes>
           <Route path='/p/:postID' element={
             <PhotoPostModal
+              onMouseEnter={onMouseEnter}
+              onMouseLeave={onMouseLeave}
               backgroundLocation={backgroundLocation}
               setBackgroundLocation={setBackgroundLocation} 
-              setIsLikedByModalOpen={setIsLikedByModalOpen}
+              setIsMouseHovering={setIsMouseHovering}
+              getUserProfileData={getUserProfileData}
               postLinksModalHandler={postLinksModalHandler}
-              photosArray={photosArray}
-              profilePosts={profilePosts}
+              isMobile={isMobile}
+              setIsLikedByModalOpen={setIsLikedByModalOpen}
+              setSelectedPost={setSelectedPost}
+              setDataLoading={setDataLoading}
               setPhotosArray={setPhotosArray}
+              photosArray={photosArray}
+              getFollowingPosts={getFollowingPosts}
+              selectedPost={selectedPost}
               setIsLoadingPage={setIsLoadingPage}
               likeUploadToggle={likeUploadToggle}
               userData={userData}
-              profileData={profileData} 
-              setDataLoading={setDataLoading}
-              selectedPost={selectedPost}
-              setSelectedPost={setSelectedPost}
+              followHandler={followHandler}
+              isFollowLoading={isFollowLoading}
+              unfollowModalHandler={unfollowModalHandler}
+              allUserProfiles={allUserProfiles}
+              selectedListProfile={selectedListProfile}
             />} 
           />
+          <Route path='/:username/followers' element={
+            <FollowersModal
+              setBackgroundLocation={setBackgroundLocation}
+              onMouseEnter={onMouseEnter}
+              onMouseLeave={onMouseLeave}
+              selectedListProfile={selectedListProfile}
+              profileData={profileData}
+              userData={userData}
+              followHandler={followHandler}
+              isFollowLoading={isFollowLoading}
+              unfollowModalHandler={unfollowModalHandler}
+            />
+          }/>
+          <Route path='/:username/following' element={
+            <FollowingModal
+              setBackgroundLocation={setBackgroundLocation}
+              onMouseEnter={onMouseEnter}
+              onMouseLeave={onMouseLeave}
+              selectedListProfile={selectedListProfile}
+              profileData={profileData}
+              userData={userData}
+              followHandler={followHandler}
+              isFollowLoading={isFollowLoading}
+              unfollowModalHandler={unfollowModalHandler}
+            />
+          }/>
         </Routes>
         }
       </section>

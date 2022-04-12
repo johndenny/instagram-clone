@@ -129,6 +129,7 @@ h1.logo-header {
   justify-content: center;
   align-items: center;
   flex: 1;
+  height: 44px;
 }
 
 .mobile-navigation-bar-spacer {

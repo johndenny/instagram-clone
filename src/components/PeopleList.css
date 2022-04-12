@@ -5,18 +5,18 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-left: 6px;
 }
 
-.suggestions-user-wrapper {
+.user-wrapper {
   display: flex;
+  align-items: center;
 }
 
-.profile-photo-frame.suggestions {
+.people-list .profile-photo-frame {
   margin: 0;
 }
 
-.suggestions-user-text-wrapper {
+.user-text-wrapper {
   display: flex;
   flex-direction: column;
   font-size: 14px;
@@ -24,7 +24,19 @@
   gap: 4px;
 }
 
-.suggestions-full-name-text {
+.full-name-text {
   font-size: 12px;
-  color: rgba(142, 142, 142, 1)
+  color: rgba(142, 142, 142, 1);
+}
+
+.people-list .username-text {
+  line-height: 18px;
+}
+
+.username-text {
+  cursor: pointer;
+}
+
+.username-text:hover {
+  text-decoration: underline;
 }

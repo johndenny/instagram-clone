@@ -1,10 +1,14 @@
 import './HomepageFixedMenu.css';
 import PeopleList from './PeopleList';
 import useWindowSize from '../hooks/useWindowSize';
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const HomepageFixedMenu = (props) => {
   const {
+    onMouseEnter,
+    onMouseLeave,
+    selectedListProfile,
     userData,
     allUserProfiles,
     followHandler,
@@ -15,11 +19,11 @@ const HomepageFixedMenu = (props) => {
   const [left, setLeft] = useState(0);
 
   const leftHandler = () => {
-    const left = (width / 2) + (684 / 4);
+    const left = (width / 2) + (658 / 4);
     setLeft(left)
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     leftHandler();
   }, [width]);
 
@@ -50,17 +54,22 @@ const HomepageFixedMenu = (props) => {
         <h1 className='profile-suggestions-header-text'>
           Suggestions For You
         </h1>
-        <button className='see-all-suggestions-button'>
+        <Link to='/explore/people' className='see-all-suggestions-button'>
           See All
-        </button>
+        </Link>
       </header>
-      <PeopleList 
-        allUserProfiles={allUserProfiles}
-        userData={userData}
-        followHandler={followHandler}
-        isFollowLoading={isFollowLoading}
-        unfollowModalHandler={unfollowModalHandler}
-      />
+      <main className='profile-suggestions-content'>
+        <PeopleList
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          selectedListProfile={selectedListProfile}
+          allUserProfiles={allUserProfiles}
+          userData={userData}
+          followHandler={followHandler}
+          isFollowLoading={isFollowLoading}
+          unfollowModalHandler={unfollowModalHandler}
+        />        
+      </main>
     </section>
   )
 }

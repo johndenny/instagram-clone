@@ -6,12 +6,21 @@ import React, { useEffect, useRef, useState } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
 import { v4 as uuidv4 } from 'uuid';
 import PostComments from '../components/PostComments';
+import FollowButton from '../components/FollowButton';
 
 const db = getFirestore()
 let lastPress = 0;
 
 const MobilePhotoPost = (props) => {
   const {
+    onMouseEnter,
+    onMouseLeave,
+    setIsMouseHovering,
+    followHandler,
+    isFollowLoading,
+    unfollowModalHandler,
+    allUserProfiles,
+    selectedListProfile,
     getUserProfileData,
     isModal,
     backgroundLocation,
@@ -46,7 +55,47 @@ const MobilePhotoPost = (props) => {
   const postCommentsRef = useRef(null);
   const [modalPhotoWidth, setModalPhotoWidth] = useState(0);
   const [modalPhotoHeight, setModalPhotoHeight] = useState(0);
-  
+  const profilePhotoRef = useRef(null);
+  const profileCaptionPhotoRef = useRef(null);
+  const usernameHeaderRef = useRef(null);
+  const usernameCaptionRef = useRef(null);
+  const usernameCommentRef = useRef(null);
+  const featuredCommentsRef = useRef([]);
+  const fullCommentsUsernameRef = useRef([]);
+  const fullCommentsPhotoRef = useRef([]);
+
+
+  // const onMouseEnter = (uid, ref) => {
+  //   setProfileModalData(null);
+  //   setProfileModalPosts(null);
+  //   console.log(ref);
+  //   console.log('mouse entered');
+  //   // clearTimeout(timerRef.current);
+  //   const location = ref.getBoundingClientRect();
+  //   const locationHeight = ref.offsetHeight;
+  //   let locationY = location.y + window.pageYOffset + locationHeight
+  //   if (window.innerHeight < (location.y + locationHeight + 350)) {
+  //     locationY = location.y + window.pageYOffset - 346;
+  //   }
+  //   setProfileModalLocation({
+  //     x: location.x,
+  //     y: locationY
+  //   });
+  //   timerRef.current = setTimeout(() => {
+  //     getModalProfileData(uid);
+  //     setIsMouseHovering(true);      
+  //   }, 400);
+  // }
+
+  // const onMouseLeave = () => {
+  //   console.log('mouse left');
+  //   console.log('set:', timerRef.current)
+  //   clearTimeout(timerRef.current)
+  //   timerRef.current = setTimeout(() => {
+  //     setIsMouseHovering(false);
+  //   }, 400);     
+  // } 
+
   const onDoublePress = (event) => {
     const time = new Date().getTime();
     const delta = time - lastPress;
@@ -128,7 +177,7 @@ const MobilePhotoPost = (props) => {
   }
 
   const navigateLikedBy = async (postID) => {
-    await getPostData(postID);
+    await getPostData();
     if (isMobile) {
       navigate(`/p/${postID}/liked_by`);  
     } else {
@@ -216,10 +265,17 @@ const MobilePhotoPost = (props) => {
   }
 
   useEffect(() => {
+    console.log(selectedPost);
     if (selectedPost === '') {
       getPostData();
     }
   }, []);
+
+  useEffect(() => () => {
+    if (params.postID !== undefined && isModal) {
+      setSelectedPost('');
+    }
+  },[]);
 
   useEffect(() => {
     if (selectedPost !== '') {
@@ -244,13 +300,8 @@ const MobilePhotoPost = (props) => {
     setSoloPostHeight(newHeight);
   }
 
-  useEffect(() => {
-    console.log(backgroundLocation);
-  }, [backgroundLocation]);
-
   const modalSizesHandler = () => {
     const { aspectRatio } = selectedPost[1];
-    console.log('hi')
     let maxPhotoHeight = height - 60;
     let maxPhotoWidth = 1090;
     let modalHeight = maxPhotoHeight;
@@ -284,7 +335,6 @@ const MobilePhotoPost = (props) => {
   }
 
   if (selectedPost !== '') {
-    console.log(selectedPost);
     const { 
       username,
       photoURL,
@@ -294,6 +344,7 @@ const MobilePhotoPost = (props) => {
       comments,
       photos,
       likes,
+      uid
     } = selectedPost[0];
 
     const frameWrapperHandler = () => {
@@ -324,11 +375,12 @@ const MobilePhotoPost = (props) => {
       }
     };
 
-    const navigateUserProfile = async () => {
+    const navigateUserProfile = async (username) => {
       setIsLoadingPage(true);
       await getUserProfileData(username);
       navigate(`/${username}`);
       setIsLoadingPage(false);
+      setIsMouseHovering(false);
     }
 
     if (isModal) {
@@ -430,12 +482,32 @@ const MobilePhotoPost = (props) => {
           <section className='solo-post-side-bar-modal'>
             <header className='solo-post-header'>
               <div className='profile-photo-username-wrapper'>
-                <div className='feed-profile-photo-wrapper'>
+                <div 
+                  className='feed-profile-photo-wrapper'
+                  onClick={() => navigateUserProfile(username)}
+                  onMouseEnter={() => onMouseEnter(uid, profilePhotoRef.current)}
+                  onMouseLeave={onMouseLeave}
+                  ref={profilePhotoRef}  
+                >
                   <img alt={`${username}'s profile`} src={photoURL} className="feed-profile-photo"/> 
                 </div>
-                <span className='profile-username-header'>
+                <span 
+                  className='profile-username-header'
+                  onClick={() => navigateUserProfile(username)}
+                  onMouseEnter={() => onMouseEnter(uid, usernameHeaderRef.current)}
+                  onMouseLeave={onMouseLeave}
+                  ref={usernameHeaderRef}
+                >
                   {username}
                 </span>
+                <FollowButton 
+                  selectedListProfile={selectedListProfile}
+                  userData={userData}
+                  followHandler={followHandler}
+                  unfollowModalHandler={unfollowModalHandler}
+                  isFollowLoading={isFollowLoading}
+                  user={selectedPost[0]}
+                />
                 <button 
                   className='post-links-modal'
                   onClick={() => postLinksModalHandler(index)}  
@@ -455,40 +527,60 @@ const MobilePhotoPost = (props) => {
                 className='solo-post-comment-list'
                 
               >
-                <li className='comment-wrapper'>
-                  <div className='comment-profile-photo-frame'>
-                    <img 
-                      alt={`${selectedPost[0].username}'s profile`} 
-                      src={selectedPost[0].photoURL} 
-                      className="comments-profile-photo"
-                    /> 
-                  </div>
-                  <div className='comment-text-time-wrapper'>
-                    <div className='comment-text-wrapper'>
-                      <h2 className='comment-username'>
-                        {selectedPost[0].username}
-                      </h2>
-                      <span className='comment-text'>
-                        {postCaption}
-                      </span>                    
+                {postCaption !== '' &&
+                  <li className='comment-wrapper'>
+                    <div 
+                      className='comment-profile-photo-frame'
+                      onClick={() => navigateUserProfile(username)}
+                      onMouseEnter={() => onMouseEnter(uid, profileCaptionPhotoRef.current)}
+                      onMouseLeave={onMouseLeave}
+                      ref={profileCaptionPhotoRef} 
+                    >
+                      <img 
+                        alt={`${selectedPost[0].username}'s profile`} 
+                        src={selectedPost[0].photoURL} 
+                        className="comments-profile-photo"
+                      /> 
                     </div>
-                    <time className='comment-time-stamp'>
-                      {new Date(uploadDate).toDateString()}
-                    </time>
-                  </div>
-                  
-                </li>
-                {comments.map((comment) => {
+                    <div className='comment-text-time-wrapper'>
+                      <div className='comment-text-wrapper'>
+                        <h2 
+                          className='comment-username'
+                          onClick={() => navigateUserProfile(username)}
+                          onMouseEnter={() => onMouseEnter(uid, usernameCaptionRef.current)}
+                          onMouseLeave={onMouseLeave}
+                          ref={usernameCaptionRef}
+                        >
+                          {selectedPost[0].username}
+                        </h2>
+                        <span className='comment-text'>
+                          {postCaption}
+                        </span>                    
+                      </div>
+                      <time className='comment-time-stamp'>
+                        {new Date(uploadDate).toDateString()}
+                      </time>
+                    </div>
+                  </li>                
+                }
+                {comments.map((comment, index) => {
                   const {
                     commentID,
                     username,
                     text,
                     photoURL,
                     uploadDate,
+                    uid
                   } = comment;
                   return (
                     <li key={commentID} className='comment-wrapper'>
-                      <div className='comment-profile-photo-frame'>
+                      <div 
+                        className='comment-profile-photo-frame'
+                        onClick={() => navigateUserProfile(username)}
+                        ref={(element) => fullCommentsPhotoRef.current.push(element)}
+                        onMouseEnter={() => onMouseEnter(uid, fullCommentsPhotoRef.current[index])}
+                        onMouseLeave={onMouseLeave} 
+                      >
                         <img 
                           alt={`${username}'s profile`} 
                           src={photoURL} 
@@ -497,7 +589,13 @@ const MobilePhotoPost = (props) => {
                       </div>
                       <div className='comment-text-time-wrapper'>
                         <div className='comment-text-wrapper'>
-                          <h2 className='comment-username'>
+                          <h2 
+                            className='comment-username'
+                            onClick={() => navigateUserProfile(username)}
+                            ref={(element) => fullCommentsUsernameRef.current.push(element)}
+                            onMouseEnter={() => onMouseEnter(uid, fullCommentsUsernameRef.current[index])}
+                            onMouseLeave={onMouseLeave} 
+                          >
                             {username}
                           </h2>
                           <span className='comment-text'>
@@ -687,7 +785,10 @@ const MobilePhotoPost = (props) => {
               <section className='solo-post-side-bar'>
                 <header className='solo-post-header'>
                   <div className='profile-photo-username-wrapper'>
-                    <div className='feed-profile-photo-wrapper'>
+                    <div 
+                      className='feed-profile-photo-wrapper'
+                    
+                    >
                       <img alt={`${username}'s profile`} src={photoURL} className="feed-profile-photo"/> 
                     </div>
                     <span className='profile-username-header'>
@@ -853,13 +954,19 @@ const MobilePhotoPost = (props) => {
                 <div className='profile-photo-username-wrapper'>
                   <div 
                     className='feed-profile-photo-wrapper'
-                    onClick={navigateUserProfile}
+                    onClick={() => navigateUserProfile(username)}
+                    onMouseEnter={() => onMouseEnter(uid, profilePhotoRef.current)}
+                    onMouseLeave={onMouseLeave}
+                    ref={profilePhotoRef}
                   >
                     <img alt={`${username}'s profile`} src={photoURL} className="feed-profile-photo"/> 
                   </div>
                   <span 
                     className='profile-username-header'
-                    onClick={navigateUserProfile}
+                    onClick={() => navigateUserProfile(username)}
+                    onMouseEnter={() => onMouseEnter(uid, usernameHeaderRef.current)}
+                    onMouseLeave={onMouseLeave}
+                    ref={usernameHeaderRef}
                   >
                     {username}
                   </span>
@@ -1016,7 +1123,13 @@ const MobilePhotoPost = (props) => {
                 <div className='post-caption-comments-wrapper'>
                   {postCaption !== '' &&
                     <div className='post-caption-wrapper'>
-                      <span className='caption-username'>
+                      <span 
+                        className='caption-username'
+                        onClick={() => navigateUserProfile(username)}
+                        onMouseEnter={() => onMouseEnter(uid, usernameCommentRef.current)}
+                        onMouseLeave={onMouseLeave}
+                        ref={usernameCommentRef}
+                      >
                         {username}
                       </span>
                       <span>&nbsp;</span>
@@ -1067,7 +1180,8 @@ const MobilePhotoPost = (props) => {
                         const {
                           username,
                           text,
-                          commentID
+                          commentID,
+                          uid
                         } = comment;
                         if (index <= 1) {
                           return (
@@ -1075,7 +1189,13 @@ const MobilePhotoPost = (props) => {
                               key={commentID}
                               className='featured-comment-wrapper'>
                               <div className='comment-text-wrapper'>
-                                <h2 className='comment-username'>
+                                <h2 
+                                  className='comment-username'
+                                  onClick={() => navigateUserProfile(username)}
+                                  ref={(element) => featuredCommentsRef.current.push(element)}
+                                  onMouseEnter={() => onMouseEnter(uid, featuredCommentsRef.current[index])}
+                                  onMouseLeave={onMouseLeave} 
+                                >
                                   {username}
                                 </h2>
                                 <span className='comment-text'>
@@ -1102,7 +1222,10 @@ const MobilePhotoPost = (props) => {
                             key={commentID}
                             className='new-comment-wrapper'>
                             <div className='comment-text-wrapper'>
-                              <h2 className='comment-username'>
+                              <h2 
+                                className='comment-username'
+                                onClick={() => navigateUserProfile(username)}  
+                              >
                                 {username}
                               </h2>
                               <span className='comment-text'>

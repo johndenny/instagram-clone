@@ -11,6 +11,10 @@
   cursor: pointer;
 }
 
+.view-comments-button:active {
+  opacity: .5;
+}
+
 .featured-comments-list,
 .new-comments-list {
   margin: 0;

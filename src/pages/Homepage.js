@@ -2,11 +2,15 @@ import './Homepage.css';
 import ProfileImagesLoader from '../components/ProfileImagesLoader';
 import MobilePhotoPost from './MobilePhotoPost';
 import HomepageFixedMenu from '../components/HomepageFixedMenu';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
 
 const Homepage = (props) => {
   const {
+    onMouseEnter,
+    onMouseLeave,
+    setIsMouseHovering,
+    selectedListProfile,
     followHandler,
     isFollowLoading,
     unfollowModalHandler,
@@ -31,8 +35,10 @@ const Homepage = (props) => {
   const [width, height] = useWindowSize();
 
   useEffect(() => {
-    getUserProfiles();
-  }, []);
+    if (userData && Object.keys(userData).length > 0 && Object.getPrototypeOf(userData) === Object.prototype) {
+      getUserProfiles();
+    }
+  }, [userData]);
 
   return (
     <main className='homepage-sidebar-wrapper'>
@@ -42,6 +48,9 @@ const Homepage = (props) => {
             return (
               <div key={post[0].postID}>
                 <MobilePhotoPost
+                  onMouseEnter={onMouseEnter}
+                  onMouseLeave={onMouseLeave}
+                  setIsMouseHovering={setIsMouseHovering}
                   getUserProfileData={getUserProfileData}
                   setBackgroundLocation={setBackgroundLocation}
                   postLinksModalHandler={postLinksModalHandler}
@@ -57,6 +66,11 @@ const Homepage = (props) => {
                   setIsLoadingPage={setIsLoadingPage}
                   likeUploadToggle={likeUploadToggle}
                   userData={userData}
+                  followHandler={followHandler}
+                  isFollowLoading={isFollowLoading}
+                  unfollowModalHandler={unfollowModalHandler}
+                  allUserProfiles={allUserProfiles}
+                  selectedListProfile={selectedListProfile}
                 />               
               </div>
             )
@@ -64,11 +78,14 @@ const Homepage = (props) => {
         </section>
         {!isMobile && width > 999 &&
           <HomepageFixedMenu
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
             followHandler={followHandler}
             isFollowLoading={isFollowLoading}
             unfollowModalHandler={unfollowModalHandler}
             userData={userData}
             allUserProfiles={allUserProfiles}
+            selectedListProfile={selectedListProfile}
           />           
         }
       </div>

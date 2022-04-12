@@ -2,7 +2,7 @@ import defaultProfileImage from "../images/default-profile-image.jpg";
 import './Profile.css';
 import React, { useEffect, useState } from "react";
 import ProfilePhotoModal from "../components/ProfilePhotoModal";
-import { Link, useParams, useLocation} from "react-router-dom";
+import { Link, useParams, useLocation, useNavigate} from "react-router-dom";
 import useWindowSize from "../hooks/useWindowSize";
 import firebaseApp from "../Firebase";
 import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
@@ -14,6 +14,7 @@ const auth = getAuth();
 
 const Profile = (props) => {
   const {
+    setProfileData,
     setSelectedPost,
     setBackgroundLocation,
     isFollowLoading,
@@ -49,6 +50,7 @@ const Profile = (props) => {
   const [width, height] = useWindowSize();
   const params = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [pageSelected, setPageSelected] = useState('posts');
   const [previousUsername, setPreviousUsername] = useState('')
 
@@ -72,6 +74,20 @@ const Profile = (props) => {
     setCurrentPath('');
   }
 
+  const navigateFollowers = () => {
+    if (width > 736) {
+      setBackgroundLocation(location);    
+    } 
+    navigate(`/${profileData.username}/followers`); 
+  }
+
+  const navigateFollowing = () => {
+    if (width > 736) {
+      setBackgroundLocation(location);
+    };
+    navigate(`/${profileData.username}/following`)
+  }
+
   useEffect(() => {
     console.log(profileData);
   },[profileData]);
@@ -79,6 +95,10 @@ const Profile = (props) => {
   useEffect(() => {
     console.log(pageSelected)
   }, [pageSelected])
+
+  // useEffect(() => () => {
+  //   setProfileData([]);
+  // }, []);
 
   return (
     <main className="profile-wrapper">
@@ -416,7 +436,7 @@ const Profile = (props) => {
                           </button>
                           <button 
                             className="unfollow-button"
-                            onClick={unfollowModalHandler}
+                            onClick={() => unfollowModalHandler(profileData)}
                           >
                             <div 
                               className={isFollowLoading ? 'follow-spinner' : 'follow-spinner hidden'}
@@ -589,7 +609,10 @@ const Profile = (props) => {
                           </div>
                         </li>
                         <li className="followers-number-wrapper">
-                          <div className="followers-link">
+                          <div 
+                            className="followers-link"
+                            onClick={navigateFollowers}
+                          >
                             <span className="followers">
                               {profileData.followers.length}
                             </span>
@@ -597,9 +620,12 @@ const Profile = (props) => {
                           </div>
                         </li>
                         <li className="following-number-wrapper">
-                          <div className="following-link">
+                          <div 
+                            className="following-link"
+                            onClick={navigateFollowing}
+                          >
                             <span className="following-number">
-                              {profileData.followers.length}
+                              {profileData.following.length}
                             </span>
                             {' following'}
                           </div>
@@ -1020,7 +1046,7 @@ const Profile = (props) => {
                         </button>
                         <button 
                           className="unfollow-button"
-                          onClick={unfollowModalHandler}
+                          onClick={() => unfollowModalHandler(profileData)}
                         >
                           <div 
                             className={isFollowLoading ? 'follow-spinner' : 'follow-spinner hidden'}
@@ -1181,7 +1207,10 @@ const Profile = (props) => {
                     </div>
                   </li>
                   <li className="followers-number-wrapper">
-                    <div className="followers-link">
+                    <div 
+                      className="followers-link"
+                      onClick={navigateFollowers}
+                    >
                       <span className="followers">
                         {profileData.followers.length}
                       </span>
@@ -1189,7 +1218,10 @@ const Profile = (props) => {
                     </div>
                   </li>
                   <li className="following-number-wrapper">
-                    <div className="following-link">
+                    <div 
+                      className="following-link"
+                      onClick={navigateFollowing}
+                    >
                       <span className="following-number">
                         {profileData.following.length}
                       </span>

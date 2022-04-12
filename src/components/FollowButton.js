@@ -1,5 +1,9 @@
+import { useEffect } from 'react';
+import './FollowButton.css'
+
 const FollowButton = (props) => {
   const {
+    selectedListProfile,
     userData,
     isFollowLoading,
     followHandler,
@@ -11,11 +15,15 @@ const FollowButton = (props) => {
   if (followIndex === -1 && user.uid !== userData.uid) {
     return (
       <button 
-        className='liked-by-follow-button'
+        className='follow-button'
         onClick={() => followHandler(user)}
       >
         <div 
-          className={isFollowLoading ? 'follow-spinner' : 'follow-spinner hidden'}
+          className={
+            isFollowLoading && selectedListProfile === user 
+              ? 'follow-spinner' 
+              : 'follow-spinner hidden'
+          }
         >
           <svg aria-label="Loading..." className='follow-spinner-svg' viewBox="0 0 100 100">
             <rect fill="#555555" height="6" opacity="0" rx="3" ry="3" transform="rotate(-90 50 50)" width="25" x="72" y="47">
@@ -152,18 +160,25 @@ const FollowButton = (props) => {
             </rect>
           </svg>    
         </div>
-        Follow
+        <span 
+          className={isFollowLoading && selectedListProfile === user 
+            ? 'follow-button-text hidden'
+            : 'follow-button-text'
+          }
+        >
+          Follow
+        </span>
       </button>   
     )
   }         
   if (followIndex !== -1 && user.uid !== userData.uid) {
     return (
       <button 
-        className='liked-by-following-button'
+        className='following-button'
         onClick={() => unfollowModalHandler(user)}
       >
         <div 
-          className={isFollowLoading ? 'follow-spinner' : 'follow-spinner hidden'}
+          className={isFollowLoading && selectedListProfile === user ? 'follow-spinner' : 'follow-spinner hidden'}
         >
           <svg aria-label="Loading..." className='follow-spinner-svg' viewBox="0 0 100 100">
             <rect fill="#555555" height="6" opacity="0" rx="3" ry="3" transform="rotate(-90 50 50)" width="25" x="72" y="47">
@@ -300,7 +315,14 @@ const FollowButton = (props) => {
             </rect>
           </svg>    
         </div>
-        Following
+        <span 
+          className={isFollowLoading && selectedListProfile === user 
+            ? 'following-button-text hidden'
+            : 'following-button-text'
+          }
+        >
+          Following
+        </span>
       </button>       
     )
   }

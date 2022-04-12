@@ -114,7 +114,43 @@ const MobileNavigationBars = (props) => {
           </div>
         </header>   
       )
-    } 
+    }
+    if (pathname.split('/')[2] === 'followers') {
+      return (
+        <header className="mobile-navigation-header">
+          <div className="mobile-navigation-icon-wrapper">
+            <button className="back-button" onClick={goBack}>
+              <svg aria-label="Back" className="back-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
+              </svg>
+            </button>
+            <h1 className="logo-header">
+              Followers
+            </h1>
+            <div className="message-icon-wrapper">
+            </div>            
+          </div>
+        </header>   
+      ) 
+    }
+    if (pathname.split('/')[2] === 'following') {
+      return (
+        <header className="mobile-navigation-header">
+          <div className="mobile-navigation-icon-wrapper">
+            <button className="back-button" onClick={goBack}>
+              <svg aria-label="Back" className="back-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
+              </svg>
+            </button>
+            <h1 className="logo-header">
+              Following
+            </h1>
+            <div className="message-icon-wrapper">
+            </div>            
+          </div>
+        </header>   
+      ) 
+    }  
     if (pathname.split('/')[3] === 'comments') {
       return (
         <header className="mobile-navigation-header">
@@ -178,11 +214,11 @@ const MobileNavigationBars = (props) => {
             <h1 className="logo-header">
               {profileUsername}
             </h1>
-            <div className="discover-people-icon-wrapper">
+            <Link to='/explore/people' className="discover-people-icon-wrapper">
               <svg aria-label="Discover People" className="discover-people-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 48 48" width="24">
                 <path d="M32 25.5c5.2 0 9.5-4.3 9.5-9.5S37.2 6.5 32 6.5s-9.5 4.3-9.5 9.5 4.3 9.5 9.5 9.5zm0-16c3.6 0 6.5 2.9 6.5 6.5s-2.9 6.5-6.5 6.5-6.5-2.9-6.5-6.5 2.9-6.5 6.5-6.5zm5.5 19h-11c-5.5 0-10 4.5-10 10V40c0 .8.7 1.5 1.5 1.5s1.5-.7 1.5-1.5v-1.5c0-3.9 3.1-7 7-7h11c3.9 0 7 3.1 7 7V40c0 .8.7 1.5 1.5 1.5s1.5-.7 1.5-1.5v-1.5c0-5.5-4.5-10-10-10zm-20-4.5c0-.8-.7-1.5-1.5-1.5h-5.5V17c0-.8-.7-1.5-1.5-1.5s-1.5.7-1.5 1.5v5.5H2c-.8 0-1.5.7-1.5 1.5s.7 1.5 1.5 1.5h5.5V31c0 .8.7 1.5 1.5 1.5s1.5-.7 1.5-1.5v-5.5H16c.8 0 1.5-.7 1.5-1.5z"></path>
               </svg>
-            </div>            
+            </Link>            
           </div>
         </header>   
       )

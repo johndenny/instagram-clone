@@ -1,43 +1,62 @@
+import { useRef } from 'react';
 import FollowButton from './FollowButton.js';
 import './PeopleList.css'
+import defaultProfile from '../images/default-profile-image.jpg';
 
 const PeopleList = (props) => {
-  const { 
+  const {
+    onMouseEnter,
+    onMouseLeave,
+    selectedListProfile,
     allUserProfiles,
     userData,
     followHandler,
     isFollowLoading,
     unfollowModalHandler,
   } = props;
+  const usernameRef = useRef([]);
+  const photoRef = useRef([]);
   
   if (userData && Object.keys(userData).length > 0 && Object.getPrototypeOf(userData) === Object.prototype) {
+    console.log(allUserProfiles);
     return (
       <ul className='people-list'>
-        {allUserProfiles.map((user) => {
+        {allUserProfiles.map((user, index) => {
           const {
             username,
             photoURL,
             fullname,
+            fullName,
             uid,
           } = user;
-          // const followIndex = userData.following.findIndex((follow) => follow.uid === uid);
           return (
             <div 
               key={uid}
-              className='suggestions-user-wrapper'
+              className='user-wrapper'
             >
-              <div className='profile-photo-frame suggestions'>
-                <img alt={`${username}'s profile`} className='user-profile-photo' src={photoURL} />
+              <div 
+                className='profile-photo-frame'
+                ref={(element) => photoRef.current.push(element)}
+                onMouseEnter={() => onMouseEnter(uid, photoRef.current[index])}
+                onMouseLeave={onMouseLeave} 
+              >
+                <img alt={`${username}'s profile`} className='user-profile-photo' src={photoURL === '' ? defaultProfile : photoURL} />
               </div>
-              <div className='suggestions-user-text-wrapper'>
-                <span className='liked-by-username-text'>
+              <div className='user-text-wrapper'>
+                <span 
+                  className='username-text'
+                  ref={(element) => usernameRef.current.push(element)}
+                  onMouseEnter={() => onMouseEnter(uid, usernameRef.current[index])}
+                  onMouseLeave={onMouseLeave} 
+                >
                   {username}
                 </span>
-                <span className='suggestions-full-name-text'>
-                  {fullname}
+                <span className='full-name-text'>
+                  {fullname || fullName}
                 </span>
               </div>
-              <FollowButton 
+              <FollowButton
+                selectedListProfile={selectedListProfile}
                 userData={userData}
                 followHandler={followHandler}
                 unfollowModalHandler={unfollowModalHandler}

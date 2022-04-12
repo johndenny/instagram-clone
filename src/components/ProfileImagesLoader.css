@@ -108,11 +108,15 @@
   top: 0;
 }
 
+.profile-photo-username-wrapper > .following-button,
+.profile-photo-username-wrapper > .follow-button {
+  margin: 0;
+}
+
 .profile-username-header {
   font-size: 14px;
   font-weight: 600;
-  margin-left: 12px;
-  flex: 1;
+  margin: 0 12px;
   margin-bottom: 3px;
   cursor: pointer;
 }
@@ -190,6 +194,11 @@
 
 .caption-username {
   font-weight: 600;
+}
+
+.caption-username:hover {
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .post-caption-wrapper {
