@@ -11,6 +11,7 @@ const MobileNavigationBars = (props) => {
   const location = useLocation();
   const [currentPath, setCurrentPath] = useState('');
   const {
+    setSearchResults,
     searchString,
     setSearchString,
     setIsLoadingPage,
@@ -47,6 +48,12 @@ const MobileNavigationBars = (props) => {
     mobilePhotoUploadHandler(event)
     navigate('/create/style/');
     event.target.value = null;
+  }
+
+  const cancelSearchHandler = () => {
+    setSearchString('');
+    setSearchResults([]);
+    navigate('/explore/');
   }
 
   const topNavigationHandler = () => {
@@ -119,7 +126,7 @@ const MobileNavigationBars = (props) => {
             {pathname === '/explore/search' &&
               <button 
                 className="search-cancel-button"
-                onClick={() => navigate('/explore/')}
+                onClick={cancelSearchHandler}
               >
                 Cancel
               </button>            

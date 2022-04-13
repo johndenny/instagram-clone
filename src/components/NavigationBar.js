@@ -1,12 +1,29 @@
 import './NavigationBar.css'
 import navigationLogo from '../images/navigation-logo.png';
 import defaultProfileImage from '../images/default-profile-image.jpg';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import ProfileDropDown from './ProfileDropDown';
+import SearchDropDown from './SearchDropDown';
 
 const NavigationBar = (props) => {
   const {
+    deleteRecentSearch,
+    isNoMatch,
+    isSearching,
+    clearRecentSearch,
+    saveRecentSearch,
+    isSearchClicked,
+    setIsSearchClicked,
+    searchString,
+    setIsMouseHovering,
+    setSearchResults,
+    setSearchString,
+    searchResults,
+    selectedListProfile,
+    unfollowModalHandler,
+    followHandler,
+    isFollowLoading,
     setCurrentPath,
     currentPath, 
     userData, 
@@ -17,6 +34,9 @@ const NavigationBar = (props) => {
   } = props
   const location = useLocation();
   const [dropDownOpen, setDropDownOpen] = useState(false);
+  const searchInputRef = useRef(null);
+  const onBlurTimeout = useRef(null)
+  const [menuClicked, setMenuClicked] = useState(false);
 
   useEffect(() => {
     console.log('location:', location)
@@ -39,6 +59,35 @@ const NavigationBar = (props) => {
     setCurrentPath('');
   }
 
+  const inputFocusHandler = () => {
+    setIsSearchClicked(true);
+    searchInputRef.current.focus();
+  }
+
+  const searchInputHandler = (event) => {
+    const { value } = event.target;
+    if (value !== '') {
+      searchInputRef.current.focus();
+    }
+    setSearchString(value);
+  }
+
+  const clearInputs = (event) => {
+    event.stopPropagation();
+    console.log('clear-inputs')
+    setSearchString('');
+    setSearchResults([]);
+  };
+
+  const onBlurHandler = () => {
+    if (menuClicked) {
+      setMenuClicked(false);
+      searchInputRef.current.focus();
+    } else {
+      setIsSearchClicked(false);
+    }
+  };
+
   return (
     <nav className='navigation-bar-spacer-wrapper'>
       <div className='navigation-bar-spacer'></div>
@@ -50,16 +99,60 @@ const NavigationBar = (props) => {
             </Link>          
           </div>
           <div className="search-bar-wrapper">
-            <input aria-label='Search Input' autoCapitalize='none' className='search-input' />
-            <div className='search-placeholder'>
-              <div className='search-icon-text-wrapper'>
-                <svg aria-label="Search" className="_8-yf5 " color="#8e8e8e" fill="#8e8e8e" height="16" role="img" viewBox="0 0 24 24" width="16">
-                  <path d="M19 10.5A8.5 8.5 0 1110.5 2a8.5 8.5 0 018.5 8.5z" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-                  <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="16.511" x2="22" y1="16.511" y2="22"></line>
-                </svg>
-                <span>Search</span>
+            <input
+              value={searchString}
+              onChange={searchInputHandler} 
+              aria-label='Search Input' 
+              autoCapitalize='none' 
+              className='search-input' 
+              placeholder='Search'
+              ref={searchInputRef}
+              onBlur={onBlurHandler}
+            />
+            {!isSearchClicked &&
+              <div 
+                className='search-placeholder'
+                onClick={inputFocusHandler}
+              >
+                <div className='search-icon-text-wrapper'>
+                  <svg aria-label="Search" className="_8-yf5 " color="#8e8e8e" fill="#8e8e8e" height="16" role="img" viewBox="0 0 24 24" width="16">
+                    <path d="M19 10.5A8.5 8.5 0 1110.5 2a8.5 8.5 0 018.5 8.5z" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+                    <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="16.511" x2="22" y1="16.511" y2="22"></line>
+                  </svg>
+                  <span>{searchString === '' ? 'Search' : searchString}</span>
+                </div>
               </div>
-            </div>
+
+            }                   
+            {isSearchClicked &&
+              <button 
+                className="clear-search-button"
+                onMouseDown={clearInputs}
+              >
+                <span className="clear-search-glyph-sprite">
+                </span>
+              </button>              
+            }
+            {isSearchClicked &&
+              <SearchDropDown
+                deleteRecentSearch={deleteRecentSearch}
+                isNoMatch={isNoMatch}
+                isSearching={isSearching}
+                clearRecentSearch={clearRecentSearch}
+                searchString={searchString}
+                saveRecentSearch={saveRecentSearch}
+                setIsMouseHovering={setIsMouseHovering}
+                setSearchString={setSearchString}
+                setSearchResults={setSearchResults} 
+                searchResults={searchResults}
+                selectedListProfile={selectedListProfile}
+                userData={userData}
+                followHandler={followHandler}
+                isFollowLoading={isFollowLoading}
+                unfollowModalHandler={unfollowModalHandler}
+                setMenuClicked={setMenuClicked}
+              />               
+            }
           </div>
           <div className="page-icons-wrapper">
             <div className='home-icon icon'>

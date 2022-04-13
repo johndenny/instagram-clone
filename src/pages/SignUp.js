@@ -49,7 +49,8 @@ const SignUp = (props) => {
       following: [],
       followersUID: [],
       followingUID: [],
-      photoURL: ''
+      photoURL: '',
+      recentSearch: []
       });
       setUserData({...userCredential.user, ...{
         uid: uid,
@@ -63,7 +64,8 @@ const SignUp = (props) => {
         following: [],
         followersUID: [],
         followingUID: [],
-        photoURL: ''
+        photoURL: '',
+        recentSearch: [],
         }});
       console.log(userCredential.user);
       signInWithEmailAndPassword(auth, loginEmail, loginPassword);

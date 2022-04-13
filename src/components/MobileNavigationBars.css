@@ -247,6 +247,8 @@ h1.logo-header {
   top: 0;
   bottom: 0;
   right: 0;
+  z-index: 10;
+  cursor: pointer;
 }
 
 .clear-search-glyph-sprite {

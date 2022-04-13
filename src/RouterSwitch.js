@@ -120,13 +120,86 @@ const RouterSwitch = () => {
 
   // SEARCH //
 
+  const [isSearchClicked, setIsSearchClicked] = useState(false);
   const [searchString, setSearchString] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const searchTimeoutRef = useRef();
+  const [isSearching, setIsSearching] = useState(false);
+  const [isNoMatch, setIsNoMatch] = useState(false);
 
   // SEARCH //
 
+  const deleteRecentSearch = async (event, uid) => {
+    event.stopPropagation();
+    const { recentSearch } = userData;
+    const index = recentSearch.findIndex((search) => search.uid === uid);
+    const currentUserDataRef = doc(db, 'users', userData.uid);
+    if (index !== -1) {
+      await updateDoc(currentUserDataRef, {
+        recentSearch: arrayRemove(recentSearch[index])
+      });
+      console.log('success: recentSearch removed');
+    } else {
+      console.log('error: recentSearch delete');
+    }
+    getUserProfileDoc(userData);
+  }
+
+  const clearRecentSearch = async () => {
+    const currentUserDataRef = doc(db, 'users', userData.uid); 
+    await updateDoc(currentUserDataRef, {recentSearch: []});
+    getUserProfileDoc(userData);
+  }
+
+  const saveRecentSearch = async (uid) => {
+    const profileDataRef = doc(db, 'users', uid);
+    const currentUserDataRef = doc(db, 'users', userData.uid); 
+    const profileDataSnap = await getDoc(profileDataRef);
+    const currentUserDataSnap = await getDoc(currentUserDataRef);
+    if (currentUserDataSnap.exists()) {
+      const {
+        photoURL,
+        username,
+        fullname,
+        uid
+      } = profileDataSnap.data();
+      const {
+        recentSearch
+      } = currentUserDataSnap.data();
+      const index = recentSearch.findIndex((search) => search.uid === uid);
+      if (index === -1) {
+        await updateDoc(currentUserDataRef, {
+          recentSearch: arrayUnion({
+            searchID: uuidv4(),
+            photoURL: photoURL,
+            uid: uid,
+            uploadDate: Date.now(),
+            username: username,
+            fullName: fullname
+          })
+        });         
+      } else {
+        await updateDoc(currentUserDataRef, {
+          recentSearch: arrayRemove(recentSearch[index])
+        });
+        await updateDoc(currentUserDataRef, {
+          recentSearch: arrayUnion({
+            searchID: uuidv4(),
+            photoURL: photoURL,
+            uid: uid,
+            uploadDate: Date.now(),
+            username: username,
+            fullName: fullname
+          })
+        });  
+      }
+    }
+    getUserProfileDoc(userData);
+  }
+
   const getSearchResults = async () => {
+    setIsNoMatch(false);
+    setIsSearching(true);
     const matchedUsers = [];
     const searchTerm = searchString.toLowerCase();
     const users = query(collection(db, 'users'), 
@@ -135,7 +208,11 @@ const RouterSwitch = () => {
     usersSnapshot.forEach((user) => {
       matchedUsers.push(user.data());
     });
+    if (matchedUsers.length === 0) {
+      setIsNoMatch(true);
+    }
     setSearchResults(matchedUsers);
+    setIsSearching(false);
   }
 
   useEffect(() => {
@@ -1282,6 +1359,22 @@ const RouterSwitch = () => {
 
         {(userLoggedIn && !isMobile) &&
           <NavigationBar
+            deleteRecentSearch={deleteRecentSearch}
+            isNoMatch={isNoMatch}
+            isSearching={isSearching}
+            clearRecentSearch={clearRecentSearch}
+            saveRecentSearch={saveRecentSearch}
+            isSearchClicked={isSearchClicked}
+            setIsSearchClicked={setIsSearchClicked}
+            searchString={searchString}
+            setIsMouseHovering={setIsMouseHovering}
+            setSearchString={setSearchString}
+            setSearchResults={setSearchResults} 
+            searchResults={searchResults}
+            selectedListProfile={selectedListProfile}
+            followHandler={followHandler}
+            isFollowLoading={isFollowLoading}
+            unfollowModalHandler={unfollowModalHandler}
             currentPath={currentPath} 
             setCurrentPath={setCurrentPath}
             photoUploadModalOpen={photoUploadModalOpen}
@@ -1294,6 +1387,7 @@ const RouterSwitch = () => {
         {(userLoggedIn && isMobile && !photoUploadOpen) &&
           <MobileNavigationBars
             searchString={searchString}
+            setSearchResults={setSearchResults}
             setSearchString={setSearchString}
             setProfileNavigate={setProfileNavigate}
             profileNavigate={profileNavigate}
@@ -1363,6 +1457,11 @@ const RouterSwitch = () => {
               <Route path='/explore/' element={<Explore />} />
               <Route path='/explore/search' element={
                 <SearchResults
+                  deleteRecentSearch={deleteRecentSearch}
+                  isNoMatch={isNoMatch}
+                  clearRecentSearch={clearRecentSearch}
+                  searchString={searchString}
+                  saveRecentSearch={saveRecentSearch}
                   setIsMouseHovering={setIsMouseHovering}
                   setSearchString={setSearchString}
                   setSearchResults={setSearchResults} 
@@ -1438,6 +1537,9 @@ const RouterSwitch = () => {
           }
           <Route path='/:username' element={
             <Profile
+              setIsSearchClicked={setIsSearchClicked}
+              setSearchResults={setSearchResults}
+              setSearchString={setSearchString}
               setProfileData={setProfileData}
               setSelectedPost={setSelectedPost}
               setBackgroundLocation={setBackgroundLocation}
@@ -1475,6 +1577,9 @@ const RouterSwitch = () => {
           />
           <Route path='/:username/:page' element={
             <Profile
+              setIsSearchClicked={setIsSearchClicked}
+              setSearchResults={setSearchResults}
+              setSearchString={setSearchString}
               setProfileData={setProfileData}
               setSelectedPost={setSelectedPost}
               setBackgroundLocation={setBackgroundLocation}

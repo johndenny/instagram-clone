@@ -14,6 +14,9 @@ const auth = getAuth();
 
 const Profile = (props) => {
   const {
+    setIsSearchClicked,
+    setSearchString,
+    setSearchResults,
     setProfileData,
     setSelectedPost,
     setBackgroundLocation,
@@ -99,6 +102,12 @@ const Profile = (props) => {
   // useEffect(() => () => {
   //   setProfileData([]);
   // }, []);
+
+  useEffect(() => {
+    setSearchResults([]);
+    setSearchString('');
+    setIsSearchClicked(false);
+  },[])
 
   return (
     <main className="profile-wrapper">
