@@ -46,7 +46,7 @@ const Homepage = (props) => {
         <section className='homepage-posts-wrapper'>
           {photosArray.map((post, index) => {
             return (
-              <div key={post[0].postID}>
+              <div className='homepage-post' key={post[0].postID}>
                 <MobilePhotoPost
                   onMouseEnter={onMouseEnter}
                   onMouseLeave={onMouseLeave}

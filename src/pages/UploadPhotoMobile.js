@@ -58,7 +58,6 @@ const UploadPhotoMobile = (props) => {
 
   const editPageToggle = () => {
     editorPage === 'edit' ? setEditorPage('filter') : setEditorPage('edit');
-    filterScrollRef.current.scrollLeft = filterScrollLeft;
   }
 
   // const nextPage = () => {
@@ -118,14 +117,16 @@ const UploadPhotoMobile = (props) => {
             <canvas className={canvasClass.join(' ')} ref={canvasRef} width='1080' height='1080'></canvas>
           </div>
         </div>
-        <MobileFilterSlider
-          filterScrollRef={filterScrollRef} 
-          filterScrollLeft={filterScrollLeft} 
-          setFilterScrollLeft={setFilterScrollLeft} 
-          selectedFilter={selectedFilter} 
-          filterToggle={filterToggle}
-        />
-      </div>
+        {editorPage === 'filter' &&
+          <MobileFilterSlider
+            filterScrollRef={filterScrollRef} 
+            filterScrollLeft={filterScrollLeft} 
+            setFilterScrollLeft={setFilterScrollLeft} 
+            selectedFilter={selectedFilter} 
+            filterToggle={filterToggle}
+          />        
+        }
+      </div>      
       <div className={editorPage === 'filter' ? ["photo-overflow-frame", 'hidden'].join(' ') : 'photo-overflow-frame'} 
         onPointerMove={pointerTracker} 
         onPointerDown={pointerStart} 

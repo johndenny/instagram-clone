@@ -11,7 +11,7 @@ import crema from '../images/filters/crema.jpg';
 import ludwig from '../images/filters/crema.jpg';
 import aden from '../images/filters/aden.jpg';
 import perpetua from '../images/filters/perpetua.jpg';
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useEffect, useRef, useState } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
 
 const MobileFilterSlider = (props) => {
@@ -43,6 +43,7 @@ const MobileFilterSlider = (props) => {
 
   const getFilters = (index) => {
     const filtersVisable = Math.ceil(width/106) + 2;
+    console.log('filtersVisable:', filtersVisable, 'width:', width);
     const paddingRight = (filters.length - filtersVisable) - index;
     setFilterPaddingRight(paddingRight * 106);
     setFilterPaddingLeft(index * 106)
@@ -50,8 +51,8 @@ const MobileFilterSlider = (props) => {
     setVisableFilters(selectedFilters);
   }
 
-  const scrollLocation = (event) => {
-    const { scrollLeft } = event.target;
+  const scrollLocation = () => {
+    const scrollLeft = filterScrollRef.current.scrollLeft;
     setFilterScrollLeft(scrollLeft);
     if (scrollLeft/125 < 1) {
       getFilters(0);
@@ -71,13 +72,14 @@ const MobileFilterSlider = (props) => {
     if (scrollLeft/125 > 5 && scrollLeft/125 < 6) {
       getFilters(5);
     }
-    if (scrollLeft/125 > 6 && scrollLeft/125 < 7) {
+    if (scrollLeft/125 > 6 && scrollLeft/125 < 7.5) {
       getFilters(6);
     }
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     getFilters(0);
+    filterScrollRef.current.scrollLeft = filterScrollLeft;
   }, [width]);
   
   return (

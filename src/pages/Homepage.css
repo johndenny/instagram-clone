@@ -6,6 +6,9 @@
   position: relative;
 }
 
+.homepage-width-wrapper {
+}
+
 @media screen and (max-width: 736px) {
   .homepage-sidebar-wrapper {
     align-items: stretch;
@@ -26,7 +29,6 @@
     margin: 24px 0;
     max-width: 614px;
   }
-
 }
 
 .homepage-posts-wrapper {
