@@ -6,6 +6,8 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const PeopleList = (props) => {
   const {
+    isTag,
+    tagUserSelection,
     isRecentSearch,
     deleteRecentSearch,
     isSearch,
@@ -25,16 +27,17 @@ const PeopleList = (props) => {
   const photoRef = useRef([]);
 
   const navigateUserProfile = (username, uid) => {
-    if (isSearch) {
+    if (isTag) {
+      tagUserSelection(username, uid);
+      return;
+    } else if (isSearch) {
       saveRecentSearch(uid)
       setIsMouseHovering(false);
       navigate(`/${username}`);      
     }
   }
 
-  
-  if (userData && Object.keys(userData).length > 0 && Object.getPrototypeOf(userData) === Object.prototype) {
-    console.log(allUserProfiles);
+  if (isSearch) {
     return (
       <ul className='people-list'>
         {allUserProfiles.map((user, index) => {
@@ -74,16 +77,6 @@ const PeopleList = (props) => {
                   {fullname || fullName}
                 </span>
               </div>
-              {!isSearch &&
-                <FollowButton
-                  selectedListProfile={selectedListProfile}
-                  userData={userData}
-                  followHandler={followHandler}
-                  unfollowModalHandler={unfollowModalHandler}
-                  isFollowLoading={isFollowLoading}
-                  user={user}
-                />              
-              }
               {isRecentSearch &&
                 <button 
                   className='delete-recent-search'
@@ -95,7 +88,59 @@ const PeopleList = (props) => {
                   </svg>
                 </button>
               }
-
+            </li>
+          )
+        })}
+      </ul>
+    )
+  } else if (userData && Object.keys(userData).length > 0 && Object.getPrototypeOf(userData) === Object.prototype) {
+    return (
+      <ul className='people-list'>
+        {allUserProfiles.map((user, index) => {
+          const {
+            username,
+            photoURL,
+            fullname,
+            fullName,
+            uid,
+          } = user;
+          return (
+            <li 
+              key={uid}
+              className='user-wrapper'
+              onClick={() => navigateUserProfile(username, uid)} 
+            >
+              <div
+                to={`/${username}`}
+                className='profile-photo-frame'
+                ref={(element) => photoRef.current.push(element)}
+                onMouseEnter={() => onMouseEnter(uid, photoRef.current[index])}
+                onMouseLeave={onMouseLeave}
+              >
+                <img alt={`${username}'s profile`} className='user-profile-photo' src={photoURL === '' ? defaultProfile : photoURL} />
+              </div>
+              <div className='user-text-wrapper'>
+                <span 
+                  to={`/${username}`}
+                  className='username-text'
+                  ref={(element) => usernameRef.current.push(element)}
+                  onMouseEnter={() => onMouseEnter(uid, usernameRef.current[index])}
+                  onMouseLeave={onMouseLeave} 
+                >
+                  {username}
+                </span>
+                <span className='full-name-text'>
+                  {fullname || fullName}
+                </span>
+              </div>
+              <FollowButton
+                selectedListProfile={selectedListProfile}
+                userData={userData}
+                followHandler={followHandler}
+                unfollowModalHandler={unfollowModalHandler}
+                isFollowLoading={isFollowLoading}
+                user={user}
+              />              
             </li>
           )
         })}

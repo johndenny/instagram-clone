@@ -1,4 +1,5 @@
-.mobile-photo-upload-editor {
+.mobile-photo-upload-editor,
+.mobile-upload-tag-people {
   display: flex;
   align-items: stretch;
   flex-direction: column;
@@ -159,7 +160,8 @@
   width: 30px;
 }
 
-.new-post-header {
+.new-post-header,
+.mobile-upload-tag-people-header {
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
@@ -211,7 +213,8 @@
   white-space: nowrap;
 }
 
-.next-new-post-button {
+.next-new-post-button,
+.done-new-post-button {
   display: flex;
   flex-basis: 32px;
   justify-content: flex-end;

@@ -6,6 +6,7 @@ import MobileFilterSlider from "../components/MobileFilterSlider";
 const UploadPhotoMobile = (props) => {
   const navigate = useNavigate();
   const {
+    locationBeforeUpload,
     filterScrollLeft,
     setFilterScrollLeft,
     pointerX,
@@ -60,33 +61,9 @@ const UploadPhotoMobile = (props) => {
     editorPage === 'edit' ? setEditorPage('filter') : setEditorPage('edit');
   }
 
-  // const nextPage = () => {
-  //   resizeCropFilterImage(true);
-  //   navigate('/create/details');
-  // }
-
-  // useEffect(() => {
-  //   centerImage();
-  //   imageLoad();
-  // },[aspectRatio, flippedAspectRatio]);
-
   useEffect(() => {
     resizeCropFilterImage(true);
   }, []);
-
-  // useEffect(() => {
-  //   imageHandler();
-  // }, [imageFitHeight]);
-
-  // useEffect(() => {
-  //   if (!imageFitHeight) {
-  //     imageHandler();
-  //   };
-  // }, [imageFlipped]);
-
-  // useEffect(() => {
-  //   resizeCropFilterImage();
-  // }, [pointerX, pointerY]);
 
   useEffect(() => {
     photoCanvasWrapperClass()
@@ -101,7 +78,7 @@ const UploadPhotoMobile = (props) => {
     <section className="mobile-photo-upload-editor">
       <header className="new-post-header">
         <div className="header-content-wrapper">
-          <button className="close-new-post-button" onClick={() => navigate(-1)}>
+          <button className="close-new-post-button" onClick={() => navigate(locationBeforeUpload.pathname)}>
             <svg aria-label="Close" className="close-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
               <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="21" x2="3" y1="3" y2="21"></line>
               <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="21" x2="3" y1="21" y2="3"></line>

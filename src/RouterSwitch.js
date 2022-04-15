@@ -33,6 +33,7 @@ import Following from './pages/Following';
 import FollowersModal from './components/FollowersModal';
 import FollowingModal from './components/FollowingModal';
 import SearchResults from './components/SearchResults';
+import TagPeopleMobile from './pages/TagPeopleMobile';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -117,6 +118,8 @@ const RouterSwitch = () => {
   const canvasRef = useRef(null);
   const shortestImageRatio = 1080/565;
   const widestImageRatio = 1080/1350;
+  const [tagData, setTagData] = useState([]);
+  const [locationBeforeUpload, setLocationBeforeUpload] = useState('');
 
   // SEARCH //
 
@@ -487,6 +490,7 @@ const RouterSwitch = () => {
       setFilterScrollLeft(0);
       setPhotoUploadText('');
       setMobilePhotoUpload('');
+      setTagData([]);
     }
   }, [photoUploadOpen]);
 
@@ -1386,6 +1390,7 @@ const RouterSwitch = () => {
         }
         {(userLoggedIn && isMobile && !photoUploadOpen) &&
           <MobileNavigationBars
+            setLocationBeforeUpload={setLocationBeforeUpload}
             searchString={searchString}
             setSearchResults={setSearchResults}
             setSearchString={setSearchString}
@@ -1487,6 +1492,7 @@ const RouterSwitch = () => {
               } />
               <Route path='/create/style' element={
                 <UploadPhotoMobile
+                  locationBeforeUpload={locationBeforeUpload}
                   filterScrollLeft={filterScrollLeft}
                   setFilterScrollLeft={setFilterScrollLeft}
                   selectedFilter={selectedFilter}
@@ -1521,6 +1527,7 @@ const RouterSwitch = () => {
               } />
               <Route path='/create/details' element={ 
                 <UploadPhotoMobileDetails
+                  tagData={tagData}
                   showNotification={showNotification}
                   photoUploadText={photoUploadText}
                   photoUploadTextHandler={photoUploadTextHandler}
@@ -1532,7 +1539,23 @@ const RouterSwitch = () => {
                   userData={userData}
                   profilePhotoURL={profilePhotoURL} 
                 />
-              } />            
+              } />
+              <Route path='/create/tag/' element={
+                <TagPeopleMobile
+                  tagData={tagData}
+                  setTagData={setTagData}
+                  setSearchResults={setSearchResults}
+                  searchResults={searchResults}
+                  searchString={searchString}
+                  setSearchString={setSearchString}
+                  imageFitHeight={imageFitHeight}
+                  imageFlipped={imageFlipped}
+                  imageHeight={imageHeight}
+                  imageWidth={imageWidth}
+                  editedPhoto={editedPhoto}
+                  aspectRatio={aspectRatio}
+                />
+              } />         
             </React.Fragment>
           }
           <Route path='/:username' element={

@@ -11,6 +11,7 @@ const MobileNavigationBars = (props) => {
   const location = useLocation();
   const [currentPath, setCurrentPath] = useState('');
   const {
+    setLocationBeforeUpload,
     setSearchResults,
     searchString,
     setSearchString,
@@ -45,7 +46,8 @@ const MobileNavigationBars = (props) => {
   }
 
   const handleRouteAndUpload = (event) => {
-    mobilePhotoUploadHandler(event)
+    mobilePhotoUploadHandler(event);
+    setLocationBeforeUpload(location);
     navigate('/create/style/');
     event.target.value = null;
   }
