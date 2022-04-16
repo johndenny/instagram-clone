@@ -34,6 +34,7 @@ import FollowersModal from './components/FollowersModal';
 import FollowingModal from './components/FollowingModal';
 import SearchResults from './components/SearchResults';
 import TagPeopleMobile from './pages/TagPeopleMobile';
+import { async } from '@firebase/util';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -120,6 +121,9 @@ const RouterSwitch = () => {
   const widestImageRatio = 1080/1350;
   const [tagData, setTagData] = useState([]);
   const [locationBeforeUpload, setLocationBeforeUpload] = useState('');
+  const [isResizing, setIsResizing] = useState(false);
+  const uploadCanvasRef = useRef(null);
+  const [croppedAspectRatio, setCroppedAspectRatio] = useState(0);
 
   // SEARCH //
 
@@ -838,180 +842,300 @@ const RouterSwitch = () => {
     if (mobilePhotoUpload !== '') {
       const img = new Image();
       img.onload = () => {
-          canvasCropFilterResize(img, upload)    
+          canvasCropFilterResize(img, 1080, 'display').then((blob) => {
+            setEditedPhoto(blob);
+          })    
       };
       img.src = mobilePhotoUpload;      
     }
   }
 
-  function canvasCropFilterResize(img, upload) {
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext("2d");
+  const shareMobilePost = async () => {
+    const postID = uuidv4();
+    const resizedPhotos = await resizePhoto();
+    console.log(resizedPhotos);
+    const {
+      photoID,
+      aspectRatio,
+      w1080,
+      w750,
+      w640,
+      w480,
+      w320,
+      w240,
+      w150,
+    } = resizedPhotos;
+    const w1080Ref = ref(storage, `w1080_photoUploads/${photoID}.jpg`);
+    const w750Ref = ref(storage, `w750_photoUploads/${photoID}.jpg`);
+    const w640Ref = ref(storage, `w640_photoUploads/${photoID}.jpg`);
+    const w480Ref = ref(storage, `w480_photoUploads/${photoID}.jpg`);
+    const w320Ref = ref(storage, `w320_photoUploads/${photoID}.jpg`);
+    const w240Ref = ref(storage, `w240_photoUploads/${photoID}.jpg`);
+    const w150Ref = ref(storage, `w150_photoUploads/${photoID}.jpg`);
+    const w1080Upload = await uploadBytes(w1080Ref, w1080);
+    const w1080URL = await getDownloadURL(
+      ref(storage, w1080Upload.metadata.fullPath)
+    );
+    const w750Upload = await uploadBytes(w750Ref, w750);
+    const w750URL = await getDownloadURL(
+      ref(storage, w750Upload.metadata.fullPath)
+    );
+    const w640Upload = await uploadBytes(w640Ref, w640);
+    const w640URL = await getDownloadURL(
+      ref(storage, w640Upload.metadata.fullPath)
+    );
+    const w480Upload = await uploadBytes(w480Ref, w480);
+    const w480URL = await getDownloadURL(
+      ref(storage, w480Upload.metadata.fullPath)
+    );
+    const w320Upload = await uploadBytes(w320Ref, w320);
+    const w320URL = await getDownloadURL(
+      ref(storage, w320Upload.metadata.fullPath)
+    );
+    const w240Upload = await uploadBytes(w240Ref, w240);
+    const w240URL = await getDownloadURL(
+      ref(storage, w240Upload.metadata.fullPath)
+    );
+    const w150Upload = await uploadBytes(w150Ref, w150);
+    const w150URL = await getDownloadURL(
+      ref(storage, w150Upload.metadata.fullPath)
+    );
+    const photoURLS = {
+      photoID: photoID,
+      aspectRatio: aspectRatio,
+      postID: postID,
+      index: 0,
+      w1080: w1080URL,
+      w750: w750URL,
+      w640: w640URL,
+      w480: w480URL,
+      w320: w320URL,
+      w240: w240URL,
+      w150: w150URL,
+      uploadDate: Date.now(),
+    }
+    console.log(photoURLS);
+    await setDoc(doc(db, 'photoUploads', photoID), photoURLS);
+    await setDoc(doc(db, 'postUploads', postID), {
+      postID: postID,
+      photos: [photoID],
+      postCaption: photoUploadText,
+      comments: [],
+      likes: [],
+      tags: tagData,
+      uid: userData.uid,
+      username: userData.displayName,
+      photoURL: userData.photoURL,
+      uploadDate: Date.now(),
+    });
+    console.log('photo uploaded', w1080URL);
+  }
 
-    if (imageFitHeight) {
-      canvas.width = 1080;
-      canvas.height = 1080;
-    }
-    if (!imageFitHeight && !imageFlipped && (aspectRatio > 1)) {
-      canvas.width = 1080;
-      const height = canvas.width * flippedAspectRatio;
-      if (height < 565) {
-        canvas.height = 565;
-      } else {
-        canvas.height = canvas.width * flippedAspectRatio;        
-      }
-    }
-    if (!imageFitHeight && !imageFlipped && (aspectRatio < 1)) {
-      canvas.width = 1080;
-      const height = canvas.width * flippedAspectRatio
-      if (height > 1350) {
-        canvas.height = 1350
-      } else {
-        canvas.height = canvas.width * flippedAspectRatio;        
-      }
-    }
-    if (!imageFitHeight && imageFlipped && (aspectRatio > 1)) {
-      canvas.width = 1080;
-      const height = canvas.width * aspectRatio;
-      if (height > 1350) {
-        canvas.height = 1350;
-      } else {
-        canvas.height = canvas.width * aspectRatio;        
+  const resizePhoto = async () => {
+    setIsResizing(true);
+    const image = new Image();
+    image.src = mobilePhotoUpload;
+    return new Promise((resolve) => {
+      let resizedPhotos = {
+        photoID: uuidv4(),
+        aspectRatio: croppedAspectRatio
       };
-    };
-    if (!imageFitHeight && imageFlipped && (aspectRatio < 1)) {
+      image.onload = async () => {
+        const w1080 = await canvasCropFilterResize(image, 1080, 'hide');
+        resizedPhotos = {...resizedPhotos, w1080: w1080};
+        const w750 = await canvasCropFilterResize(image, 750, 'hide');
+        resizedPhotos = {...resizedPhotos, w750: w750};
+        const w640 = await canvasCropFilterResize(image, 480, 'hide');
+        resizedPhotos = {...resizedPhotos, w640: w640};
+        const w480 = await canvasCropFilterResize(image, 480, 'hide');
+        resizedPhotos = {...resizedPhotos, w480: w480};
+        const w320 = await canvasCropFilterResize(image, 320, 'hide');
+        resizedPhotos = {...resizedPhotos, w320: w320};
+        const w240 = await canvasCropFilterResize(image, 240, 'hide');
+        resizedPhotos = {...resizedPhotos, w240: w240};
+        const w150 = await canvasCropFilterResize(image, 150, 'hide');
+        resizedPhotos = {...resizedPhotos, w150: w150};
+        console.log(resizedPhotos);
+        resolve({
+          ...resizedPhotos
+        })
+        setIsResizing(false);
+      }
+    })
+  }
+ 
+  function canvasCropFilterResize(img, width, result) {
+    return new Promise((resolve) => {
+      let canvas;
+      if (result === 'display') {
+        canvas = canvasRef.current;
+      } else if (result === 'hide') {
+        canvas = uploadCanvasRef.current;
+      }
+
+      const ctx = canvas.getContext("2d");
+      const aspectRatioUpperBoundery = width / 1080/565;
+      const aspectRatioLowerBoundery = width / 1080/1350;
+      
       canvas.width = 1080;
-      const height = canvas.width * aspectRatio;
-      if (height < 565) {
-        canvas.height = 565;
-      } else {
-        canvas.height = canvas.width * aspectRatio;
+      if (imageFitHeight) {
+        canvas.height = canvas.width;
+      }
+      if (!imageFitHeight && !imageFlipped && (aspectRatio > 1)) {
+        const height = canvas.width * flippedAspectRatio;
+        if (height < aspectRatioUpperBoundery) {
+          canvas.height = aspectRatioUpperBoundery;
+        } else {
+          canvas.height = height;        
+        }
+      }
+      if (!imageFitHeight && !imageFlipped && (aspectRatio < 1)) {
+        const height = canvas.width * flippedAspectRatio;
+        if (height > aspectRatioLowerBoundery) {
+          canvas.height = aspectRatioLowerBoundery;
+        } else {
+          canvas.height = height;        
+        }
+      }
+      if (!imageFitHeight && imageFlipped && (aspectRatio > 1)) {
+        const height = canvas.width * aspectRatio;
+        if (height > aspectRatioLowerBoundery) {
+          canvas.height = aspectRatioLowerBoundery;
+        } else {
+          canvas.height = height;        
+        };
       };
-    };
+      if (!imageFitHeight && imageFlipped && (aspectRatio < 1)) {
+        const height = canvas.width * aspectRatio;
+        if (height < aspectRatioUpperBoundery) {
+          canvas.height = aspectRatioUpperBoundery;
+        } else {
+          canvas.height = height;
+        };
+      };
+      setCroppedAspectRatio(canvas.width / canvas.height);
 
-    ctx.globalCompositeOperation = 'destination-under';
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'destination-under';
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const ratio = img.width / img.height;
-    let newWidth = canvas.width;
-    let newHeight = newWidth / ratio;
-    if (!imageFitHeight && imageFlipped && (aspectRatio < 1)) {
-      newHeight = canvas.width;
-      newWidth = canvas.width * ratio;    
-    }
-    if (newHeight < canvas.height) {
-      if (imageFlipped && (aspectRatio > 1)) {
+      const ratio = img.width / img.height;
+      let newWidth = canvas.width;
+      let newHeight = newWidth / ratio;
+      if (!imageFitHeight && imageFlipped && (aspectRatio < 1)) {
         newHeight = canvas.width;
         newWidth = canvas.width * ratio;    
-      }    
-      if (!imageFlipped) {
-        newHeight = canvas.height;
-        newWidth = newHeight * ratio;        
       }
-    }
+      if (newHeight < canvas.height) {
+        if (imageFlipped && (aspectRatio > 1)) {
+          newHeight = canvas.width;
+          newWidth = canvas.width * ratio;    
+        }    
+        if (!imageFlipped) {
+          newHeight = canvas.height;
+          newWidth = newHeight * ratio;        
+        }
+      }
 
-    let xOffset;
-    let yOffset;
-    if (imageFitHeight) {
-      xOffset = (newHeight * (pointerX / 100));
-      yOffset = (newWidth * (pointerY / 100));   
-    }   
-    if (!imageFitHeight && (aspectRatio > 1)) {
-      xOffset = newWidth > canvas.width ? (canvas.width - newWidth) / 2 : 0;
-      yOffset = newHeight > canvas.height ? (canvas.height - newHeight) / 2 : 0;
-    }
-    if (!imageFitHeight && (aspectRatio < 1)) {
-      xOffset = newWidth > canvas.width ? (canvas.width - newWidth) / 2 : 0;
-      yOffset = newHeight > canvas.height ? (canvas.height - newHeight) / 2 : 0;
-    }
-    if (!imageFitHeight && imageFlipped && (aspectRatio > 1)) {
-      xOffset = (canvas.height - newWidth) / 2;
-      yOffset = newHeight > canvas.height ? (canvas.height - newHeight) / 2 : 0;
-    }
-    if (!imageFitHeight && imageFlipped && (aspectRatio < 1)) {
-      xOffset = (canvas.height - newWidth) / 2;
-      yOffset = newHeight > canvas.width ? (canvas.height - newHeight) / 2 : 0;
-    }
-    switch (true) {
-      case imageOrientation === 'vertical-up':
-        if (!imageFitHeight) {
-          ctx.translate(0, canvas.height);
-        } else {
-          ctx.translate(0, canvas.width);
-        };
-        break;
-      case imageOrientation === 'horizontal-down':
-        if (!imageFitHeight) {
-          if (newWidth > canvas.width) {
-            ctx.translate(newWidth - (newWidth - canvas.width), newHeight);
-          } else if (newHeight > canvas.height) {
-            ctx.translate(newWidth, newHeight - (newHeight - canvas.height))
+      let xOffset;
+      let yOffset;
+      if (imageFitHeight) {
+        xOffset = (newHeight * (pointerX / 100));
+        yOffset = (newWidth * (pointerY / 100));   
+      }   
+      if (!imageFitHeight && (aspectRatio > 1)) {
+        xOffset = newWidth > canvas.width ? (canvas.width - newWidth) / 2 : 0;
+        yOffset = newHeight > canvas.height ? (canvas.height - newHeight) / 2 : 0;
+      }
+      if (!imageFitHeight && (aspectRatio < 1)) {
+        xOffset = newWidth > canvas.width ? (canvas.width - newWidth) / 2 : 0;
+        yOffset = newHeight > canvas.height ? (canvas.height - newHeight) / 2 : 0;
+      }
+      if (!imageFitHeight && imageFlipped && (aspectRatio > 1)) {
+        xOffset = (canvas.height - newWidth) / 2;
+        yOffset = newHeight > canvas.height ? (canvas.height - newHeight) / 2 : 0;
+      }
+      if (!imageFitHeight && imageFlipped && (aspectRatio < 1)) {
+        xOffset = (canvas.height - newWidth) / 2;
+        yOffset = newHeight > canvas.width ? (canvas.height - newHeight) / 2 : 0;
+      }
+      switch (true) {
+        case imageOrientation === 'vertical-up':
+          if (!imageFitHeight) {
+            ctx.translate(0, canvas.height);
           } else {
-            ctx.translate(newWidth, newHeight);
+            ctx.translate(0, canvas.width);
           };
-        };
-        if (imageFitHeight) {
-          ctx.translate(canvas.height, canvas.width);
-        }
-        break;
-      case imageOrientation === 'vertical-down':
-        if (!imageFitHeight) {
-          ctx.translate(canvas.width, 0);
-        } else {
-          ctx.translate(canvas.height, 0);
-        }
-        break;
-      default: 
-    }
-    switch (true) {
-      case selectedFilter === 'moon':
-        ctx.filter = 'grayscale(100%) brightness(125%)';
-        break;
-      case selectedFilter === 'clarendon':
-        ctx.filter = 'saturate(130%) brightness(115%) contrast(120%) hue-rotate(5deg)';
-        break;
-      case selectedFilter === 'gingham':
-        ctx.filter = 'contrast(75%) saturate(90%) brightness(115%)'
-        break;
-      case selectedFilter === 'lark':
-        ctx.filter = 'saturate(115%) brightness(110%) hue-rotate(5deg)';
-        break;
-      case selectedFilter === 'reyes':
-        ctx.filter = 'contrast(50%) saturate(75%) brightness(125%) hue-rotate(355deg)';
-        break;
-      case selectedFilter === 'juno':
-        ctx.filter = 'contrast(90%) hue-rotate(10deg) brightness(110%)';
-        break;
-      case selectedFilter === 'slumber':
-        ctx.filter = 'brightness(80%) hue-rotate(350deg) saturate(125%)';
-        break;
-      case selectedFilter === 'crema':
-        ctx.filter = 'brightness(85%) hue-rotate(5deg) saturate(90%)';
-        break;
-      case selectedFilter === 'ludwig':
-        ctx.filter = 'hue-rotate(355deg) saturate(125%)';
-        break;
-      case selectedFilter === 'aden':
-        ctx.filter = 'sepia(50%) saturate(150%)';
-        break;
-      case selectedFilter === 'perpetua':
-        ctx.filter = 'brightness(80%) saturate(130%)';
-        break;
-      default: 
-    }
+          break;
+        case imageOrientation === 'horizontal-down':
+          if (!imageFitHeight) {
+            if (newWidth > canvas.width) {
+              ctx.translate(newWidth - (newWidth - canvas.width), newHeight);
+            } else if (newHeight > canvas.height) {
+              ctx.translate(newWidth, newHeight - (newHeight - canvas.height))
+            } else {
+              ctx.translate(newWidth, newHeight);
+            };
+          };
+          if (imageFitHeight) {
+            ctx.translate(canvas.height, canvas.width);
+          }
+          break;
+        case imageOrientation === 'vertical-down':
+          if (!imageFitHeight) {
+            ctx.translate(canvas.width, 0);
+          } else {
+            ctx.translate(canvas.height, 0);
+          }
+          break;
+        default: 
+      }
+      switch (true) {
+        case selectedFilter === 'moon':
+          ctx.filter = 'grayscale(100%) brightness(125%)';
+          break;
+        case selectedFilter === 'clarendon':
+          ctx.filter = 'saturate(130%) brightness(115%) contrast(120%) hue-rotate(5deg)';
+          break;
+        case selectedFilter === 'gingham':
+          ctx.filter = 'contrast(75%) saturate(90%) brightness(115%)'
+          break;
+        case selectedFilter === 'lark':
+          ctx.filter = 'saturate(115%) brightness(110%) hue-rotate(5deg)';
+          break;
+        case selectedFilter === 'reyes':
+          ctx.filter = 'contrast(50%) saturate(75%) brightness(125%) hue-rotate(355deg)';
+          break;
+        case selectedFilter === 'juno':
+          ctx.filter = 'contrast(90%) hue-rotate(10deg) brightness(110%)';
+          break;
+        case selectedFilter === 'slumber':
+          ctx.filter = 'brightness(80%) hue-rotate(350deg) saturate(125%)';
+          break;
+        case selectedFilter === 'crema':
+          ctx.filter = 'brightness(85%) hue-rotate(5deg) saturate(90%)';
+          break;
+        case selectedFilter === 'ludwig':
+          ctx.filter = 'hue-rotate(355deg) saturate(125%)';
+          break;
+        case selectedFilter === 'aden':
+          ctx.filter = 'sepia(50%) saturate(150%)';
+          break;
+        case selectedFilter === 'perpetua':
+          ctx.filter = 'brightness(80%) saturate(130%)';
+          break;
+        default: 
+      }
 
-    ctx.rotate(imageDegrees * Math.PI / 180);
-    ctx.drawImage(img, xOffset, yOffset, newWidth, newHeight);
-    
-    if (upload) {
+      ctx.rotate(imageDegrees * Math.PI / 180);
+      ctx.drawImage(img, xOffset, yOffset, newWidth, newHeight);
+      
       canvas.toBlob((blob) => {
         const image = new Image();
         image.src = blob;
-        console.log(blob);
-        setEditedPhoto(blob);
+        resolve(blob);
       });      
-    }
+    })
   }
 
   const filterToggle = (event) => {
@@ -1291,6 +1415,10 @@ const RouterSwitch = () => {
 
   return (
     <BrowserRouter>
+      {isResizing &&
+        <canvas className='upload-canvas' ref={uploadCanvasRef}>
+        </canvas>
+      }
       {!isMobile && isMouseHovering && profileModalPosts !== null &&
         <ProfileModal
           setIsLoadingPage={setIsLoadingPage}
@@ -1527,6 +1655,8 @@ const RouterSwitch = () => {
               } />
               <Route path='/create/details' element={ 
                 <UploadPhotoMobileDetails
+                  locationBeforeUpload={locationBeforeUpload}
+                  shareMobilePost={shareMobilePost}
                   tagData={tagData}
                   showNotification={showNotification}
                   photoUploadText={photoUploadText}
