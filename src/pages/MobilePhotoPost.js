@@ -13,6 +13,8 @@ let lastPress = 0;
 
 const MobilePhotoPost = (props) => {
   const {
+    isPostLinksOpen,
+    setIsPostLinksOpen,
     onMouseEnter,
     onMouseLeave,
     setIsMouseHovering,
@@ -25,7 +27,6 @@ const MobilePhotoPost = (props) => {
     isModal,
     backgroundLocation,
     setBackgroundLocation,
-    postLinksModalHandler,
     isMobile,
     setIsLikedByModalOpen,
     index,
@@ -64,37 +65,11 @@ const MobilePhotoPost = (props) => {
   const fullCommentsUsernameRef = useRef([]);
   const fullCommentsPhotoRef = useRef([]);
 
-
-  // const onMouseEnter = (uid, ref) => {
-  //   setProfileModalData(null);
-  //   setProfileModalPosts(null);
-  //   console.log(ref);
-  //   console.log('mouse entered');
-  //   // clearTimeout(timerRef.current);
-  //   const location = ref.getBoundingClientRect();
-  //   const locationHeight = ref.offsetHeight;
-  //   let locationY = location.y + window.pageYOffset + locationHeight
-  //   if (window.innerHeight < (location.y + locationHeight + 350)) {
-  //     locationY = location.y + window.pageYOffset - 346;
-  //   }
-  //   setProfileModalLocation({
-  //     x: location.x,
-  //     y: locationY
-  //   });
-  //   timerRef.current = setTimeout(() => {
-  //     getModalProfileData(uid);
-  //     setIsMouseHovering(true);      
-  //   }, 400);
-  // }
-
-  // const onMouseLeave = () => {
-  //   console.log('mouse left');
-  //   console.log('set:', timerRef.current)
-  //   clearTimeout(timerRef.current)
-  //   timerRef.current = setTimeout(() => {
-  //     setIsMouseHovering(false);
-  //   }, 400);     
-  // } 
+  const openPostLinksModal = (index) => {
+    console.log(selectedPost);
+    setSelectedPost(selectedPost);
+    setIsPostLinksOpen(true);
+  };
 
   const onDoublePress = (event) => {
     const time = new Date().getTime();
@@ -510,7 +485,7 @@ const MobilePhotoPost = (props) => {
                 />
                 <button 
                   className='post-links-modal'
-                  onClick={() => postLinksModalHandler(index)}  
+                  onClick={() => openPostLinksModal(index)}  
                 >
                   <svg aria-label="More options" className="elipsis-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
                     <circle cx="12" cy="12" r="1.5"></circle><circle cx="6" cy="12" r="1.5"></circle><circle cx="18" cy="12" r="1.5"></circle>
@@ -796,7 +771,7 @@ const MobilePhotoPost = (props) => {
                     </span>
                     <button 
                       className='post-links-modal'
-                      onClick={() => postLinksModalHandler(index)}  
+                      onClick={() => openPostLinksModal(index)}  
                     >
                       <svg aria-label="More options" className="elipsis-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
                         <circle cx="12" cy="12" r="1.5"></circle><circle cx="6" cy="12" r="1.5"></circle><circle cx="18" cy="12" r="1.5"></circle>
@@ -972,7 +947,7 @@ const MobilePhotoPost = (props) => {
                   </span>
                   <button 
                     className='post-links-modal'
-                    onClick={() => postLinksModalHandler(index)}  
+                    onClick={() => openPostLinksModal(index)}  
                   >
                     <svg aria-label="More options" className="elipsis-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
                       <circle cx="12" cy="12" r="1.5"></circle><circle cx="6" cy="12" r="1.5"></circle><circle cx="18" cy="12" r="1.5"></circle>

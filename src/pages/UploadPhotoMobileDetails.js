@@ -26,37 +26,12 @@ const UploadPhotoMobileDetails = (props) => {
   const navigate = useNavigate();
   const [sharingPost, setSharingPost] = useState(false);
 
-  const uploadNewPost = async () => {
-    setSharingPost(true);
-    const id = uuidv4();
-    const newPostRef = ref(storage, `photoUploads/${id}.jpg`);
-    const newThumbnailRef = ref(storage, `photoUploadsThumbnails/${id}.jpg`);
-    const photoUpload = await uploadBytes(newPostRef, editedPhoto);
-    const thumbnailUpload = await uploadBytes(newThumbnailRef, thumbnailImage);
-    const photoURL = await getDownloadURL(ref(storage, photoUpload.metadata.fullPath));
-    const thumbnailURL = await getDownloadURL(ref(storage, thumbnailUpload.metadata.fullPath));
-    await setDoc(doc(db, 'photoUploads', id), {
-      photoID: id,
-      photoURL: photoURL,
-      thumbnailURL: thumbnailURL, 
-      photoText: photoUploadText, 
-      uid: userData.uid,
-      uploadDate: Date.now(),
-    });
-    setSharingPost(false)
-    navigate(locationBeforeUpload.pathname);
-    setPhotoUploadOpen(false);
-    showNotification('Your photo was posted.');
-    console.log('Photo Uploaded', photoURL);
-  }
-
   const shareNewPost = async () => {
     setSharingPost(true);
     await shareMobilePost();
     setSharingPost(false);
     setPhotoUploadOpen(false);
     navigate(locationBeforeUpload.pathname);
-    // uploadNewPost();
   }
 
   useEffect(() => {

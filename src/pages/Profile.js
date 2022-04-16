@@ -14,6 +14,7 @@ const auth = getAuth();
 
 const Profile = (props) => {
   const {
+    setIsPostLinksOpen,
     setIsSearchClicked,
     setSearchString,
     setSearchResults,
@@ -1311,6 +1312,7 @@ const Profile = (props) => {
             <div className="profile-posts">
               {(pageSelected === 'posts' || pageSelected === 'feed') &&
                 <ProfileImagesLoader
+                  setIsPostLinksOpen={setIsPostLinksOpen}
                   getUserProfileData={getUserProfileData}
                   setSelectedPost={setSelectedPost}
                   setDataLoading={setDataLoading}

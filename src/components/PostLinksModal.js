@@ -1,13 +1,14 @@
 import { useEffect } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import './PostLinksModal.css'
 
 const PostLinksModal = (props) => {
   const navigate = useNavigate();
+  const params = useParams();
   const {
+    setSelectedPost,
     selectedPost,
-    setIsPostLinkOpen,
-    postLinksModalHandler
+    setIsPostLinksOpen,
   } = props;
 
 
@@ -15,13 +16,25 @@ const PostLinksModal = (props) => {
     event.stopPropagation();
   }
 
+  useEffect(() => {
+    console.log(selectedPost);
+  }, [selectedPost]);
+
   const navigationHandler = () => {
+    console.log(selectedPost[1]);
     navigate(`/p/${selectedPost[1].postID}`);
-    setIsPostLinkOpen(false);
+    setIsPostLinksOpen(false);
+  }
+
+  const closeModal = () => {
+    if (params.postID !== undefined) {
+      setSelectedPost('')
+    }
+    setIsPostLinksOpen(false);
   }
 
   return (
-    <div className="profile-photo-modal" onClick={postLinksModalHandler}>
+    <div className="profile-photo-modal" onClick={closeModal}>
       <div className="post-links-content" onClick={stopBubbles}>
         <div className="post-links-buttons">
           <button className='delete-post-button'>
@@ -33,7 +46,7 @@ const PostLinksModal = (props) => {
           >
             Go to Post
           </button>
-          <button className="cancel-button" onClick={postLinksModalHandler}>
+          <button className="cancel-button" onClick={closeModal}>
             Cancel
           </button>
         </div>

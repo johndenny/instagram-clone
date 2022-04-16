@@ -10,6 +10,7 @@ let lastPress = 0;
 
 const ProfileImagesLoader = (props) => {
   const {
+    setIsPostLinksOpen,
     setSelectedPost,
     getUserProfileData,
     setDataLoading,
@@ -552,17 +553,15 @@ const ProfileImagesLoader = (props) => {
           return (
             <div key={post[0].postID}>
               <MobilePhotoPost
+                setIsPostLinksOpen={setIsPostLinksOpen}
                 getUserProfileData={getUserProfileData}
                 setBackgroundLocation={setBackgroundLocation}
-                postLinksModalHandler={postLinksModalHandler}
                 isMobile={isMobile}
-                // setIsLikedByModalOpen={setIsLikedByModalOpen}
                 setSelectedPost={setSelectedPost}
                 setDataLoading={setDataLoading}
                 index={index}
                 setPhotosArray={setPhotosArray}
                 photosArray={photosArray}
-                // getFollowingPosts={getFollowingPosts}
                 selectedPost={post}
                 setIsLoadingPage={setIsLoadingPage}
                 likeUploadToggle={likeUploadToggle}

@@ -61,7 +61,7 @@ const RouterSwitch = () => {
   const [profileUsername, setProfileUsername] = useState('');
   const [profileNavigate, setProfileNavigate] = useState('');
   const [usernameLink, setUsernameLink] = useState('');
-  const [isPostLinksOpen, setIsPostLinkOpen] = useState(false);
+  const [isPostLinksOpen, setIsPostLinksOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState('');
   const [photosArray, setPhotosArray] = useState([]);
   const [profilePosts, setProfilePosts] = useState([]);
@@ -365,16 +365,6 @@ const RouterSwitch = () => {
       }
     }
   };
-
-  const postLinksModalHandler = (index) => {
-    if (isPostLinksOpen) {
-    setIsPostLinkOpen(false);
-    setSelectedPost('');
-    } else {
-    setIsPostLinkOpen(true);
-    setSelectedPost(photosArray[index])     
-    };
-  };
   
   useEffect(() => {
     console.log(selectedPost);
@@ -516,10 +506,6 @@ const RouterSwitch = () => {
   useEffect(() => {
     resizeCropFilterImage(true);
   }, [imageX, imageY, selectedFilter, imageDegrees, imageFitHeight]);
-
-  useEffect(() => {
-    createThumbnailImage();
-  }, [editedPhoto]);
 
   const pointerStart = (event) => {
     const x = event.screenX
@@ -796,46 +782,6 @@ const RouterSwitch = () => {
     if (imageOrientation === 'vertical-down') {
       setImageOrientation('horizontal-up');
     }
-  }
-
-  const createThumbnailImage = () => {
-    if (editedPhoto !== '') {
-      const img = new Image();
-      img.onload = () => {
-        canvasThumbnail(img)
-      }; 
-      img.src = URL.createObjectURL(editedPhoto);
-    }
-  }
-
-  function canvasThumbnail(img) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext("2d");
-
-    canvas.width = 150;
-    canvas.height = 150;
-
-    ctx.globalCompositeOperation = 'destination-under';
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const ratio = img.width / img.height;
-    let newWidth = canvas.width;
-    let newHeight = newWidth / ratio;
-    if (newHeight < canvas.height) {
-      newHeight = canvas.height;
-      newWidth = newHeight * ratio;
-    }
-    const xOffset = newWidth > canvas.width ? (canvas.width - newWidth) / 2 : 0;
-    const yOffset = newHeight > canvas.height ? (canvas.height - newHeight) / 2 : 0;
-    ctx.drawImage(img, xOffset, yOffset, newWidth, newHeight);
-
-    canvas.toBlob((blob) => {
-      const image = new Image();
-      image.src = blob;
-      console.log('thumbnail:', blob);
-      setThumbnailImage(blob)
-    });
   }
   
   const resizeCropFilterImage = (upload) => {
@@ -1465,9 +1411,9 @@ const RouterSwitch = () => {
       }
       {isPostLinksOpen &&
         <PostLinksModal
+          setSelectedPost={setSelectedPost}
           selectedPost={selectedPost}
-          setIsPostLinkOpen={setIsPostLinkOpen} 
-          postLinksModalHandler={postLinksModalHandler}
+          setIsPostLinksOpen={setIsPostLinksOpen} 
         />
       }
       {photoUploadModalOpen &&
@@ -1560,6 +1506,8 @@ const RouterSwitch = () => {
             <React.Fragment>
               <Route path='/' element={
                 <Homepage
+                  setIsPostLinksOpen={setIsPostLinksOpen}
+                  isPostLinksOpen={isPostLinksOpen}
                   onMouseEnter={onMouseEnter}
                   onMouseLeave={onMouseLeave}
                   setIsMouseHovering={setIsMouseHovering}
@@ -1579,7 +1527,6 @@ const RouterSwitch = () => {
                   userData={userData}
                   setIsLoadingPage={setIsLoadingPage}
                   getPostData={getPostData}
-                  postLinksModalHandler={postLinksModalHandler}
                   isMobile={isMobile}
                   profileData={profileData} 
                   photosArray={photosArray}
@@ -1690,6 +1637,7 @@ const RouterSwitch = () => {
           }
           <Route path='/:username' element={
             <Profile
+              setIsPostLinksOpen={setIsPostLinksOpen}
               setIsSearchClicked={setIsSearchClicked}
               setSearchResults={setSearchResults}
               setSearchString={setSearchString}
@@ -1703,7 +1651,6 @@ const RouterSwitch = () => {
               setPhotosArray={setPhotosArray}
               setIsLoadingPage={setIsLoadingPage}
               getPostData={getPostData}
-              postLinksModalHandler={postLinksModalHandler}
               photosArray={photosArray}
               profilePosts={profilePosts}
               setProfileUsername={setProfileUsername}
@@ -1730,6 +1677,7 @@ const RouterSwitch = () => {
           />
           <Route path='/:username/:page' element={
             <Profile
+              setIsPostLinksOpen={setIsPostLinksOpen}
               setIsSearchClicked={setIsSearchClicked}
               setSearchResults={setSearchResults}
               setSearchString={setSearchString}
@@ -1743,7 +1691,6 @@ const RouterSwitch = () => {
               setPhotosArray={setPhotosArray}
               setIsLoadingPage={setIsLoadingPage}
               getPostData={getPostData}
-              postLinksModalHandler={postLinksModalHandler}
               photosArray={photosArray}
               profilePosts={profilePosts}
               setProfileUsername={setProfileUsername}
@@ -1770,12 +1717,13 @@ const RouterSwitch = () => {
           />
           <Route path='/p/:postID' element={
             <MobilePhotoPost
+              setIsPostLinksOpen={setIsPostLinksOpen}
+              isPostLinksOpen={isPostLinksOpen}
               onMouseEnter={onMouseEnter}
               onMouseLeave={onMouseLeave}
               setIsMouseHovering={setIsMouseHovering}
               getUserProfileData={getUserProfileData}
               setBackgroundLocation={setBackgroundLocation}
-              postLinksModalHandler={postLinksModalHandler}
               isMobile={isMobile}
               setIsLikedByModalOpen={setIsLikedByModalOpen}
               setSelectedPost={setSelectedPost}
@@ -1860,7 +1808,6 @@ const RouterSwitch = () => {
               setBackgroundLocation={setBackgroundLocation} 
               setIsMouseHovering={setIsMouseHovering}
               getUserProfileData={getUserProfileData}
-              postLinksModalHandler={postLinksModalHandler}
               isMobile={isMobile}
               setIsLikedByModalOpen={setIsLikedByModalOpen}
               setSelectedPost={setSelectedPost}
