@@ -48,7 +48,6 @@ const Profile = (props) => {
     setCurrentPath,
     setPhotoUploadModalOpen,
     setProfileUsername,
-    postLinksModalHandler,
     setIsLoadingPage,
   } = props;
   const [width, height] = useWindowSize();
@@ -1321,7 +1320,6 @@ const Profile = (props) => {
                   userData={userData}
                   setIsLoadingPage={setIsLoadingPage}
                   getPostData={getPostData}
-                  postLinksModalHandler={postLinksModalHandler}
                   isMobile={isMobile}
                   pageSelected={pageSelected}
                   profileData={profileData} 
