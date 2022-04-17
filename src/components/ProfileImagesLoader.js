@@ -45,7 +45,11 @@ const ProfileImagesLoader = (props) => {
   }
 
   useEffect(() => {
-    imageSizeHandler();
+    console.log(photoWidth);
+  }, [photoWidth]);
+
+  useEffect(() => {
+      imageSizeHandler();
   }, [width]);
 
   const navigatePost = async (postID) => {
@@ -81,11 +85,11 @@ const ProfileImagesLoader = (props) => {
                 left: `-${((photoWidth * aspectRatio) - photoWidth) / 2}px`
               }
             } else if (aspectRatio < 1) {
-              console.log(aspectRatio, photoWidth);
               photoCenter = {
                 top: `-${((photoWidth / aspectRatio) - photoWidth) / 2}px`
               }
             }
+            console.log('sizes:', aspectRatio > 1 ? `${photoWidth * aspectRatio}px` : `${photoWidth}px`);
             return (
               <div 
                 key={photoID} 
@@ -113,24 +117,23 @@ const ProfileImagesLoader = (props) => {
                   </div>                
                 }
                 <div className="photo-post-padding">
-                  <img 
-                    decoding='sync'
-                    alt={captionText} 
-                    className='photo-post-image' 
-                    sizes={aspectRatio > 1 ? `${photoWidth * aspectRatio}px` : `${photoWidth}px`} 
-                    srcSet={`
-                      ${post[1].w1080} 1080w,
-                      ${post[1].w750} 750w,
-                      ${post[1].w640} 640w,
-                      ${post[1].w480} 480w,
-                      ${post[1].w320} 320w,
-                      ${post[1].w240} 240w,
-                      ${post[1].w150} 150w
-                    `}
-                    style={photoCenter}
-                  />
+                    <img 
+                      alt={captionText} 
+                      className='photo-post-image' 
+                      sizes={aspectRatio > 1 ? `${photoWidth * aspectRatio}px` : `${photoWidth}px`} 
+                      srcSet={`
+                        ${post[1].w1080} 1080w,
+                        ${post[1].w750} 750w,
+                        ${post[1].w640} 640w,
+                        ${post[1].w480} 480w,
+                        ${post[1].w320} 320w,
+                        ${post[1].w240} 240w,
+                        ${post[1].w150} 150w
+                      `}
+                      style={photoCenter}
+                    />                    
+                  </div>
                 </div>
-              </div>
             )
           })}
         </div>      

@@ -59,14 +59,8 @@ const MobileComments = (props) => {
     setDataLoading(false);
   };
 
-  useEffect(() => {
-    if (selectedPost === '') {
-      getPostData()
-    }
-  }, []);
-
-  useEffect(() => () => {
-    setSelectedPost('');
+  useLayoutEffect(() => {
+      getPostData();
   }, []);
 
   if (selectedPost !== '') {

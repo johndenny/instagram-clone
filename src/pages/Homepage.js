@@ -7,6 +7,7 @@ import useWindowSize from '../hooks/useWindowSize';
 
 const Homepage = (props) => {
   const {
+    setIsLocationPost,
     setIsPostLinksOpen,
     isPostLinksOpen,
     onMouseEnter,
@@ -49,6 +50,7 @@ const Homepage = (props) => {
             return (
               <div className='homepage-post' key={post[0].postID}>
                 <MobilePhotoPost
+                  setIsLocationPost={setIsLocationPost}
                   setIsPostLinksOpen={setIsPostLinksOpen}
                   isPostLinksOpen={isPostLinksOpen}
                   onMouseEnter={onMouseEnter}

@@ -1,6 +1,6 @@
 import './UploadPhotoMobileDetails.css'
 import { useNavigate } from 'react-router-dom'
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { getFirestore, setDoc, doc, getDoc } from 'firebase/firestore';
 import firebaseApp from '../Firebase';
@@ -27,6 +27,7 @@ const UploadPhotoMobileDetails = (props) => {
   const [sharingPost, setSharingPost] = useState(false);
 
   const shareNewPost = async () => {
+    console.log('hi');
     setSharingPost(true);
     await shareMobilePost();
     setSharingPost(false);
@@ -37,7 +38,7 @@ const UploadPhotoMobileDetails = (props) => {
   useEffect(() => {
     setPhotoUploadOpen(true);
   }, []);
-
+  
   return (
     <section className='mobile-upload-photo-details'>
       <div className='upload-details-header-wrapper'>

@@ -14,7 +14,7 @@ import Profile from "./pages/Profile";
 import defaultProfileImage from "./images/default-profile-image.jpg";
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import EditProfile from './pages/EditProfile';
-import { getFirestore, setDoc, doc, getDoc, query, collection, where, getDocs, orderBy, arrayUnion, updateDoc, arrayRemove } from 'firebase/firestore';
+import { getFirestore, setDoc, doc, getDoc, query, collection, where, getDocs, orderBy, arrayUnion, updateDoc, arrayRemove, deleteDoc } from 'firebase/firestore';
 import UploadPhotoMobile from './pages/UploadPhotoMobile';
 import UploadPhotoMobileDetails from './pages/UploadPhotoMobileDetails';
 import UploadPhotoModal from './components/UploadPhotoModal';
@@ -75,6 +75,7 @@ const RouterSwitch = () => {
   const [profileModalLocation, setProfileModalLocation] = useState(null);
   const [profileModalTimeoutID, setProfileModalTimeoutID] = useState(null);
   const timerRef = useRef();
+  const [isLocationPost, setIsLocationPost] = useState(false)
 
   // Profile //
 
@@ -334,6 +335,39 @@ const RouterSwitch = () => {
   }
 
   // POSTS //
+
+  const deletePost = async (postID) => {
+    console.log(postID);
+    const deleteRef = doc(db, 'postUploads', postID)
+    const deleteDocument = await getDoc(deleteRef);
+    const { photos } = deleteDocument.data();
+    photos.map( async (photo, index) => {
+      await deletePhoto(photo[index]);
+    });
+    await deleteDoc(deleteRef);
+  }
+
+  const deletePhoto = async (photoID) => {
+    const w1080Ref = ref(storage, `w1080_photoUploads/${photoID}.jpg`);
+    const w750Ref = ref(storage, `w750_photoUploads/${photoID}.jpg`);
+    const w640Ref = ref(storage, `w640_photoUploads/${photoID}.jpg`);
+    const w480Ref = ref(storage, `w480_photoUploads/${photoID}.jpg`);
+    const w320Ref = ref(storage, `w320_photoUploads/${photoID}.jpg`);
+    const w240Ref = ref(storage, `w240_photoUploads/${photoID}.jpg`);
+    const w150Ref = ref(storage, `w150_photoUploads/${photoID}.jpg`);
+    try {
+      await deleteDoc(doc(db, 'photoUploads', photoID));
+      await deleteObject(w1080Ref);
+      await deleteObject(w750Ref);
+      await deleteObject(w640Ref);
+      await deleteObject(w480Ref);
+      await deleteObject(w320Ref);
+      await deleteObject(w240Ref);
+      await deleteObject(w150Ref);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   const likeUploadToggle = async (postID) => {
     const {
@@ -789,6 +823,7 @@ const RouterSwitch = () => {
       const img = new Image();
       img.onload = () => {
           canvasCropFilterResize(img, 1080, 'display').then((blob) => {
+            console.log('editedPhoto:', editedPhoto);
             setEditedPhoto(blob);
           })    
       };
@@ -920,10 +955,10 @@ const RouterSwitch = () => {
       }
 
       const ctx = canvas.getContext("2d");
-      const aspectRatioUpperBoundery = width / 1080/565;
-      const aspectRatioLowerBoundery = width / 1080/1350;
+      const aspectRatioUpperBoundery = width / (1080/565);
+      const aspectRatioLowerBoundery = width / (1080/1350);
       
-      canvas.width = 1080;
+      canvas.width = width;
       if (imageFitHeight) {
         canvas.height = canvas.width;
       }
@@ -934,6 +969,7 @@ const RouterSwitch = () => {
         } else {
           canvas.height = height;        
         }
+        
       }
       if (!imageFitHeight && !imageFlipped && (aspectRatio < 1)) {
         const height = canvas.width * flippedAspectRatio;
@@ -948,7 +984,7 @@ const RouterSwitch = () => {
         if (height > aspectRatioLowerBoundery) {
           canvas.height = aspectRatioLowerBoundery;
         } else {
-          canvas.height = height;        
+          canvas.height = height;     
         };
       };
       if (!imageFitHeight && imageFlipped && (aspectRatio < 1)) {
@@ -1330,6 +1366,7 @@ const RouterSwitch = () => {
       });
       console.log(urlArray);
       Promise.all(urlArray).then((values) => {
+        console.log(values);
         setProfilePosts(values);
         setIsLoadingPage(false);
         setDataLoading(false);
@@ -1411,6 +1448,9 @@ const RouterSwitch = () => {
       }
       {isPostLinksOpen &&
         <PostLinksModal
+          isLocationPost={isLocationPost}
+          userData={userData}
+          deletePost={deletePost}
           setSelectedPost={setSelectedPost}
           selectedPost={selectedPost}
           setIsPostLinksOpen={setIsPostLinksOpen} 
@@ -1506,6 +1546,7 @@ const RouterSwitch = () => {
             <React.Fragment>
               <Route path='/' element={
                 <Homepage
+                  setIsLocationPost={setIsLocationPost}
                   setIsPostLinksOpen={setIsPostLinksOpen}
                   isPostLinksOpen={isPostLinksOpen}
                   onMouseEnter={onMouseEnter}
@@ -1717,6 +1758,7 @@ const RouterSwitch = () => {
           />
           <Route path='/p/:postID' element={
             <MobilePhotoPost
+              setIsLocationPost={setIsLocationPost}
               setIsPostLinksOpen={setIsPostLinksOpen}
               isPostLinksOpen={isPostLinksOpen}
               onMouseEnter={onMouseEnter}

@@ -13,6 +13,7 @@ let lastPress = 0;
 
 const MobilePhotoPost = (props) => {
   const {
+    setIsLocationPost,
     isPostLinksOpen,
     setIsPostLinksOpen,
     onMouseEnter,
@@ -66,7 +67,12 @@ const MobilePhotoPost = (props) => {
   const fullCommentsPhotoRef = useRef([]);
 
   const openPostLinksModal = (index) => {
-    console.log(selectedPost);
+    if (params.postID !== undefined) {
+      setIsLocationPost(true);
+    } else {
+      setIsLocationPost(false);
+    }
+    console.log(selectedPost, params);
     setSelectedPost(selectedPost);
     setIsPostLinksOpen(true);
   };
