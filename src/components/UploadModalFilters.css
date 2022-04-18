@@ -223,3 +223,76 @@
 .upload-filter-canvas {
   width: 100%;
 }
+
+.tag-photo-instruction {
+  background-color: rgba(0, 0, 0, 0.85);
+  color: rgba(255, 255, 255, 1);
+  position: absolute;
+  font-weight: 400;
+  font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  padding: 10px 16px;
+  border-radius: 8px;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  transform-origin: left;
+  animation: scaleUp 0.3s ease-in-out;
+}
+
+@keyframes scaleUp {
+  0% {
+    transform: scale(0) translateX(-50%);
+  }
+  75% {
+    transform: scale(1.2) translateX(-50%);
+  }
+  100% {
+    transform: scale(1) translateX(-50%);
+  }
+}
+
+.tag-instruction-tab {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  height: 0;
+  width: 0;
+  border-bottom: 0;
+  border-top: 10px solid rgba(0, 0, 0, 0.85);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  margin-left: -10px;
+}
+
+.upload-canvas-fitted-wrapper {
+  display: flex;
+  position: relative;
+  cursor: crosshair;
+}
+
+.modal-upload-tag-search {
+  height: 226px;
+  width: 338px;
+  position: absolute;
+  background-color: rgba(255, 255, 255, 1);
+  border-radius: 6px;
+  box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.0975);
+  margin-top: 10px;
+  transform: translateX(-10%);
+  z-index: 101;
+}
+
+.tag-search-modal-tab {
+  position: absolute;
+  top: -10px;
+  left: 10%;
+  height: 0;
+  width: 0;
+  border-bottom: 10px solid rgba(255, 255, 255, 1);
+  border-top: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  margin-left: -10px;
+}

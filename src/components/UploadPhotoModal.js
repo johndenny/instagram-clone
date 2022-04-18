@@ -13,12 +13,19 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import spinner10s from '../images/spinner10s.gif'
 import checkmarkLoopsOnce from '../images/checkmarkLoopsOnce.gif'
 import { v4 as uuidv4 } from 'uuid'
+import TagSearch from './TagSearch';
 
 const storage = getStorage();
 const db = getFirestore();
 
 const UploadPhotoModal = (props) => {
   const {
+    searchString,
+    searchResults,
+    setSearchString,
+    setTagData,
+    tagData,
+    setSearchResults,
     userData,
     setCurrentPath,
     setPhotoUploadModalOpen,
@@ -59,6 +66,11 @@ const UploadPhotoModal = (props) => {
   const [postURLS, setPostURLS] = useState([]);
   const uploadCanvasRef = useRef(null);
   const canvasRef = useRef(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [clickLocation, setClickLocation] = useState(null);
+  const [tagLocation, setTagLocation] = useState(null);
+  const [tagIDs, setTagIDs] = useState([]);
+
 
   const maxHorizontalRatio = 1080/565;
   const flippedHorizontalRatio = 565/1080;
@@ -668,6 +680,7 @@ const UploadPhotoModal = (props) => {
             y: 0,
             zoom: 0,
             filter: 'normal',
+            tags: []
           });
           };
         });
@@ -788,6 +801,7 @@ const UploadPhotoModal = (props) => {
     const {
       photoID,
       aspectRatio,
+      tags,
       w1080,
       w750,
       w640,
@@ -855,6 +869,7 @@ const UploadPhotoModal = (props) => {
       aspectRatio: croppedAspectRatio,
       postID: postID,
       index: index,
+      tags: tags,
       w1080: w1080URL,
       w750: w750URL,
       w640: w640URL,
@@ -871,6 +886,7 @@ const UploadPhotoModal = (props) => {
       postCaption: captionText,
       comments: [],
       likes: [],
+      tags: tagIDs,
       uid: userData.uid,
       username: userData.displayName,
       photoURL: userData.photoURL,
@@ -891,7 +907,8 @@ const UploadPhotoModal = (props) => {
         const index = i;
         const { 
           url,
-          aspectRatio 
+          aspectRatio,
+          tags, 
         } = photoUploads[i];
         const image = new Image();
         image.src = url;
@@ -930,6 +947,7 @@ const UploadPhotoModal = (props) => {
                                         resolve({
                                           photoID: photoID,
                                           aspectRatio: aspectRatio,
+                                          tags: tags,
                                           w1080: w1080,
                                           w750: w750,
                                           w640: w640,
@@ -1027,8 +1045,12 @@ const UploadPhotoModal = (props) => {
         }
       }
       if (ratio > 1) {
-        newHeight = canvas.height * (1 + (zoom / 100));
-        newWidth = canvas.height * ratio * (1 + (zoom / 100));
+        newHeight = (canvas.width / ratio) * (1 + (zoom / 100));
+        newWidth = canvas.width * (1 + (zoom / 100));
+        if (canvasAspectRatio < 1) {
+          newHeight = canvas.height * (1 + (zoom / 100));
+          newWidth = (canvas.height * ratio) * (1 + (zoom / 100));
+        }
       }
       const yPixels = newHeight * ((y / (1 + (zoom / 100))) / 100);
       const xPixels = newWidth * ((x / (1 + (zoom / 100))) / 100);
@@ -1088,6 +1110,36 @@ const UploadPhotoModal = (props) => {
 
   return (
     <React.Fragment>
+      {isSearchOpen &&
+        <section 
+          className='modal-upload-tag-search'
+          style={{
+            left: `${clickLocation.left}px`,
+            top: `${clickLocation.top}px`
+          }}
+          onClick={(event) => event.stopPropagation()}  
+        >
+          <div className='tag-search-modal-tab'>
+          </div>
+          <TagSearch
+            setTagIDs={setTagIDs}
+            tagIDs={tagIDs}
+            setPhotoUploads={setPhotoUploads}
+            photoUploads={photoUploads}
+            selectedIndex={selectedIndex}
+            clickLocation={clickLocation}
+            isModal={true}
+            setSearchResults={setSearchResults}
+            tagData={tagData}
+            tagLocation={tagLocation}
+            setIsSearchOpen={setIsSearchOpen}
+            setTagData={setTagData} 
+            searchString={searchString}
+            setSearchString={setSearchString}
+            searchResults={searchResults}
+          />
+        </section>        
+      }
       {discardPhotoModalOpen &&
         <DiscardPhotoModal 
           setDiscardPhotoModalOpen={setDiscardPhotoModalOpen}
@@ -1319,6 +1371,19 @@ const UploadPhotoModal = (props) => {
                   <div className='photo-editing-wrapper'>
                     {(selectedPhoto !== '' && (currentPage === 'filter' || currentPage === 'text')) &&
                       <UploadModalFilters
+                        setTagIDs={setTagIDs}
+                        tagIDs={tagIDs}
+                        clickLocation={clickLocation}
+                        isSearchOpen={isSearchOpen}
+                        setTagLocation={setTagLocation}
+                        setIsSearchOpen={setIsSearchOpen}
+                        setClickLocation={setClickLocation}
+                        setSearchResults={setSearchResults}
+                        tagData={tagData}
+                        setTagData={setTagData}
+                        searchString={searchString}
+                        setSearchString={setSearchString}
+                        searchResults={searchResults}
                         captionText={captionText}
                         setCaptionText={setCaptionText}
                         canvasRef={canvasRef}

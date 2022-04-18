@@ -12,7 +12,7 @@
 }
 
 .view-comments-button:active {
-  opacity: .5;
+  opacity: 0.5;
 }
 
 .featured-comments-list,
@@ -106,6 +106,7 @@
   bottom: 0;
   left: 0;
   right: 0;
+  pointer-events: none;
 }
 
 .slide-indicator {
@@ -132,7 +133,7 @@
 
 @media screen and (min-width: 737px) {
   .photo-frames-wrapper {
-    transition: all .2s ease-in-out;
+    transition: all 0.2s ease-in-out;
   }
 }
 
@@ -154,7 +155,7 @@
   display: flex;
   flex-direction: column;
   padding: 4vh 20px 0;
-  display: inline-block
+  display: inline-block;
 }
 
 .photo-post-wide,
@@ -175,7 +176,6 @@
   display: flex;
   justify-content: center;
 }
-
 
 .solo-post-side-bar,
 .solo-post-side-bar-modal {
@@ -219,4 +219,16 @@
 .solo-post-side-bar > .feed-post-footer {
   border-top: 1px solid rgba(239, 239, 239, 1);
   margin-top: 4px;
+}
+
+.post-tag-button {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: 8px;
+  background-color: rgba(0, 0, 0, 0.8);
+  margin: 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  z-index: 10;
 }

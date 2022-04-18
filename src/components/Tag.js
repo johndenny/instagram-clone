@@ -1,8 +1,13 @@
 import './Tag.css';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useEffect, useRef, useState } from 'react';
 
 const Tag = (props) => {
   const {
+    setTagIDs,
+    tagIDs,
+    isTagsHidden,
+    deleteTagModal,
+    isModal,
     setIsMoved,
     isMoved,
     imageDimensions,
@@ -18,7 +23,7 @@ const Tag = (props) => {
   const [tagTabLeft, setTagTabLeft] = useState(50);
   const [tagTabTop, setTagTabTop] = useState(0);
   const [tagLeft, setTagLeft] = useState(50);
-  const [isTagTapped, setIsTaggedTapped] = useState(false);
+  const [isTagTapped, setIsTagTapped] = useState(false);
 
   const onTouchEnd = () => {
     console.log('end')
@@ -26,23 +31,28 @@ const Tag = (props) => {
       setIsMoved(false);
     } else {
       isTagTapped 
-        ? setIsTaggedTapped(false) 
-        : setIsTaggedTapped(true);
+        ? setIsTagTapped(false) 
+        : setIsTagTapped(true);
     }
   }
 
   const tagOrientationHandler = () => {
+    console.log('orientation');
+    console.log(imageRef);
     const tag = tagRef.current.getBoundingClientRect();
+    const imageDimension = imageRef.current.getBoundingClientRect();
+    console.log(imageRef.current.getBoundingClientRect());
     const {
       width,
       height,
-    } = imageDimensions;
+    } = imageDimension;
     const tagWidthOverflow = ((tag.width / width) * 100) / 2;
     const tagHeightOverflow = ((tag.height / height) * 100);
     const tagSizeMultiplyer = width / tag.width;
     const leftUpperBoundery = 100 - (tagWidthOverflow + 2.5);
     const leftLowerBoundery = tagWidthOverflow + 2.5;
     if (left >= leftUpperBoundery) {
+      
       const percentOverBoundery = left - leftUpperBoundery;
       const newLeft = 50 + (percentOverBoundery * tagSizeMultiplyer);
       setTagLeft(newLeft);
@@ -52,6 +62,7 @@ const Tag = (props) => {
         setTagTabLeft(newLeft);
       }
     } else if (left <= leftLowerBoundery){
+      console.log(left, leftLowerBoundery, tag.width, width);
       const percentUnderBoundery = leftLowerBoundery - left;
       const newLeft = 50 - (percentUnderBoundery * tagSizeMultiplyer);
       setTagLeft(newLeft);
@@ -76,13 +87,32 @@ const Tag = (props) => {
     const newData = [...tagData];
     newData.splice(index, 1);
     setTagData(newData);
+    const newTagIDs = [...tagIDs];
+    newTagIDs.splice(index, 1);
+    setTagIDs(newTagIDs);
   }
 
   useLayoutEffect(() => {
-    if (imageDimensions !== null) {
+      tagOrientationHandler();
+  }, [tagData]);
+
+  useEffect(() => {
+    if (!isTagsHidden) {
       tagOrientationHandler();
     }
-  }, [tagData]);
+  }, [isTagsHidden])
+
+  const mouseDownHandler = () => {
+    if (isModal) {
+      setIsTagTapped(true);
+    }
+  }
+
+  const mouseUpHandler = () => {
+    if (isModal) {
+      setIsTagTapped(false);
+    }
+  }
 
   return (
     <div 
@@ -90,10 +120,13 @@ const Tag = (props) => {
       style={{
         left: `${left}%`,
         top: `${top}%`,
-        transform: `translate(-${tagLeft}%, -${tagTabTop}%)`
+        transform: `translate(-${tagLeft}%, -${tagTabTop}%) ${isTagTapped && isModal ? 'scale(1.08)' : ''}`
+
       }}
       ref={tagRef}
       onTouchEnd={onTouchEnd}
+      onMouseUp={mouseUpHandler}
+      onMouseDown={mouseDownHandler}
     >
       <div 
         className={tagTabTop === 100 ? 'photo-tag-tab flipped' : 'photo-tag-tab'}
@@ -101,15 +134,29 @@ const Tag = (props) => {
           left: `${tagTabLeft}%`
         }}
       ></div>
-      <span className='photo-tag-username'>
+      <span 
+        className='photo-tag-username'
+        draggable='false'
+      >
         {username}
       </span>
-      {isTagTapped && !isMoved &&
+      {isTagTapped && !isMoved && !isModal &&
         <span 
           className='photo-tag-delete-sprite'
           onTouchEnd={deleteTag}
         >
         </span>      
+      }
+      {isModal &&
+        <button 
+          className='modal-delete-tag-button'
+          onClick={deleteTagModal}
+        >
+          <svg aria-label="Close" className="tag-delete-svg" color="#ffffff" fill="#ffffff" height="16" role="img" viewBox="0 0 24 24" width="16">
+            <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="21" x2="3" y1="3" y2="21"></line>
+            <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="21" x2="3" y1="21" y2="3"></line>
+          </svg>
+        </button>
       }
     </div>
   )

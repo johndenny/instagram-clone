@@ -19,6 +19,8 @@ const TagPeopleMobile = (props) => {
     editedPhoto,
     imageHeight,
     imageWidth,
+    setTagIDs,
+    tagIDs
   } = props;
   const navigate = useNavigate();
   const [width, height] = useWindowSize()
@@ -193,6 +195,8 @@ const TagPeopleMobile = (props) => {
       {isSearchOpen &&
         <section className='mobile-upload-tag-search'>
           <TagSearch
+            setTagIDs={setTagIDs}
+            tagIDs={tagIDs}
             setSearchResults={setSearchResults}
             tagData={tagData}
             touchLocation={touchLocation}
@@ -244,6 +248,8 @@ const TagPeopleMobile = (props) => {
                     onTouchStart={(event) => onTouchStart(event, index)}
                   >
                     <Tag
+                      setTagIDs={setTagIDs}
+                      tagIDs={tagIDs}
                       setIsMoved={setIsMoved}
                       isMoved={isMoved}
                       imageDimensions={imageDimensions}

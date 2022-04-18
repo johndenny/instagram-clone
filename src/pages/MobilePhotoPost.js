@@ -2,11 +2,12 @@ import './MobilePhotoPost.css'
 import firebaseApp from '../Firebase';
 import { getFirestore, query, collection, where, orderBy, getDocs, doc, getDoc} from 'firebase/firestore';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
 import { v4 as uuidv4 } from 'uuid';
 import PostComments from '../components/PostComments';
 import FollowButton from '../components/FollowButton';
+import Tag from '../components/Tag';
 
 const db = getFirestore()
 let lastPress = 0;
@@ -65,6 +66,25 @@ const MobilePhotoPost = (props) => {
   const featuredCommentsRef = useRef([]);
   const fullCommentsUsernameRef = useRef([]);
   const fullCommentsPhotoRef = useRef([]);
+  const imageRef = useRef(null);
+  const [imageDimensions, setImageDimensions] = useState(null);
+  const [isTagsHidden, setIsTagsHidden] = useState(true);
+
+  const TagsHandler = () => {
+    isTagsHidden ? setIsTagsHidden(false) : setIsTagsHidden(true);
+  }
+
+  // useEffect(() => {
+  //   console.log('hello')
+  //   const image = imageRef.current.getBoundingClientRect();
+  //   setImageDimensions({
+  //     width: image.width,
+  //     height: image.height,
+  //     left: image.left,
+  //     top: image.top
+  //   })
+  //   console.log(image);
+  // }, [width]);
 
   const openPostLinksModal = (index) => {
     if (params.postID !== undefined) {
@@ -208,7 +228,11 @@ const MobilePhotoPost = (props) => {
 
   const previousPhotoHandler = (event) => {
     let photoWidth;
-    width > 736 ? photoWidth = 614 : photoWidth = width;
+    if (isModal) {
+      photoWidth = modalPhotoWidth
+    } else {
+      width > 736 ? photoWidth = 614 : photoWidth = width;
+    }
     event.stopPropagation();
     if (galleryIndex !== 0) {
       setGalleryIndex(galleryIndex - 1);
@@ -325,7 +349,8 @@ const MobilePhotoPost = (props) => {
       comments,
       photos,
       likes,
-      uid
+      uid,
+      tags
     } = selectedPost[0];
 
     const frameWrapperHandler = () => {
@@ -380,6 +405,7 @@ const MobilePhotoPost = (props) => {
             onTouchStart={onDoublePress}
             onTouchMove={movementHandler}
             onTouchEnd={movementEndHandler}
+            ref={imageRef}
           >
             <div 
               className='photo-frames-wrapper'
@@ -400,6 +426,7 @@ const MobilePhotoPost = (props) => {
                       style={{
                         transform: `translateX(${modalPhotoWidth * (photoIndex - 1)}px)`
                       }}
+                      onClick={TagsHandler}
                     >
                       <img
                         decoding='sync' 
@@ -416,6 +443,44 @@ const MobilePhotoPost = (props) => {
                           ${photo.w150} 150w
                         `}
                       />
+                      {!isTagsHidden &&
+                        <React.Fragment>
+                          {photo.tags.map((tag, index) => {
+                            const {
+                              left,
+                              top,
+                              username,
+                              uid,
+                            } = tag;
+                            return (
+                              
+                              <div 
+                                key={uid}
+                                onClick={() => navigateUserProfile(username)}
+                              >
+                                <Tag
+                                  isTagsHidden={isTagsHidden}
+                                  imageDimensions={imageDimensions}
+                                  index={index}
+                                  tagData={tags}
+                                  key={uid}
+                                  imageRef={imageRef}
+                                  left={left}
+                                  top={top}
+                                  username={username}
+                                />                    
+                              </div>
+                            )
+                          })}                              
+                        </React.Fragment>
+                      }
+                      {photo.tags.length !== 0 &&
+                        <button className='post-tag-button'>
+                          <svg aria-label="Tags" className="tag-button-svg" color="#ffffff" fill="#ffffff" height="12" role="img" viewBox="0 0 24 24" width="12">
+                            <path d="M21.334 23H2.666a1 1 0 01-1-1v-1.354a6.279 6.279 0 016.272-6.272h8.124a6.279 6.279 0 016.271 6.271V22a1 1 0 01-1 1zM12 13.269a6 6 0 116-6 6.007 6.007 0 01-6 6z"></path>
+                          </svg>
+                        </button>                            
+                      }
                     </div>
                   )
                 }
@@ -684,7 +749,18 @@ const MobilePhotoPost = (props) => {
                 onTouchStart={onDoublePress}
                 onTouchMove={movementHandler}
                 onTouchEnd={movementEndHandler}
+                ref={imageRef}
               >
+                {selectedPost[galleryIndex + 1].tags.length !== 0 &&
+                  <button 
+                    className='post-tag-button'
+                    onClick={TagsHandler}
+                  >
+                    <svg aria-label="Tags" className="tag-button-svg" color="#ffffff" fill="#ffffff" height="12" role="img" viewBox="0 0 24 24" width="12">
+                      <path d="M21.334 23H2.666a1 1 0 01-1-1v-1.354a6.279 6.279 0 016.272-6.272h8.124a6.279 6.279 0 016.271 6.271V22a1 1 0 01-1 1zM12 13.269a6 6 0 116-6 6.007 6.007 0 01-6 6z"></path>
+                    </svg>
+                  </button>                            
+                }
                 <div 
                   className='photo-frames-wrapper'
                   style={{
@@ -704,6 +780,7 @@ const MobilePhotoPost = (props) => {
                           style={{
                             transform: `translateX(${(width > 736 ? 614 : width) * (photoIndex - 1)}px)`
                           }}
+                          onClick={TagsHandler}
                         >
                           <img 
                             alt={postCaption} 
@@ -719,6 +796,37 @@ const MobilePhotoPost = (props) => {
                               ${photo.w150} 150w
                             `}
                           />
+                          {!isTagsHidden &&
+                            <React.Fragment>
+                              {photo.tags.map((tag, index) => {
+                                const {
+                                  left,
+                                  top,
+                                  username,
+                                  uid,
+                                } = tag;
+                                return (
+                                  
+                                  <div 
+                                    key={uid}
+                                    onClick={() => navigateUserProfile(username)}
+                                  >
+                                    <Tag
+                                      isTagsHidden={isTagsHidden}
+                                      imageDimensions={imageDimensions}
+                                      index={index}
+                                      tagData={tags}
+                                      key={uid}
+                                      imageRef={imageRef}
+                                      left={left}
+                                      top={top}
+                                      username={username}
+                                    />                    
+                                  </div>
+                                )
+                              })}                              
+                            </React.Fragment>
+                          }
                         </div>
                       )
                     }
@@ -970,7 +1078,18 @@ const MobilePhotoPost = (props) => {
                 onTouchStart={onDoublePress}
                 onTouchMove={movementHandler}
                 onTouchEnd={movementEndHandler}
+                ref={imageRef}
               >
+                {selectedPost[galleryIndex + 1].tags.length !== 0 &&
+                  <button 
+                    className='post-tag-button'
+                    onClick={TagsHandler}
+                  >
+                    <svg aria-label="Tags" className="tag-button-svg" color="#ffffff" fill="#ffffff" height="12" role="img" viewBox="0 0 24 24" width="12">
+                      <path d="M21.334 23H2.666a1 1 0 01-1-1v-1.354a6.279 6.279 0 016.272-6.272h8.124a6.279 6.279 0 016.271 6.271V22a1 1 0 01-1 1zM12 13.269a6 6 0 116-6 6.007 6.007 0 01-6 6z"></path>
+                    </svg>
+                  </button>                            
+                }
                 <div 
                   className='photo-frames-wrapper'
                   style={{
@@ -989,6 +1108,7 @@ const MobilePhotoPost = (props) => {
                           style={{
                             transform: `translateX(${(width > 736 ? 614 : width) * (photoIndex - 1)}px)`
                           }}
+                          onClick={TagsHandler}
                         >
                           <img
                             decoding='sync' 
@@ -1005,6 +1125,37 @@ const MobilePhotoPost = (props) => {
                               ${photo.w150} 150w
                             `}
                           />
+                          {!isTagsHidden &&
+                            <React.Fragment>
+                              {photo.tags.map((tag, index) => {
+                                const {
+                                  left,
+                                  top,
+                                  username,
+                                  uid,
+                                } = tag;
+                                return (
+                                  
+                                  <div 
+                                    key={uid}
+                                    onClick={() => navigateUserProfile(username)}
+                                  >
+                                    <Tag
+                                      isTagsHidden={isTagsHidden}
+                                      imageDimensions={imageDimensions}
+                                      index={index}
+                                      tagData={tags}
+                                      key={uid}
+                                      imageRef={imageRef}
+                                      left={left}
+                                      top={top}
+                                      username={username}
+                                    />                    
+                                  </div>
+                                )
+                              })}                              
+                            </React.Fragment>
+                          }
                         </div>
                       )
                     }

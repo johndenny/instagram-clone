@@ -14,7 +14,21 @@ import Profile from "./pages/Profile";
 import defaultProfileImage from "./images/default-profile-image.jpg";
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import EditProfile from './pages/EditProfile';
-import { getFirestore, setDoc, doc, getDoc, query, collection, where, getDocs, orderBy, arrayUnion, updateDoc, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { 
+  getFirestore, 
+  setDoc, 
+  doc, 
+  getDoc, 
+  query, 
+  collection, 
+  where, 
+  getDocs, 
+  orderBy, 
+  arrayUnion, 
+  updateDoc, 
+  arrayRemove, 
+  deleteDoc 
+} from 'firebase/firestore';
 import UploadPhotoMobile from './pages/UploadPhotoMobile';
 import UploadPhotoMobileDetails from './pages/UploadPhotoMobileDetails';
 import UploadPhotoModal from './components/UploadPhotoModal';
@@ -121,6 +135,7 @@ const RouterSwitch = () => {
   const shortestImageRatio = 1080/565;
   const widestImageRatio = 1080/1350;
   const [tagData, setTagData] = useState([]);
+  const [tagIDs, setTagIDs] = useState([]);
   const [locationBeforeUpload, setLocationBeforeUpload] = useState('');
   const [isResizing, setIsResizing] = useState(false);
   const uploadCanvasRef = useRef(null);
@@ -307,10 +322,15 @@ const RouterSwitch = () => {
   }
 
   const getFollowingPosts = async (user) => {
-    const { following } = user;
+    const { 
+      following,
+      uid 
+    } = user;
     console.log(user);
-    const followingPosts = Array.from({length: following.length}, async (_, i) => {
-      const postData = query(collection(db, 'postUploads'), where('uid', '==', following[i].uid));
+    const followingAndUser = [...following, user]
+    console.log(followingAndUser);
+    const followingPosts = Array.from({length: followingAndUser.length}, async (_, i) => {
+      const postData = query(collection(db, 'postUploads'), where('uid', '==', followingAndUser[i].uid));
       return new Promise( async (resolve) => {
         const postArray = [];
         const followingPostsSnap = await getDocs(postData);
@@ -886,6 +906,7 @@ const RouterSwitch = () => {
       aspectRatio: aspectRatio,
       postID: postID,
       index: 0,
+      tags: tagData,
       w1080: w1080URL,
       w750: w750URL,
       w640: w640URL,
@@ -903,7 +924,7 @@ const RouterSwitch = () => {
       postCaption: photoUploadText,
       comments: [],
       likes: [],
-      tags: tagData,
+      tags: tagIDs,
       uid: userData.uid,
       username: userData.displayName,
       photoURL: userData.photoURL,
@@ -1458,6 +1479,12 @@ const RouterSwitch = () => {
       }
       {photoUploadModalOpen &&
         <UploadPhotoModal
+          searchResults={searchResults}
+          setSearchResults={setSearchResults}
+          tagData={tagData}
+          setTagData={setTagData}
+          searchString={searchString}
+          setSearchString={setSearchString}
           userData={userData}
           setCurrentPath={setCurrentPath}
           setPhotoUploadModalOpen={setPhotoUploadModalOpen} 
@@ -1660,6 +1687,8 @@ const RouterSwitch = () => {
               } />
               <Route path='/create/tag/' element={
                 <TagPeopleMobile
+                  setTagIDs={setTagIDs}
+                  tagIDs={tagIDs}
                   tagData={tagData}
                   setTagData={setTagData}
                   setSearchResults={setSearchResults}

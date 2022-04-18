@@ -10,13 +10,29 @@ import crema from '../images/filters/crema.jpg';
 import ludwig from '../images/filters/crema.jpg';
 import aden from '../images/filters/aden.jpg';
 import perpetua from '../images/filters/perpetua.jpg';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import './UploadModalFilters.css'
 import UploadModalText from './UploadModalText';
 import { async } from '@firebase/util';
+import TagSearch from './TagSearch';
+import Tag from './Tag';
+import useWindowSize from '../hooks/useWindowSize';
 
 const UploadModalFilters = (props) => {
   const {
+    tagIDs,
+    setTagIDs,
+    clickLocation,
+    isSearchOpen,
+    setTagLocation,
+    setIsSearchOpen,
+    setClickLocation,
+    setSearchResults,
+    tagData,
+    setTagData,
+    searchString,
+    setSearchString,
+    searchResults,
     captionText,
     setCaptionText,
     userData,
@@ -31,6 +47,7 @@ const UploadModalFilters = (props) => {
     canvasCrop,
     canvasRef
   } = props;
+  const [width, height] = useWindowSize();
   const [currentFilterPage, setCurrentFilterPage] = useState('filters');
   const [selectedFilter, setSelectedFilter] = useState('normal');
   const [filterFadeValue, setFilterFadeValue] = useState(100);
@@ -40,6 +57,13 @@ const UploadModalFilters = (props) => {
   const [temperatureValue, setTemperatureValue] = useState('0');
   const [fadeValue, setFadeValue] = useState('0');
   const [vignetteValue, setVignetteValue] = useState('0');
+  const [isTagInstructionHidden, setIsTagInstructionHidden] = useState(true);
+  const [imageDimensions, setImageDimensions] = useState(null);
+  const [tagSelectedIndex, setTagSelectedIndex] = useState(null);
+  const [previousPosition, setPreviousPosition] = useState(null);
+  const [movementStart, setMovementStart] = useState(null);
+  const [isMoved, setIsMoved] = useState(false);
+  const [isTagClicked, setIsTagClicked] = useState(false);
   const adjustments = [
     {
       title: 'brightness', 
@@ -156,7 +180,18 @@ const UploadModalFilters = (props) => {
       image: perpetua, 
       title: 'perpetua'
     },
-  ]
+  ] 
+
+  useEffect(() => {
+    if (currentPage === 'text'){
+      setTimeout(() => {
+        setIsTagInstructionHidden(false);
+        setTimeout(() => {
+          setIsTagInstructionHidden(true);
+        }, 5000);        
+      }, 300);
+    }
+  }, [currentPage])
 
   const filterPageToggle = () => {
     currentFilterPage === 'filters'
@@ -215,19 +250,266 @@ const UploadModalFilters = (props) => {
 
   useEffect(() => {
     loadCanvasPhoto();
-  },[brightnessValue, contrastValue, saturationValue, temperatureValue, selectedIndex, photoUploads]);
+  },[
+    brightnessValue, 
+    contrastValue, 
+    saturationValue, 
+    temperatureValue, 
+    selectedIndex, 
+    photoUploads[selectedIndex].filter
+  ]);
+
+  const getClickLocation = (event) => {
+    if (isTagClicked) {
+      return null
+    };
+    const {
+      clientX,
+      clientY,
+    } = event;
+    setIsSearchOpen(true);
+    const image = canvasRef.current.getBoundingClientRect();
+    const {
+      width,
+      height,
+      left,
+      top,
+    } = image
+    console.log(clientX);
+    let x = ((clientX - left) / width) * 100;
+    let y = ((clientY - top) / height) * 100;
+    console.log('left:', x, "top:", y);
+    if (x > 95) {
+      x = 95;
+    };
+    if (x < 5) {
+      x = 5;
+    };
+    if (y > 95) {
+      y = 95;
+    };
+    if (y < 2.5) {
+      y = 2.5;
+    };
+    setTagLocation({
+      left: x,
+      top: y,
+    })
+    setClickLocation({
+      left: clientX,
+      top: clientY,
+    });
+  }
+
+  const closeTagSearch = (event) => {
+    event.stopPropagation();
+    setIsSearchOpen(false);
+  }
+
+  useEffect(() => {
+    if (isSearchOpen) {
+      window.addEventListener('click', closeTagSearch)
+
+      return () => {
+        window.removeEventListener('click', closeTagSearch);
+      }      
+    }
+  });
+
+  useLayoutEffect(() => {
+    const image = canvasRef.current.getBoundingClientRect();
+    setImageDimensions({
+      width: image.width,
+      height: image.height,
+      left: image.left,
+      top: image.top
+    })
+  }, [width]);
+
+
+  const onMouseDown = (event, index) => {
+    const { tags } = photoUploads[selectedIndex]
+    setIsMoved(true);
+    setIsTagClicked(true);
+    event.stopPropagation();
+    console.log("start")
+    const {
+      clientX,
+      clientY,
+    } = event;
+    const {
+      width,
+      height,
+      left,
+      top
+    } = imageDimensions;
+    let startLeft = ((clientX - left) / width) * 100;
+    let startTop = ((clientY - top) / height) * 100;
+    setTagSelectedIndex(index);
+    console.log(left,top);
+    setPreviousPosition({
+      previousLeft: tags[index].left,
+      previousTop: tags[index].top,
+    })
+    setMovementStart({
+      startLeft: startLeft,
+      startTop: startTop 
+    })
+  };
+
+  const onMouseMove = (event) => {
+    const { tags } = photoUploads[selectedIndex]
+    event.stopPropagation()
+    console.log('middle')
+    console.log(imageDimensions);
+    // const image = imageRef.current.getBoundingClientRect();
+    const {
+      width,
+      height,
+      left,
+      top,
+    } = imageDimensions
+    const {
+      clientX,
+      clientY
+    } = event;
+    const {
+      startLeft,
+      startTop
+    } = movementStart;
+    const {
+      previousLeft,
+      previousTop
+    } = previousPosition;
+    console.log(startTop, startLeft, (clientY / height) * 100);
+    const topOffset = startTop - previousTop;
+    const leftOffset = startLeft - previousLeft;
+    console.log(startTop, '-', previousTop, '=', topOffset);
+    let movementX = (((clientX - left) / width) * 100) - leftOffset;
+    let movementY = (((clientY - top) / height) * 100) - topOffset;
+    console.log(clientX, clientY);
+    if (movementX > 95) {
+      movementX = 95;
+    };
+    if (movementX < 5) {
+      movementX = 5;
+    };
+    if (movementY > 95) {
+      movementY = 95;
+    };
+    if (movementY < 2.5) {
+      movementY = 2.5;
+    };
+    const movement = {
+      left: movementX,
+      top: movementY,
+    };
+    console.log('x:', movementX, "y:", movementY);
+    const photos = [...photoUploads];
+    const newTagData = [...tags];
+    const newData = {...tags[tagSelectedIndex], ...movement}
+    newTagData.splice(tagSelectedIndex, 1, newData);
+    const newPhoto = {...photoUploads[selectedIndex], tags: newTagData}
+    photos.splice(selectedIndex, 1, newPhoto);
+    setPhotoUploads(photos);
+  };
+
+  const deleteTagModal = (index) => {
+    const photos = [...photoUploads];
+    const newTagData = [...photoUploads[selectedIndex].tags];
+    newTagData.splice(index, 1);
+    const newPhoto = {...photoUploads[selectedIndex], tags: newTagData};
+    photos.splice(selectedIndex, 1, newPhoto);
+    setPhotoUploads(photos);
+    const newTagIDs = [...tagIDs];
+    newTagIDs.splice(index, 1);
+    setTagIDs(newTagIDs);
+  }
+
+  useEffect(() => {
+    if (isMoved) {
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    } else {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);      
+    }
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    }
+  }, [isMoved])
+
+  const onMouseUp = (event) => {
+    event.stopPropagation();
+    setIsMoved(false);
+  }
+
+  const onMouseDownSearch = () => {
+    setIsTagClicked(false);
+  }
 
   return (
     <div className='upload-canvas-filters-wrapper'>
       <div className='upload-canvas-wrapper'>
-        <canvas 
-          ref={canvasRef} 
-          className='upload-filter-canvas'
+        {!isTagInstructionHidden &&
+          <div className='tag-photo-instruction'>
+            <div className='tag-instruction-tab'>
+            </div>
+            <span className='tag-instruction-text'>
+              Click photo to tag people
+            </span>
+          </div>        
+        }
+        <div 
+          className='upload-canvas-fitted-wrapper'
           style={{
             width: `${frameDimensions.width}px`,
             height: `${frameDimensions.height}px`,
           }}
-        ></canvas>
+          onMouseDown={onMouseDownSearch}
+          onClick={getClickLocation}
+        >
+          <canvas 
+            ref={canvasRef} 
+            className='upload-filter-canvas'
+            style={{
+              width: `${frameDimensions.width}px`,
+              height: `${frameDimensions.height}px`,
+            }}
+          ></canvas>
+          {photoUploads[selectedIndex].tags.map((tag, index) => {
+            const {
+              left,
+              top,
+              username,
+              uid,
+            } = tag;
+            return (
+              <div 
+                key={uid}
+                onMouseDown={(event) => onMouseDown(event, index)}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <Tag
+                  deleteTagModal={deleteTagModal}
+                  setIsMoved={setIsMoved}
+                  isMoved={isMoved}
+                  isModal={true}
+                  imageDimensions={imageDimensions}
+                  index={index}
+                  setTagData={setTagData}
+                  tagData={photoUploads[selectedIndex].tags}
+                  key={uid}
+                  imageRef={canvasRef}
+                  left={left}
+                  top={top}
+                  username={username}
+                />                    
+              </div>
+            )
+          })}  
+        </div>
         <div className='gallery-navigation-buttons'>
           {selectedIndex !== 0 &&
             <button className='left-photo-button' onClick={leftPhotoButton}>
