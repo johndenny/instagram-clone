@@ -37,11 +37,8 @@ const Tag = (props) => {
   }
 
   const tagOrientationHandler = () => {
-    console.log('orientation');
-    console.log(imageRef);
     const tag = tagRef.current.getBoundingClientRect();
     const imageDimension = imageRef.current.getBoundingClientRect();
-    console.log(imageRef.current.getBoundingClientRect());
     const {
       width,
       height,
@@ -51,8 +48,7 @@ const Tag = (props) => {
     const tagSizeMultiplyer = width / tag.width;
     const leftUpperBoundery = 100 - (tagWidthOverflow + 2.5);
     const leftLowerBoundery = tagWidthOverflow + 2.5;
-    if (left >= leftUpperBoundery) {
-      
+    if (left >= leftUpperBoundery) { 
       const percentOverBoundery = left - leftUpperBoundery;
       const newLeft = 50 + (percentOverBoundery * tagSizeMultiplyer);
       setTagLeft(newLeft);

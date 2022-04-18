@@ -100,6 +100,7 @@ const RouterSwitch = () => {
   const [isProfilePhotoUploading, setIsProfilePhotoUploading] = useState(false);
   const [isUnfollowModalOpen, setIsUnfollowModalOpen] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [profileTaggedPosts, setProfileTaggedPosts] = useState([]);
 
   // DESKTOP IMAGE UPLOAD //
 
@@ -360,6 +361,7 @@ const RouterSwitch = () => {
     console.log(postID);
     const deleteRef = doc(db, 'postUploads', postID)
     const deleteDocument = await getDoc(deleteRef);
+    console.log(deleteDocument.data());
     const { photos } = deleteDocument.data();
     photos.map( async (photo, index) => {
       await deletePhoto(photo[index]);
@@ -1353,7 +1355,8 @@ const RouterSwitch = () => {
     if (docSnap.exists()) {
       const { uid } = docSnap.data();
       let imageArray = [];
-      let urlArray = []
+      let urlArray = [];
+      let taggedArray = [];
 
       const profileDataRef = doc(db, 'users', uid);
       const profileDataSnap = await getDoc(profileDataRef);
@@ -1394,6 +1397,16 @@ const RouterSwitch = () => {
       })
       setProfileImages(imageArray);
       console.log(imageArray);
+      const taggedImageData = query(collection(db, 'postUploads'),
+        where('tags', 'array-contains', uid), orderBy('uploadDate', 'desc'));
+      const taggedImageDataSnap = await getDocs(taggedImageData);
+      taggedImageDataSnap.forEach((doc) => {
+        taggedArray.push(getPhotoURLs(doc.data()));
+      });
+      Promise.all(taggedArray).then((values) => {
+        console.log(values);
+        setProfileTaggedPosts(values);
+      })
     } else {
       console.log('no displayName document');
       setProfileExists(false);
@@ -1707,6 +1720,7 @@ const RouterSwitch = () => {
           }
           <Route path='/:username' element={
             <Profile
+              profileTaggedPosts={profileTaggedPosts}
               setIsPostLinksOpen={setIsPostLinksOpen}
               setIsSearchClicked={setIsSearchClicked}
               setSearchResults={setSearchResults}
@@ -1747,6 +1761,7 @@ const RouterSwitch = () => {
           />
           <Route path='/:username/:page' element={
             <Profile
+              profileTaggedPosts={profileTaggedPosts}
               setIsPostLinksOpen={setIsPostLinksOpen}
               setIsSearchClicked={setIsSearchClicked}
               setSearchResults={setSearchResults}

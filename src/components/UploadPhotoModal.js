@@ -907,8 +907,6 @@ const UploadPhotoModal = (props) => {
         const index = i;
         const { 
           url,
-          aspectRatio,
-          tags, 
         } = photoUploads[i];
         const image = new Image();
         image.src = url;
@@ -945,9 +943,8 @@ const UploadPhotoModal = (props) => {
                                         w150 = element;
                                         IDs.push(photoID);
                                         resolve({
+                                          ...photoUploads[i],
                                           photoID: photoID,
-                                          aspectRatio: aspectRatio,
-                                          tags: tags,
                                           w1080: w1080,
                                           w750: w750,
                                           w640: w640,
@@ -972,7 +969,8 @@ const UploadPhotoModal = (props) => {
       images.forEach((image) => {
         photoArray.push(image);
       })
-      setResizedPhotos(photoArray);
+      setPhotoUploads(photoArray);
+      console.log(photoArray)
       setPostID(postID);
       setIDArray(IDs);
     });
@@ -981,7 +979,7 @@ const UploadPhotoModal = (props) => {
   const sharePost = () => {
     setSelectedPhoto('');
     setCurrentPage('sharing');
-    resizedPhotos.map( async (image, index) => await uploadPhotos(image, index, IDArray, postID));
+    photoUploads.map( async (image, index) => await uploadPhotos(image, index, IDArray, postID));
   }
 
   const canvasCrop = (image, index, width, result) => {
@@ -1047,7 +1045,7 @@ const UploadPhotoModal = (props) => {
       if (ratio > 1) {
         newHeight = (canvas.width / ratio) * (1 + (zoom / 100));
         newWidth = canvas.width * (1 + (zoom / 100));
-        if (canvasAspectRatio < 1) {
+        if ((canvas.width / canvas.height) <= 1) {
           newHeight = canvas.height * (1 + (zoom / 100));
           newWidth = (canvas.height * ratio) * (1 + (zoom / 100));
         }

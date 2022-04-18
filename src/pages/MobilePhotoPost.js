@@ -224,6 +224,7 @@ const MobilePhotoPost = (props) => {
       setGalleryIndex(galleryIndex + 1);
       setMovement(photoWidth * (galleryIndex + 1));
     }
+    setIsTagsHidden(true);
   }
 
   const previousPhotoHandler = (event) => {
@@ -239,6 +240,7 @@ const MobilePhotoPost = (props) => {
       console.log(galleryIndex - 1);
       setMovement(photoWidth * (galleryIndex - 1));
     }
+    setIsTagsHidden(true);
   }
 
   const movementEndHandler = () => {

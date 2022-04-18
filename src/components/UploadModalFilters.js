@@ -225,6 +225,7 @@ const UploadModalFilters = (props) => {
     setSelectedPhoto(id);
     setSelectedIndex(nextIndex);
     setSelectedFilter(filter);
+    console.log(nextIndex);
   }
 
   const rightPhotoButton = () => {
@@ -239,13 +240,14 @@ const UploadModalFilters = (props) => {
   }
 
   const loadCanvasPhoto = async () => {
+    console.log(photoUploads[selectedIndex]);
     const image = new Image();
     image.onload = () => {
       canvasCrop(image, selectedIndex, 1080, 'display').then((element) => {
         console.log(element);
       })
     };
-    image.src = photoUploads[selectedIndex].url;
+    image.src = photoUploads[selectedIndex].url || photoUploads[selectedIndex].w1080;
   };
 
   useEffect(() => {

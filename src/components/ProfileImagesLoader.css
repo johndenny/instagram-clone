@@ -334,3 +334,10 @@
   display: flex;
   position: absolute;
 }
+
+.post-gallery-icon {
+  position: absolute;
+  z-index: 1;
+  padding: 8px;
+  right: 0;
+}

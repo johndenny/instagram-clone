@@ -14,6 +14,7 @@ const auth = getAuth();
 
 const Profile = (props) => {
   const {
+    profileTaggedPosts,
     setIsPostLinksOpen,
     setIsSearchClicked,
     setSearchString,
@@ -1309,7 +1310,7 @@ const Profile = (props) => {
               </React.Fragment>
             }
             <div className="profile-posts">
-              {(pageSelected === 'posts' || pageSelected === 'feed') &&
+              {(pageSelected === 'posts' || pageSelected === 'feed' || pageSelected === 'tagged') &&
                 <ProfileImagesLoader
                   setIsPostLinksOpen={setIsPostLinksOpen}
                   getUserProfileData={getUserProfileData}
@@ -1324,7 +1325,7 @@ const Profile = (props) => {
                   pageSelected={pageSelected}
                   profileData={profileData} 
                   photosArray={photosArray}
-                  profilePosts={profilePosts}
+                  profilePosts={pageSelected === 'tagged' ? profileTaggedPosts : profilePosts}
                   setPhotosArray={setPhotosArray}
                 />              
               }
@@ -1421,7 +1422,7 @@ const Profile = (props) => {
                   </h2>
                 </article>
               }
-              {!currentUsersPage && pageSelected === 'tagged' &&
+              {!currentUsersPage && pageSelected === 'tagged' && profileTaggedPosts.length === 0 &&
                 <article className="no-tagged-posts-public">
                   <span className="no-tagged-sprite-public">
                   </span>                      
