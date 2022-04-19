@@ -629,6 +629,7 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
   margin: 16px;
+  align-self: center;
 }
 
 .no-saved-posts-sprite,

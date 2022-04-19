@@ -61,7 +61,6 @@ const ProfileImagesLoader = (props) => {
       setBackgroundLocation(location);
       navigate(`/p/${postID}`);
     }
-
   }
 
   return (

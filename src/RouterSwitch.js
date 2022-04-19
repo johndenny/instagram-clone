@@ -101,6 +101,7 @@ const RouterSwitch = () => {
   const [isUnfollowModalOpen, setIsUnfollowModalOpen] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [profileTaggedPosts, setProfileTaggedPosts] = useState([]);
+  const [profileSavedPosts, setProfileSavedPosts] = useState([]);
 
   // DESKTOP IMAGE UPLOAD //
 
@@ -325,11 +326,8 @@ const RouterSwitch = () => {
   const getFollowingPosts = async (user) => {
     const { 
       following,
-      uid 
     } = user;
-    console.log(user);
     const followingAndUser = [...following, user]
-    console.log(followingAndUser);
     const followingPosts = Array.from({length: followingAndUser.length}, async (_, i) => {
       const postData = query(collection(db, 'postUploads'), where('uid', '==', followingAndUser[i].uid));
       return new Promise( async (resolve) => {
@@ -926,6 +924,7 @@ const RouterSwitch = () => {
       postCaption: photoUploadText,
       comments: [],
       likes: [],
+      saved: [],
       tags: tagIDs,
       uid: userData.uid,
       username: userData.displayName,
@@ -1357,6 +1356,7 @@ const RouterSwitch = () => {
       let imageArray = [];
       let urlArray = [];
       let taggedArray = [];
+      let savedArray = [];
 
       const profileDataRef = doc(db, 'users', uid);
       const profileDataSnap = await getDoc(profileDataRef);
@@ -1397,6 +1397,7 @@ const RouterSwitch = () => {
       })
       setProfileImages(imageArray);
       console.log(imageArray);
+
       const taggedImageData = query(collection(db, 'postUploads'),
         where('tags', 'array-contains', uid), orderBy('uploadDate', 'desc'));
       const taggedImageDataSnap = await getDocs(taggedImageData);
@@ -1406,6 +1407,18 @@ const RouterSwitch = () => {
       Promise.all(taggedArray).then((values) => {
         console.log(values);
         setProfileTaggedPosts(values);
+      })
+
+      const savedPostsData = query(collection(db, 'postUploads'),
+        where('saved', 'array-contains', uid), orderBy('uploadDate', 'desc'));
+      const savedPostsDataSnap = await getDocs(savedPostsData);
+      savedPostsDataSnap.forEach((doc) => {
+        console.log('HELLO!');
+        savedArray.push(getPhotoURLs(doc.data()));
+      });
+      Promise.all(savedArray).then((values) => {
+        setProfileSavedPosts(values);
+        console.log(values);
       })
     } else {
       console.log('no displayName document');
@@ -1720,6 +1733,7 @@ const RouterSwitch = () => {
           }
           <Route path='/:username' element={
             <Profile
+              profileSavedPosts={profileSavedPosts}
               profileTaggedPosts={profileTaggedPosts}
               setIsPostLinksOpen={setIsPostLinksOpen}
               setIsSearchClicked={setIsSearchClicked}
@@ -1761,6 +1775,7 @@ const RouterSwitch = () => {
           />
           <Route path='/:username/:page' element={
             <Profile
+              profileSavedPosts={profileSavedPosts}
               profileTaggedPosts={profileTaggedPosts}
               setIsPostLinksOpen={setIsPostLinksOpen}
               setIsSearchClicked={setIsSearchClicked}
@@ -1888,6 +1903,9 @@ const RouterSwitch = () => {
         <Routes>
           <Route path='/p/:postID' element={
             <PhotoPostModal
+              setIsLocationPost={setIsLocationPost}
+              setIsPostLinksOpen={setIsPostLinksOpen}
+              isPostLinksOpen={isPostLinksOpen}
               onMouseEnter={onMouseEnter}
               onMouseLeave={onMouseLeave}
               backgroundLocation={backgroundLocation}

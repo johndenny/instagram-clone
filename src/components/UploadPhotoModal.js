@@ -886,6 +886,7 @@ const UploadPhotoModal = (props) => {
       postCaption: captionText,
       comments: [],
       likes: [],
+      saved: [],
       tags: tagIDs,
       uid: userData.uid,
       username: userData.displayName,

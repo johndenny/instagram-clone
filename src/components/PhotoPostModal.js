@@ -5,6 +5,9 @@ import './PhotoPostModal.css'
 
 const PhotoPostModal = (props) => {
   const {
+    setIsLocationPost,
+    setIsPostLinksOpen,
+    isPostLinksOpen,
     onMouseEnter,
     onMouseLeave,
     setProfileModalData,
@@ -46,21 +49,33 @@ const PhotoPostModal = (props) => {
     setSelectedPost('');
   }, [])
 
-  
+  const closeModal = (event) => {
+    event.stopPropagation();
+    navigate(-1);
+  }
 
   return (
-    <div className='photo-post-modal'>
+    <div 
+      className='photo-post-modal'
+      onClick={closeModal}
+    >
       <button 
         className='close-modal-button'
-        onClick={() => navigate(-1)}
+        onClick={closeModal}
       >
         <svg aria-label="Close" className="close-upload-modal-svg" color="#ffffff" fill="#ffffff" height="24" role="img" viewBox="0 0 24 24" width="24">
           <polyline fill="none" points="20.643 3.357 12 12 3.353 20.647" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3"></polyline>
           <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" x1="20.649" x2="3.354" y1="20.649" y2="3.354"></line>
         </svg>
       </button>
-      <main className='photo-post-modal-content'>
+      <main 
+        className='photo-post-modal-content'
+        onClick={(event) => event.stopPropagation()}
+      >
         <MobilePhotoPost
+          setIsLocationPost={setIsLocationPost}
+          setIsPostLinksOpen={setIsPostLinksOpen}
+          isPostLinksOpen={isPostLinksOpen}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
           setProfileModalData={setProfileModalData}

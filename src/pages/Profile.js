@@ -1,6 +1,6 @@
 import defaultProfileImage from "../images/default-profile-image.jpg";
 import './Profile.css';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useLayoutEffect } from "react";
 import ProfilePhotoModal from "../components/ProfilePhotoModal";
 import { Link, useParams, useLocation, useNavigate} from "react-router-dom";
 import useWindowSize from "../hooks/useWindowSize";
@@ -14,6 +14,7 @@ const auth = getAuth();
 
 const Profile = (props) => {
   const {
+    profileSavedPosts,
     profileTaggedPosts,
     setIsPostLinksOpen,
     setIsSearchClicked,
@@ -56,7 +57,8 @@ const Profile = (props) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [pageSelected, setPageSelected] = useState('posts');
-  const [previousUsername, setPreviousUsername] = useState('')
+  const [previousUsername, setPreviousUsername] = useState('');
+  const [postData, setPostData] = useState([]);
 
   useEffect(() => {
     if (profileData.length === 0 || previousUsername !== params.username) {
@@ -96,9 +98,18 @@ const Profile = (props) => {
     console.log(profileData);
   },[profileData]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     console.log(pageSelected)
-  }, [pageSelected])
+    if (pageSelected === 'posts' || pageSelected === 'feed') {
+      setPostData(profilePosts);
+    } else if (pageSelected === 'tagged') {
+      setPostData(profileTaggedPosts);
+    } else if (pageSelected === 'saved') {
+      console.log('saved');
+      console.log(profileSavedPosts);
+      setPostData(profileSavedPosts);
+    }
+  }, [pageSelected, profilePosts, profileSavedPosts, profileTaggedPosts])
 
   // useEffect(() => () => {
   //   setProfileData([]);
@@ -1310,7 +1321,12 @@ const Profile = (props) => {
               </React.Fragment>
             }
             <div className="profile-posts">
-              {(pageSelected === 'posts' || pageSelected === 'feed' || pageSelected === 'tagged') &&
+              {pageSelected === 'saved' &&
+                <span className="no-saved-top-text">
+                  Only you can see what you've saved
+                </span>
+              }
+              {(pageSelected === 'posts' || pageSelected === 'feed' || pageSelected === 'tagged' || pageSelected === 'saved') &&
                 <ProfileImagesLoader
                   setIsPostLinksOpen={setIsPostLinksOpen}
                   getUserProfileData={getUserProfileData}
@@ -1325,7 +1341,7 @@ const Profile = (props) => {
                   pageSelected={pageSelected}
                   profileData={profileData} 
                   photosArray={photosArray}
-                  profilePosts={pageSelected === 'tagged' ? profileTaggedPosts : profilePosts}
+                  profilePosts={postData}
                   setPhotosArray={setPhotosArray}
                 />              
               }
@@ -1364,11 +1380,8 @@ const Profile = (props) => {
                   </div>
                 </article>              
               }
-              {currentUsersPage && pageSelected === 'saved' &&
+              {currentUsersPage && pageSelected === 'saved' && profileSavedPosts.length === 0 &&
                 <article className="no-saved-posts">
-                  <span className="no-saved-top-text">
-                    Only you can see what you've saved
-                  </span>
                   <div className="no-saved-posts-content">
                     <div className="no-saved-posts-sprite">
                     </div>

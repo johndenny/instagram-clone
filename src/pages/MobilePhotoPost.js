@@ -1,6 +1,6 @@
 import './MobilePhotoPost.css'
 import firebaseApp from '../Firebase';
-import { getFirestore, query, collection, where, orderBy, getDocs, doc, getDoc} from 'firebase/firestore';
+import { getFirestore, query, collection, where, orderBy, getDocs, doc, getDoc, updateDoc, arrayUnion, arrayRemove} from 'firebase/firestore';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
@@ -69,22 +69,55 @@ const MobilePhotoPost = (props) => {
   const imageRef = useRef(null);
   const [imageDimensions, setImageDimensions] = useState(null);
   const [isTagsHidden, setIsTagsHidden] = useState(true);
+  const tagTimerRef = useRef(null);
+  const [isPostSaved, setIsPostSaved] = useState(false);
 
-  const TagsHandler = () => {
-    isTagsHidden ? setIsTagsHidden(false) : setIsTagsHidden(true);
+  useEffect(() => {
+    if (selectedPost !== '') {
+      console.log(selectedPost);
+      const { uid } = userData;
+      const savedIndex = selectedPost[0].saved.findIndex((user) => user === uid)
+      console.log(savedIndex);
+      savedIndex === -1
+        ? setIsPostSaved(false)
+        : setIsPostSaved(true);         
+    }
+}, [userData, selectedPost])
+
+  const savePostHandler = (postID) => {
+    isPostSaved
+      ? setIsPostSaved(false)
+      : setIsPostSaved(true);
+    savePostUploadToggle(postID)
   }
 
-  // useEffect(() => {
-  //   console.log('hello')
-  //   const image = imageRef.current.getBoundingClientRect();
-  //   setImageDimensions({
-  //     width: image.width,
-  //     height: image.height,
-  //     left: image.left,
-  //     top: image.top
-  //   })
-  //   console.log(image);
-  // }, [width]);
+  const savePostUploadToggle = async (postID) => {
+    const {
+      uid,
+    } = userData;
+    const postRef = doc(db, 'postUploads', postID);
+    const postSnap = await getDoc(postRef);
+    if (postSnap.exists()) {
+      const { saved } = postSnap.data();
+      const savedIndex = saved.findIndex((user) => user === uid)
+      if (savedIndex === -1) {
+        await updateDoc(postRef, {
+          saved: arrayUnion(uid)
+        });          
+      } else {
+        await updateDoc(postRef, {
+          saved: arrayRemove(uid)
+        });        
+      }
+    }
+  };
+
+  const TagsHandler = () => {
+    clearTimeout(tagTimerRef.current);
+    tagTimerRef.current = setTimeout(() => {
+      isTagsHidden ? setIsTagsHidden(false) : setIsTagsHidden(true);
+    }, 400);
+  }
 
   const openPostLinksModal = (index) => {
     if (params.postID !== undefined) {
@@ -98,6 +131,8 @@ const MobilePhotoPost = (props) => {
   };
 
   const onDoublePress = (event) => {
+    console.log(tagTimerRef.current);
+    clearTimeout(tagTimerRef.current);
     const time = new Date().getTime();
     const delta = time - lastPress;
 
@@ -116,6 +151,8 @@ const MobilePhotoPost = (props) => {
   };
 
   const onDoubleClick = () => {
+    console.log(tagTimerRef.current);
+    clearTimeout(tagTimerRef.current);
     setIsLiked(true);
     const alreadyLiked = selectedPost[0].likes.findIndex((like) => like.uid === userData.uid);
     if (alreadyLiked === -1) {
@@ -397,7 +434,7 @@ const MobilePhotoPost = (props) => {
           className='photo-post-modal-wrapper'
           style={{ 
             height: `${modalPhotoHeight}px`,
-          }}            
+          }}          
         >
           <div 
             className='photo-navigation-wrapper post-modal'
@@ -997,6 +1034,7 @@ const MobilePhotoPost = (props) => {
                       </svg>
                     </button>
                     <button className='feed-save-button'>
+                      {}
                       <svg aria-label="Save" className="save-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
                         <polygon fill="none" points="20 21 12 13.44 4 21 4 3 20 3 20 21" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></polygon>
                       </svg>
@@ -1237,10 +1275,18 @@ const MobilePhotoPost = (props) => {
                       <polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></polygon>
                     </svg>
                   </button>
-                  <button className='feed-save-button'>
-                    <svg aria-label="Save" className="save-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
-                      <polygon fill="none" points="20 21 12 13.44 4 21 4 3 20 3 20 21" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></polygon>
-                    </svg>
+                  <button 
+                    className='feed-save-button'
+                    onClick={() => savePostHandler(postID)}
+                  >
+                    {isPostSaved
+                      ? <svg aria-label="Remove" className="filled-save-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                          <path d="M20 22a.999.999 0 01-.687-.273L12 14.815l-7.313 6.912A1 1 0 013 21V3a1 1 0 011-1h16a1 1 0 011 1v18a1 1 0 01-1 1z"></path>
+                        </svg>
+                      :  <svg aria-label="Save" className="save-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                          <polygon fill="none" points="20 21 12 13.44 4 21 4 3 20 3 20 21" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></polygon>
+                        </svg>
+                    }
                   </button>
                 </div>
                 {likes.length > 0 &&

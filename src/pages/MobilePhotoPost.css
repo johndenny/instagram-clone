@@ -164,7 +164,7 @@
   border: 1px solid rgba(219, 219, 219, 1);
   border-radius: 3px;
   align-items: stretch;
-  width: calc(100vw - 60px);
+  /* width: calc(100vw - 60px); */
   min-height: 450px;
   max-width: 950px;
 }
