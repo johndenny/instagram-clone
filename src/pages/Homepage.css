@@ -6,10 +6,7 @@
   position: relative;
 }
 
-.homepage-width-wrapper {
-}
-
-@media screen and (max-width: 736px) {
+@media screen and (max-width: 470px) {
   .homepage-sidebar-wrapper {
     align-items: stretch;
   }
@@ -19,19 +16,24 @@
   .homepage-width-wrapper {
     display: flex;
     width: 100%;
-    max-width: 955px;
+    max-width: 821px;
+  }
+
+  .homepage-width-wrapper:has(.homepage-sidebar-menu) {
+    justify-content: flex-start;
+  }
+  .homepage-width-wrapper.mobile {
+    justify-content: center;
   }
 }
 
 @media screen and (min-width: 737px) {
-  .homepage-posts-wrapper {
-    gap: 24px;
-    margin: 24px 0;
-    max-width: 614px;
-  }
 }
 
 .homepage-posts-wrapper {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+  margin: 24px 0;
+  max-width: 470px;
 }

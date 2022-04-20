@@ -1,6 +1,6 @@
 .post-comment {
   display: flex;
-  padding: 6px 0;
+  padding: 6px 3px;
   border-top: 1px solid rgba(239, 239, 239, 1);
   position: relative;
 }
@@ -13,5 +13,5 @@
 
 .emoji-menu-button,
 .post-comment-button {
-  padding: 8px 16px;
+  padding: 8px;
 }

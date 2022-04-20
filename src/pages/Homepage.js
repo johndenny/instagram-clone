@@ -44,7 +44,12 @@ const Homepage = (props) => {
 
   return (
     <main className='homepage-sidebar-wrapper'>
-      <div className='homepage-width-wrapper'>
+      <div className={
+        isMobile
+          ? 'homepage-width-wrapper mobile'
+          : 'homepage-width-wrapper'
+        }
+      >
         <section className='homepage-posts-wrapper'>
           {photosArray.map((post, index) => {
             return (

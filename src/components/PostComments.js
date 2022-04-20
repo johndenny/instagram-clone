@@ -58,7 +58,8 @@ const PostComments = (props) => {
       text: commentText,
       uid: uid,
       uploadDate: Date.now(),
-      username: username
+      username: username,
+      likes: [],
     }
     await updateDoc(postRef, {
       comments: arrayUnion(commentDoc)

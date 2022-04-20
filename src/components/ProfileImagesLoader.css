@@ -18,6 +18,11 @@
   position: absolute;
 }
 
+.photo-post-feed {
+  border: 1px solid rgba(219, 219, 219, 1);
+  border-radius: 8px;
+}
+
 @media screen and (min-width: 737px) {
   .profile-images {
     margin: 24px 0;
@@ -30,11 +35,6 @@
   .photo-post {
     width: min(calc((100vw - 96px) / 3), 293px);
     height: min(calc((100vw - 96px) / 3), 293px);
-  }
-
-  .photo-post-feed {
-    border: 1px solid rgba(219, 219, 219, 1);
-    border-radius: 8px;
   }
 
   .profile-images-wrapper-feed {
@@ -74,8 +74,7 @@
 
 .feed-post-header {
   display: flex;
-  padding: 10px 16px;
-  padding-right: 8px;
+  margin: 8px 4px 8px 12px;
 }
 
 .profile-photo-username-wrapper {
@@ -94,6 +93,7 @@
   overflow: hidden;
   position: relative;
   cursor: pointer;
+  margin-right: 18px;
 }
 
 .feed-profile-photo-wrapper::after {
@@ -116,7 +116,7 @@
 .profile-username-header {
   font-size: 14px;
   font-weight: 600;
-  margin: 0 12px;
+  margin-right: 12px;
   margin-bottom: 3px;
   cursor: pointer;
 }
@@ -146,13 +146,13 @@
   display: flex;
   align-items: stretch;
   flex-direction: column;
-  padding: 0 8px;
+  padding: 0 4px;
   z-index: 3;
   position: relative;
 }
 
 .feed-footer-buttons-wrapper {
-  padding: 10px 0;
+  padding: 4px 0;
   display: flex;
 }
 

@@ -20,7 +20,7 @@ const HomepageFixedMenu = (props) => {
   const [left, setLeft] = useState(0);
 
   const leftHandler = () => {
-    const left = (width / 2) + (658 / 4);
+    const left = (width / 2) + (470 / 4);
     setLeft(left)
   }
 

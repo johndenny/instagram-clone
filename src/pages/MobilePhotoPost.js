@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import PostComments from '../components/PostComments';
 import FollowButton from '../components/FollowButton';
 import Tag from '../components/Tag';
+import Comment from '../components/Comment';
 
 const db = getFirestore()
 let lastPress = 0;
@@ -168,7 +169,8 @@ const MobilePhotoPost = (props) => {
       fullname
     } = userData;
     const { postID } = selectedPost[0];   
-    const alreadyLiked = selectedPost[0].likes.findIndex((like) => like.uid === uid);
+    const alreadyLiked = selectedPost[0].likes
+      .findIndex((like) => like.uid === uid);
     if (alreadyLiked === -1) {
       setIsButtonLiked(true);
       const newLikes = [...selectedPost[0].likes];
@@ -254,7 +256,7 @@ const MobilePhotoPost = (props) => {
     if (isModal) {
       photoWidth = modalPhotoWidth;
     } else {
-      width > 736 ? photoWidth = 614 : photoWidth = width;      
+      width > 736 ? photoWidth = 470 : photoWidth = width;      
     }
     event.stopPropagation();
     if (galleryIndex !== selectedPost[0].photos.length - 1) {
@@ -269,7 +271,7 @@ const MobilePhotoPost = (props) => {
     if (isModal) {
       photoWidth = modalPhotoWidth
     } else {
-      width > 736 ? photoWidth = 614 : photoWidth = width;
+      width > 736 ? photoWidth = 470 : photoWidth = width;
     }
     event.stopPropagation();
     if (galleryIndex !== 0) {
@@ -285,7 +287,7 @@ const MobilePhotoPost = (props) => {
     console.log(galleryIndex);
     setIsMoving(true);
     let photoWidth;
-    width > 736 ? photoWidth = 614 : photoWidth = width;
+    width > 736 ? photoWidth = 470 : photoWidth = width;
     if ((galleryIndex === 0 && movement < 0)) {
       return
     } else {
@@ -331,7 +333,7 @@ const MobilePhotoPost = (props) => {
   const photoPostHeightHandler = () => {
     let newHeight;
     let photoWidth = width - 395
-    if (photoWidth > 614) photoWidth = 614
+    if (photoWidth > 470) photoWidth = 470
     if (selectedPost[1].aspectRatio > 0) {
       newHeight = photoWidth / selectedPost[1].aspectRatio;
     }
@@ -395,7 +397,7 @@ const MobilePhotoPost = (props) => {
     const frameWrapperHandler = () => {
       let newWidth;
       const photoWidth = width - 395;
-      photoWidth > 614 ? newWidth = 614 : newWidth = photoWidth;
+      photoWidth > 470 ? newWidth = 470 : newWidth = photoWidth;
       return newWidth * photos.length;
     }
 
@@ -642,9 +644,11 @@ const MobilePhotoPost = (props) => {
                           {postCaption}
                         </span>                    
                       </div>
-                      <time className='comment-time-stamp'>
-                        {new Date(uploadDate).toDateString()}
-                      </time>
+                      <div className='comment-footer'>
+                        <time className='comment-time-stamp'>
+                          {new Date(uploadDate).toDateString()}
+                        </time>                        
+                      </div>
                     </div>
                   </li>                
                 }
@@ -658,41 +662,47 @@ const MobilePhotoPost = (props) => {
                     uid
                   } = comment;
                   return (
-                    <li key={commentID} className='comment-wrapper'>
-                      <div 
-                        className='comment-profile-photo-frame'
-                        onClick={() => navigateUserProfile(username)}
-                        ref={(element) => fullCommentsPhotoRef.current.push(element)}
-                        onMouseEnter={() => onMouseEnter(uid, fullCommentsPhotoRef.current[index])}
-                        onMouseLeave={onMouseLeave} 
-                      >
-                        <img 
-                          alt={`${username}'s profile`} 
-                          src={photoURL} 
-                          className="comments-profile-photo"
-                        /> 
-                      </div>
-                      <div className='comment-text-time-wrapper'>
-                        <div className='comment-text-wrapper'>
-                          <h2 
-                            className='comment-username'
-                            onClick={() => navigateUserProfile(username)}
-                            ref={(element) => fullCommentsUsernameRef.current.push(element)}
-                            onMouseEnter={() => onMouseEnter(uid, fullCommentsUsernameRef.current[index])}
-                            onMouseLeave={onMouseLeave} 
-                          >
-                            {username}
-                          </h2>
-                          <span className='comment-text'>
-                            {text}
-                          </span>                    
-                        </div>
-                        <time className='comment-time-stamp'>
-                          {new Date(uploadDate).toDateString()}
-                        </time>
-                      </div>
+                    // <li key={commentID} className='comment-wrapper'>
+                    //   <div 
+                    //     className='comment-profile-photo-frame'
+                    //     onClick={() => navigateUserProfile(username)}
+                    //     ref={(element) => fullCommentsPhotoRef.current.push(element)}
+                    //     onMouseEnter={() => onMouseEnter(uid, fullCommentsPhotoRef.current[index])}
+                    //     onMouseLeave={onMouseLeave} 
+                    //   >
+                    //     <img 
+                    //       alt={`${username}'s profile`} 
+                    //       src={photoURL} 
+                    //       className="comments-profile-photo"
+                    //     /> 
+                    //   </div>
+                    //   <div className='comment-text-time-wrapper'>
+                    //     <div className='comment-text-wrapper'>
+                    //       <h2 
+                    //         className='comment-username'
+                    //         onClick={() => navigateUserProfile(username)}
+                    //         ref={(element) => fullCommentsUsernameRef.current.push(element)}
+                    //         onMouseEnter={() => onMouseEnter(uid, fullCommentsUsernameRef.current[index])}
+                    //         onMouseLeave={onMouseLeave} 
+                    //       >
+                    //         {username}
+                    //       </h2>
+                    //       <span className='comment-text'>
+                    //         {text}
+                    //       </span>                    
+                    //     </div>
+                    //     <time className='comment-time-stamp'>
+                    //       {new Date(uploadDate).toDateString()}
+                    //     </time>
+                    //   </div>
                       
-                    </li>
+                    // </li>
+                    <Comment
+                      comment={comment}
+                      navigateUserProfile={navigateUserProfile}
+                      onMouseEnter={onMouseEnter}
+                      onMouseLeave={onMouseLeave}
+                    />
                   )
                 })}
               </ul>
@@ -730,10 +740,18 @@ const MobilePhotoPost = (props) => {
                     <polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></polygon>
                   </svg>
                 </button>
-                <button className='feed-save-button'>
-                  <svg aria-label="Save" className="save-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
-                    <polygon fill="none" points="20 21 12 13.44 4 21 4 3 20 3 20 21" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></polygon>
-                  </svg>
+                <button 
+                  className='feed-save-button'
+                  onClick={() => savePostHandler(postID)}
+                >
+                  {isPostSaved
+                    ? <svg aria-label="Remove" className="filled-save-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                        <path d="M20 22a.999.999 0 01-.687-.273L12 14.815l-7.313 6.912A1 1 0 013 21V3a1 1 0 011-1h16a1 1 0 011 1v18a1 1 0 01-1 1z"></path>
+                      </svg>
+                    :  <svg aria-label="Save" className="save-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                        <polygon fill="none" points="20 21 12 13.44 4 21 4 3 20 3 20 21" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></polygon>
+                      </svg>
+                  }
                 </button>
               </div>
               {likes.length > 0 &&
@@ -765,7 +783,7 @@ const MobilePhotoPost = (props) => {
         </article>
       );
     };
-    if (params.postID !== undefined && width > 736) {
+    if (params.postID !== undefined && !isMobile) {
       return (
         <main 
           className='photo-post-wide-wrapper'
@@ -783,7 +801,7 @@ const MobilePhotoPost = (props) => {
               <div 
                 className='photo-navigation-wrapper'
                 style={{
-                  width: `min(calc(100vw - 395px), 614px)`
+                  width: `min(calc(100vw - 395px), 470px)`
                 }}
                 onTouchStart={onDoublePress}
                 onTouchMove={movementHandler}
@@ -817,14 +835,14 @@ const MobilePhotoPost = (props) => {
                           key={photo.photoID} 
                           className='feed-photo-frame'
                           style={{
-                            transform: `translateX(${(width > 736 ? 614 : width) * (photoIndex - 1)}px)`
+                            transform: `translateX(${(width > 736 ? 470 : width) * (photoIndex - 1)}px)`
                           }}
                           onClick={TagsHandler}
                         >
                           <img 
                             alt={postCaption} 
                             className='feed-photo-post-image' 
-                            sizes={`min(calc(100vw - 395px), 614px)`}
+                            sizes={`min(calc(100vw - 395px), 470px)`}
                             srcSet={`
                               ${photo.w1080} 1080w,
                               ${photo.w750} 750w,
@@ -1033,11 +1051,18 @@ const MobilePhotoPost = (props) => {
                         <polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></polygon>
                       </svg>
                     </button>
-                    <button className='feed-save-button'>
-                      {}
-                      <svg aria-label="Save" className="save-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
-                        <polygon fill="none" points="20 21 12 13.44 4 21 4 3 20 3 20 21" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></polygon>
-                      </svg>
+                    <button 
+                      className='feed-save-button'
+                      onClick={() => savePostHandler(postID)}
+                    >
+                      {isPostSaved
+                        ? <svg aria-label="Remove" className="filled-save-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                            <path d="M20 22a.999.999 0 01-.687-.273L12 14.815l-7.313 6.912A1 1 0 013 21V3a1 1 0 011-1h16a1 1 0 011 1v18a1 1 0 01-1 1z"></path>
+                          </svg>
+                        :  <svg aria-label="Save" className="save-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                            <polygon fill="none" points="20 21 12 13.44 4 21 4 3 20 3 20 21" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></polygon>
+                          </svg>
+                      }
                     </button>
                   </div>
                   {likes.length > 0 &&
@@ -1133,7 +1158,7 @@ const MobilePhotoPost = (props) => {
                 <div 
                   className='photo-frames-wrapper'
                   style={{
-                    width: `${(width > 736 ? 614 : width / selectedPost[1].aspectRatio) * photos.length}px`,
+                    width: `${(width > 470 ? 470 : width / selectedPost[1].aspectRatio) * photos.length}px`,
                     transform: `translateX(-${movement}px)`,
                     transition: `${isMoving ? 'all .2s ease-in-out' : ''}`
                   }}
@@ -1146,7 +1171,7 @@ const MobilePhotoPost = (props) => {
                           key={photo.photoID} 
                           className='feed-photo-frame'
                           style={{
-                            transform: `translateX(${(width > 736 ? 614 : width) * (photoIndex - 1)}px)`
+                            transform: `translateX(${(width > 470 ? 470 : width) * (photoIndex - 1)}px)`
                           }}
                           onClick={TagsHandler}
                         >
@@ -1154,7 +1179,7 @@ const MobilePhotoPost = (props) => {
                             decoding='sync' 
                             alt={postCaption} 
                             className='feed-photo-post-image' 
-                            sizes={`${width > 736 ? '614px' : '100vw'}`}
+                            sizes={`${width > 470 ? '470px' : '100vw'}`}
                             srcSet={`
                               ${photo.w1080} 1080w,
                               ${photo.w750} 750w,

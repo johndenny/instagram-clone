@@ -428,7 +428,7 @@ const RouterSwitch = () => {
     setIsLoadingPage(true);
     const photoArray = [];
     const profilePhotoData = query(collection(db, 'photoUploads'), 
-    where('postID', '==', postID), orderBy('index'));
+      where('postID', '==', postID), orderBy('index'));
     const profileImageDataSnap = await getDocs(profilePhotoData);
     profileImageDataSnap.forEach((doc) => {
       photoArray.push(doc.data());
