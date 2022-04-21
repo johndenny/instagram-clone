@@ -45,7 +45,6 @@
 .post-images {
   display: flex;
   flex-direction: column;
-  background-color: rgba(255, 255, 255, 1);
 }
 
 .photo-navigation-wrapper {
@@ -53,7 +52,7 @@
   align-items: center;
   position: relative;
   overflow: hidden;
-  background-color: rgba(250, 250, 250, 1);
+  background-color: rgba(255, 255, 255, 1);
 }
 
 .photo-navigation-wrapper.post-modal {
@@ -162,7 +161,8 @@
 .photo-post-modal-wrapper {
   display: flex;
   border: 1px solid rgba(219, 219, 219, 1);
-  border-radius: 3px;
+  border-radius: 8px;
+  overflow: hidden;
   align-items: stretch;
   /* width: calc(100vw - 60px); */
   min-height: 450px;
@@ -198,8 +198,11 @@
 .solo-post-comment-list {
   padding: 0;
   margin: 0;
-  margin: 10px 16px;
+  margin: 16px;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .solo-post-header {
@@ -214,6 +217,12 @@
   flex-grow: 1;
   overflow: auto;
   position: relative;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.solo-post-comments-wrapper::-webkit-scrollbar {
+  display: none;
 }
 
 .solo-post-side-bar > .feed-post-footer {
@@ -231,4 +240,9 @@
   border-radius: 20px;
   cursor: pointer;
   z-index: 2;
+}
+
+.post-time-stamp {
+  display: flex;
+  cursor: pointer;
 }

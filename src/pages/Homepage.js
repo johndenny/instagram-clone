@@ -42,6 +42,10 @@ const Homepage = (props) => {
     }
   }, [userData]);
 
+  useEffect(() => {
+    setSelectedPost('');
+  },[]);
+
   return (
     <main className='homepage-sidebar-wrapper'>
       <div className={

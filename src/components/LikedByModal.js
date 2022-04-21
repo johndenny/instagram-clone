@@ -1,9 +1,12 @@
 import "./LikedByModal.css";
 import LikedBy from "../pages/LikedBy";
 import PeopleList from "./PeopleList";
+import { useEffect, useState } from "react";
 
 const LikedByModal = (props) => {
   const {
+    setCommentIDs,
+    commentIDs,
     onMouseEnter,
     onMouseLeave,
     selectedListProfile,
@@ -14,10 +17,42 @@ const LikedByModal = (props) => {
     selectedPost,
     isFollowLoading,
   } = props;
+  const [likes, setLikes] = useState([]);
 
   const stopBubbles = (event) => {
     event.stopPropagation();
   }
+
+  useEffect(() => {
+    console.log(commentIDs)
+  }, [commentIDs])
+
+  useEffect(() => () => {
+    setCommentIDs('');
+  }, []);
+
+  useEffect(() => {
+    const { comments } = selectedPost[0];
+    if (commentIDs.commentID !== undefined) {
+      let commentID;
+      commentIDs.parentCommentID !== undefined
+        ? commentID = commentIDs.parentCommentID
+        : commentID = commentIDs.commentID
+      console.log(commentID);
+      const commentIndex = comments
+        .findIndex((comment) => comment.commentID === commentID);
+      if (commentIndex !== -1) {
+        setLikes(comments[commentIndex].likes);
+      } else if (commentIDs.parentCommentID !== undefined) {
+        const { replies } = comments[commentIndex];
+        const replyIndex = replies
+          .findIndex((reply) => reply.commentID === commentIDs.commentID);
+        setLikes(replies[replyIndex].likes);
+      }
+    } else {
+      setLikes(selectedPost[0].likes);
+    }; 
+  }, [commentIDs.commentID, commentIDs.parentCommentID, selectedPost]);
 
   return (
     <div className="profile-photo-modal" onClick={() => setIsLikedByModalOpen(false)}>
@@ -45,7 +80,7 @@ const LikedByModal = (props) => {
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
             selectedListProfile={selectedListProfile}
-            allUserProfiles={selectedPost[0].likes}
+            allUserProfiles={likes}
             userData={userData}
             followHandler={followHandler}
             isFollowLoading={isFollowLoading}

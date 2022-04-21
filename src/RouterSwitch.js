@@ -90,6 +90,7 @@ const RouterSwitch = () => {
   const [profileModalTimeoutID, setProfileModalTimeoutID] = useState(null);
   const timerRef = useRef();
   const [isLocationPost, setIsLocationPost] = useState(false)
+  const [commentIDs, setCommentIDs] = useState('');
 
   // Profile //
 
@@ -1443,6 +1444,10 @@ const RouterSwitch = () => {
     console.log(profileModalTimeoutID);
   },[profileModalTimeoutID]);
 
+  useEffect(() => {
+    console.log(commentIDs);
+  },[commentIDs]); 
+  
   return (
     <BrowserRouter>
       {isResizing &&
@@ -1472,6 +1477,8 @@ const RouterSwitch = () => {
       }
       {isLikedByModalOpen &&
         <LikedByModal
+          setCommentIDs={setCommentIDs}
+          commentIDs={commentIDs}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
           selectedListProfile={selectedListProfile}
@@ -1845,6 +1852,9 @@ const RouterSwitch = () => {
           />
           <Route path='/p/:postID/comments' element={
             <MobileComments
+              getPostData={getPostData}
+              isMobile={isMobile}
+              setIsLoadingPage={setIsLoadingPage}
               userData={userData}
               setDataLoading={setDataLoading}
               selectedPost={selectedPost}
@@ -1852,6 +1862,16 @@ const RouterSwitch = () => {
             />}
           />
           <Route path='/p/:postID/liked_by' element={
+            <LikedBy
+              selectedListProfile={selectedListProfile}
+              unfollowModalHandler={unfollowModalHandler}
+              followHandler={followHandler}
+              isFollowLoading={isFollowLoading}
+              userData={userData} 
+              selectedPost={selectedPost}
+            />
+          } />
+          <Route path='/p/:postID/c/:commentID/liked_by' element={
             <LikedBy
               selectedListProfile={selectedListProfile}
               unfollowModalHandler={unfollowModalHandler}
@@ -1903,6 +1923,7 @@ const RouterSwitch = () => {
         <Routes>
           <Route path='/p/:postID' element={
             <PhotoPostModal
+              setCommentIDs={setCommentIDs}
               setIsLocationPost={setIsLocationPost}
               setIsPostLinksOpen={setIsPostLinksOpen}
               isPostLinksOpen={isPostLinksOpen}

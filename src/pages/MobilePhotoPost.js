@@ -15,6 +15,7 @@ let lastPress = 0;
 
 const MobilePhotoPost = (props) => {
   const {
+    setCommentIDs,
     setIsLocationPost,
     isPostLinksOpen,
     setIsPostLinksOpen,
@@ -72,6 +73,10 @@ const MobilePhotoPost = (props) => {
   const [isTagsHidden, setIsTagsHidden] = useState(true);
   const tagTimerRef = useRef(null);
   const [isPostSaved, setIsPostSaved] = useState(false);
+  const [replyUser, setReplyUser] = useState(null);
+  const [newReplyID, setNewReplyID] = useState('');
+  const [commentText, setCommentText] = useState('');
+  const textareaRef = useRef();
 
   useEffect(() => {
     if (selectedPost !== '') {
@@ -256,7 +261,11 @@ const MobilePhotoPost = (props) => {
     if (isModal) {
       photoWidth = modalPhotoWidth;
     } else {
-      width > 736 ? photoWidth = 470 : photoWidth = width;      
+      let maxWidth = 470;
+      if (params.postID !== undefined && !isMobile) {
+        maxWidth = 614;
+      }
+      width > 736 ? photoWidth = maxWidth : photoWidth = width;      
     }
     event.stopPropagation();
     if (galleryIndex !== selectedPost[0].photos.length - 1) {
@@ -271,7 +280,11 @@ const MobilePhotoPost = (props) => {
     if (isModal) {
       photoWidth = modalPhotoWidth
     } else {
-      width > 736 ? photoWidth = 470 : photoWidth = width;
+      let maxWidth = 470;
+      if (params.postID !== undefined && !isMobile) {
+        maxWidth = 614;
+      }
+      width > 736 ? photoWidth = maxWidth : photoWidth = width;
     }
     event.stopPropagation();
     if (galleryIndex !== 0) {
@@ -287,7 +300,11 @@ const MobilePhotoPost = (props) => {
     console.log(galleryIndex);
     setIsMoving(true);
     let photoWidth;
-    width > 736 ? photoWidth = 470 : photoWidth = width;
+    let maxWidth = 470;
+    if (params.postID !== undefined && !isMobile) {
+      maxWidth = 614;
+    }
+    width > 736 ? photoWidth = maxWidth : photoWidth = width;
     if ((galleryIndex === 0 && movement < 0)) {
       return
     } else {
@@ -333,7 +350,11 @@ const MobilePhotoPost = (props) => {
   const photoPostHeightHandler = () => {
     let newHeight;
     let photoWidth = width - 395
-    if (photoWidth > 470) photoWidth = 470
+    let maxWidth = 470;
+    if (params.postID !== undefined && !isMobile) {
+      maxWidth = 614;
+    }
+    if (photoWidth > maxWidth) photoWidth = maxWidth;
     if (selectedPost[1].aspectRatio > 0) {
       newHeight = photoWidth / selectedPost[1].aspectRatio;
     }
@@ -397,7 +418,11 @@ const MobilePhotoPost = (props) => {
     const frameWrapperHandler = () => {
       let newWidth;
       const photoWidth = width - 395;
-      photoWidth > 470 ? newWidth = 470 : newWidth = photoWidth;
+      let maxWidth = 470;
+      if (params.postID !== undefined && !isMobile) {
+        maxWidth = 614;
+      }
+      photoWidth > maxWidth ? newWidth = maxWidth : newWidth = photoWidth;
       return newWidth * photos.length;
     }
 
@@ -428,6 +453,56 @@ const MobilePhotoPost = (props) => {
       navigate(`/${username}`);
       setIsLoadingPage(false);
       setIsMouseHovering(false);
+    }
+
+    const formatTime = () => {
+      const currentDate = Date.now();
+      const timePast = Date.now() - uploadDate;
+      const timeStampYear = new Date(uploadDate).getFullYear();
+      const currentYear = new Date(currentDate).getFullYear();
+      const minutesPast = timePast / 60000;
+      const hoursPast = minutesPast / 60;
+      const daysPast = hoursPast / 24;
+      switch (true) {
+        case minutesPast < 1:
+          return 'NOW';
+        case minutesPast < 60 && minutesPast > 1:
+          const minutes = Math.floor(minutesPast)
+          return `${minutes} ${
+            minutes < 1 
+              ? 'MINUTE' 
+              : 'MINUTES'
+          } AGO`;
+        case hoursPast >= 1 && hoursPast < 24:
+          const hours = Math.floor(hoursPast)
+          return `${hours} ${
+            hours < 1 
+              ? 'HOUR' 
+              : 'HOURS'
+          } AGO`;
+        case daysPast >= 1 && daysPast < 8:
+          const days = Math.floor(daysPast)
+          return `${days} ${
+            days < 1 
+              ? 'DAY' 
+              : 'DAYS'
+          } AGO`;
+        default:
+          if (timeStampYear === currentYear) {
+            return `${new Date(uploadDate)
+              .toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+              })}`.toUpperCase();
+          } else {
+            return `${new Date(uploadDate)
+              .toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}`.toUpperCase();
+          }
+      }
     }
 
     if (isModal) {
@@ -615,7 +690,7 @@ const MobilePhotoPost = (props) => {
                 
               >
                 {postCaption !== '' &&
-                  <li className='comment-wrapper'>
+                  <li className='comment-content caption'>
                     <div 
                       className='comment-profile-photo-frame'
                       onClick={() => navigateUserProfile(username)}
@@ -655,54 +730,34 @@ const MobilePhotoPost = (props) => {
                 {comments.map((comment, index) => {
                   const {
                     commentID,
-                    username,
-                    text,
-                    photoURL,
-                    uploadDate,
-                    uid
                   } = comment;
                   return (
-                    // <li key={commentID} className='comment-wrapper'>
-                    //   <div 
-                    //     className='comment-profile-photo-frame'
-                    //     onClick={() => navigateUserProfile(username)}
-                    //     ref={(element) => fullCommentsPhotoRef.current.push(element)}
-                    //     onMouseEnter={() => onMouseEnter(uid, fullCommentsPhotoRef.current[index])}
-                    //     onMouseLeave={onMouseLeave} 
-                    //   >
-                    //     <img 
-                    //       alt={`${username}'s profile`} 
-                    //       src={photoURL} 
-                    //       className="comments-profile-photo"
-                    //     /> 
-                    //   </div>
-                    //   <div className='comment-text-time-wrapper'>
-                    //     <div className='comment-text-wrapper'>
-                    //       <h2 
-                    //         className='comment-username'
-                    //         onClick={() => navigateUserProfile(username)}
-                    //         ref={(element) => fullCommentsUsernameRef.current.push(element)}
-                    //         onMouseEnter={() => onMouseEnter(uid, fullCommentsUsernameRef.current[index])}
-                    //         onMouseLeave={onMouseLeave} 
-                    //       >
-                    //         {username}
-                    //       </h2>
-                    //       <span className='comment-text'>
-                    //         {text}
-                    //       </span>                    
-                    //     </div>
-                    //     <time className='comment-time-stamp'>
-                    //       {new Date(uploadDate).toDateString()}
-                    //     </time>
-                    //   </div>
-                      
-                    // </li>
-                    <Comment
-                      comment={comment}
-                      navigateUserProfile={navigateUserProfile}
-                      onMouseEnter={onMouseEnter}
-                      onMouseLeave={onMouseLeave}
-                    />
+                    <li 
+                      key={commentID} 
+                      className='comment-wrapper'
+                    >
+                      <Comment
+                        setIsLikedByModalOpen={setIsLikedByModalOpen}
+                        setCommentIDs={setCommentIDs}
+                        getPostData={getPostData}
+                        isMobile={isMobile}
+                        setIsLoadingPage={setIsLoadingPage}
+                        isReply={false}
+                        newReplyID={newReplyID}
+                        textareaRef={textareaRef}
+                        setCommentText={setCommentText}
+                        replyUser={replyUser}
+                        setReplyUser={setReplyUser}
+                        selectedPost={selectedPost}
+                        setSelectedPost={setSelectedPost}
+                        postID={postID}
+                        userData={userData}
+                        comment={comment}
+                        navigateUserProfile={navigateUserProfile}
+                        onMouseEnter={onMouseEnter}
+                        onMouseLeave={onMouseLeave}
+                      />
+                    </li>
                   )
                 })}
               </ul>
@@ -766,12 +821,26 @@ const MobilePhotoPost = (props) => {
                 </button>                  
               }               
               <div className='feed-post-timestamp'>
-                <time>
-                  {new Date(uploadDate).toDateString()}
+                <time 
+                  className='post-time-stamp'
+                  title={new Date(uploadDate).toLocaleDateString('en-US', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}
+                >
+                  {formatTime()}
                 </time>
               </div>
             </footer>
             <PostComments
+              setNewReplyID={setNewReplyID}
+              selectedPost={selectedPost}
+              setReplyUser={setReplyUser}
+              replyUser={replyUser}
+              textareaRef={textareaRef}
+              setCommentText={setCommentText}
+              commentText={commentText}
               postCommentsRef={postCommentsRef}
               setSelectedPost={setSelectedPost}
               newComments={newComments}
@@ -801,7 +870,7 @@ const MobilePhotoPost = (props) => {
               <div 
                 className='photo-navigation-wrapper'
                 style={{
-                  width: `min(calc(100vw - 395px), 470px)`
+                  width: `min(calc(100vw - 395px), 614px)`
                 }}
                 onTouchStart={onDoublePress}
                 onTouchMove={movementHandler}
@@ -835,14 +904,14 @@ const MobilePhotoPost = (props) => {
                           key={photo.photoID} 
                           className='feed-photo-frame'
                           style={{
-                            transform: `translateX(${(width > 736 ? 470 : width) * (photoIndex - 1)}px)`
+                            transform: `translateX(${(width > 736 ? 614 : width) * (photoIndex - 1)}px)`
                           }}
                           onClick={TagsHandler}
                         >
                           <img 
                             alt={postCaption} 
                             className='feed-photo-post-image' 
-                            sizes={`min(calc(100vw - 395px), 470px)`}
+                            sizes={`min(calc(100vw - 395px), 614px)`}
                             srcSet={`
                               ${photo.w1080} 1080w,
                               ${photo.w750} 750w,
@@ -959,7 +1028,7 @@ const MobilePhotoPost = (props) => {
                     className='solo-post-comment-list'
                     
                   >
-                    <li className='comment-wrapper'>
+                    <li className='comment-content'>
                       <div className='comment-profile-photo-frame'>
                         <img 
                           alt={`${selectedPost[0].username}'s profile`} 
@@ -985,34 +1054,33 @@ const MobilePhotoPost = (props) => {
                     {comments.map((comment) => {
                       const {
                         commentID,
-                        username,
-                        text,
-                        photoURL,
-                        uploadDate,
                       } = comment;
                       return (
-                        <li key={commentID} className='comment-wrapper'>
-                          <div className='comment-profile-photo-frame'>
-                            <img 
-                              alt={`${username}'s profile`} 
-                              src={photoURL} 
-                              className="comments-profile-photo"
-                            /> 
-                          </div>
-                          <div className='comment-text-time-wrapper'>
-                            <div className='comment-text-wrapper'>
-                              <h2 className='comment-username'>
-                                {username}
-                              </h2>
-                              <span className='comment-text'>
-                                {text}
-                              </span>                    
-                            </div>
-                            <time className='comment-time-stamp'>
-                              {new Date(uploadDate).toDateString()}
-                            </time>
-                          </div>
-                          
+                        <li 
+                          key={commentID} 
+                          className='comment-wrapper'
+                        >
+                          <Comment
+                            setIsLikedByModalOpen={setIsLikedByModalOpen}
+                            setCommentIDs={setCommentIDs}
+                            getPostData={getPostData}
+                            isMobile={isMobile}
+                            setIsLoadingPage={setIsLoadingPage}
+                            isReply={false}
+                            newReplyID={newReplyID}
+                            textareaRef={textareaRef}
+                            setCommentText={setCommentText}
+                            replyUser={replyUser}
+                            setReplyUser={setReplyUser}
+                            selectedPost={selectedPost}
+                            setSelectedPost={setSelectedPost}
+                            postID={postID}
+                            userData={userData}
+                            comment={comment}
+                            navigateUserProfile={navigateUserProfile}
+                            onMouseEnter={onMouseEnter}
+                            onMouseLeave={onMouseLeave}
+                          />
                         </li>
                       )
                     })}
@@ -1077,19 +1145,33 @@ const MobilePhotoPost = (props) => {
                     </button>                  
                   }               
                   <div className='feed-post-timestamp'>
-                    <time>
-                      {new Date(uploadDate).toDateString()}
+                    <time 
+                      className='post-time-stamp'
+                      title={new Date(uploadDate).toLocaleDateString('en-US', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    >
+                      {formatTime()}
                     </time>
                   </div>
                 </footer>
                 <PostComments
+                  setNewReplyID={setNewReplyID}
+                  selectedPost={selectedPost}
+                  setReplyUser={setReplyUser}
+                  replyUser={replyUser}
+                  textareaRef={textareaRef}
+                  setCommentText={setCommentText}
+                  commentText={commentText}
                   postCommentsRef={postCommentsRef}
                   setSelectedPost={setSelectedPost}
                   newComments={newComments}
                   setNewComments={setNewComments}
                   userData={userData}
                   postID = {postID} 
-                />                                                     
+                />                                                          
               </section>
             </article>
           </section>          
@@ -1444,13 +1526,23 @@ const MobilePhotoPost = (props) => {
                   }
                 </div>                  
                 <div className='feed-post-timestamp'>
-                  <time>
-                    {new Date(uploadDate).toDateString()}
+                  <time 
+                    className='post-time-stamp'
+                    title={new Date(uploadDate).toLocaleDateString('en-US', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })}
+                  >
+                    {formatTime()}
                   </time>
                 </div>
               </footer>
               {width > 736 &&
                 <PostComments
+                  setReplyUser={setReplyUser}
+                  textareaRef={textareaRef}
+                  commentText={commentText}
                   newComments={newComments}
                   setNewComments={setNewComments}
                   userData={userData}

@@ -11,6 +11,8 @@ const db = getFirestore();
 
 const MobileComments = (props) => {
   const {
+    isMobile,
+    setIsLoadingPage,
     userData,
     setDataLoading, 
     setSelectedPost,
@@ -433,6 +435,10 @@ const MobileComments = (props) => {
               return (
                 <li key={commentID} className='comment-wrapper'>
                   <Comment
+                    getPostData={getPostData}
+                    isMobile={isMobile}
+                    setIsLoadingPage={setIsLoadingPage}
+                    isReply={false}
                     newReplyID={newReplyID}
                     textareaRef={textareaRef}
                     setCommentText={setCommentText}

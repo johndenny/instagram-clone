@@ -1,14 +1,20 @@
 import { arrayUnion, getDoc, updateDoc, doc, getFirestore } from 'firebase/firestore';
 import firebaseApp from '../Firebase';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './Comment.css';
 import { v4 as uuidv4 } from 'uuid'
 import CommentReplies from './CommentReplies';
+import { useNavigate } from 'react-router-dom';
 
 const db = getFirestore();
 
 const Comment = (props) => {
   const {
+    setCommentIDs,
+    setIsLikedByModalOpen,
+    getPostData,
+    isMobile,
+    setIsLoadingPage,
     newReplyID,
     parentCommentID,
     isReply,
@@ -39,8 +45,10 @@ const Comment = (props) => {
   const usernameRef = useRef(null);
   const userLikeIndex = likes.findIndex((like) => like.uid === userData.uid)
   const [isLiked, setIsLiked] = useState(false);
+  const navigate = useNavigate();
 
   const likeUploadToggle = async () => {
+    console.log(isReply);
     const {
       photoURL,
       uid,
@@ -53,35 +61,74 @@ const Comment = (props) => {
       const { comments } = postSnap.data();
       const newComments = [...comments];
       const commentIndex = postSnap.data().comments
-        .findIndex((comment) => comment.commentID === commentID);
+        .findIndex((comment) => comment.commentID === (isReply ? parentCommentID : commentID));
       if (commentIndex !== -1) {
         console.log('comment-found');
-        const { likes } = postSnap.data().comments[commentIndex];
-        const likeIndex = likes.findIndex((like) => like.uid === uid)
-        if (likeIndex === -1) {
-          setIsLiked(true);
-          const newLike = {
-            likeID: uuidv4(),
-            photoURL: photoURL,
-            uid: uid,
-            uploadDate: Date.now(),
-            username: displayName,
-            fullname: fullname,
+
+        if (isReply) {
+          const { replies } = comments[commentIndex];
+          const newReplies = [...replies];
+          const replyIndex = replies.findIndex((reply) => reply.commentID === commentID);
+          if (replyIndex !== -1) {
+            let newComment;
+            const { likes } = replies[replyIndex];
+            const likeIndex = likes.findIndex((like) => like.uid === uid);
+            if (likeIndex === -1) {
+              setIsLiked(true);
+              const newLike = {
+                likeID: uuidv4(),
+                photoURL: photoURL,
+                uid: uid,
+                uploadDate: Date.now(),
+                username: displayName,
+                fullname: fullname,
+              };
+              const newLikes = [...likes, newLike];
+              // comment is reply in props
+              const newReply = {...comment, likes: newLikes}
+              newReplies.splice(replyIndex, 1, newReply);
+              newComment = {...comments[commentIndex], replies: newReplies}              
+            } else {
+              const newLikes = [...likes];
+              newLikes.splice(likeIndex, 1);
+              const newReply = {...comment, likes: newLikes};
+              newReplies.splice(replyIndex, 1, newReply);
+              console.log(newReplies);
+              newComment = {...comments[commentIndex], replies: newReplies}   
+            }
+            newComments.splice(commentIndex, 1, newComment);
+            await updateDoc(postRef, {
+              comments: newComments
+            });
           };
-          const newLikes = [...likes, newLike];
-          const newComment = {...comment, likes: newLikes};
-          newComments.splice(commentIndex, 1, newComment);
-          await updateDoc(postRef, {
-            comments: newComments
-          });
         } else {
-          const newLikes = [...likes];
-          newLikes.splice(likeIndex, 1);
-          const newComment = {...comment, likes: newLikes};
-          newComments.splice(commentIndex, 1, newComment);
-          await updateDoc(postRef, {
-            comments: newComments
-          });
+          const { likes } = postSnap.data().comments[commentIndex];
+          const likeIndex = likes.findIndex((like) => like.uid === uid)
+          if (likeIndex === -1) {
+            setIsLiked(true);
+            const newLike = {
+              likeID: uuidv4(),
+              photoURL: photoURL,
+              uid: uid,
+              uploadDate: Date.now(),
+              username: displayName,
+              fullname: fullname,
+            };
+            const newLikes = [...likes, newLike];
+            const newComment = {...comment, likes: newLikes};
+            newComments.splice(commentIndex, 1, newComment);
+            await updateDoc(postRef, {
+              comments: newComments
+            });
+          } else {
+            const newLikes = [...likes];
+            newLikes.splice(likeIndex, 1);
+            const newComment = {...comment, likes: newLikes};
+            newComments.splice(commentIndex, 1, newComment);
+            await updateDoc(postRef, {
+              comments: newComments
+            });
+          }          
         }
         getCommentData();
       } else {
@@ -104,6 +151,11 @@ const Comment = (props) => {
     }
   }
 
+  useEffect(() => {
+    console.log(uploadDate, 'timePast',(Date.now() - uploadDate));
+    console.log(formatTime());
+  },[uploadDate]);
+
   const replyHandler = () => {
     setCommentText(`@${username} `)
     if (isReply) {
@@ -112,6 +164,41 @@ const Comment = (props) => {
       setReplyUser(comment);
     }
     textareaRef.current.focus();
+  }
+
+  const formatTime = () => {
+    const timePast = Date.now() - uploadDate;
+    const minutesPast = timePast / 60000;
+    const hoursPast = minutesPast / 60;
+    const daysPast = hoursPast / 24;
+    const weeksPast = daysPast / 7;
+    switch (true) {
+      case minutesPast < 1:
+        return 'Now';
+      case minutesPast < 60 && minutesPast > 1:
+        return `${Math.floor(minutesPast)}m`;
+      case hoursPast >= 1 && hoursPast < 24:
+        return `${Math.floor(hoursPast)}h`;
+      case daysPast >= 1 && daysPast < 7:
+        return `${Math.floor(daysPast)}d`;
+      case weeksPast >= 1:
+        return `${Math.floor(weeksPast)}w`;
+      default:
+    }
+  };
+
+  const navigateLikedBy = async () => {
+    await getPostData();
+    if (isMobile) {
+      if (isReply) {
+        navigate(`/p/${postID}/c/${commentID}/liked_by`, {state: parentCommentID});
+      }
+      navigate(`/p/${postID}/c/${commentID}/liked_by`);  
+    } else {
+      setIsLikedByModalOpen(true);
+      setCommentIDs({commentID: commentID, parentCommentID: parentCommentID});
+    }
+    setIsLoadingPage(false);    
   }
 
   return (
@@ -146,11 +233,21 @@ const Comment = (props) => {
             </span>                    
           </div>
           <footer className='comment-footer'>
-            <time className='comment-time-stamp'>
-              {new Date(uploadDate).toDateString()}
+            <time 
+              className='comment-time-stamp'
+              title={new Date(uploadDate).toLocaleDateString('en-US', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              })}
+            >
+              {formatTime()}
             </time>
             {likes.length !== 0 &&
-              <button className='comment-likes-counter'>
+              <button 
+                className='comment-likes-counter'
+                onClick={navigateLikedBy}
+              >
                 {`${likes.length} ${likes.length === 1 ? 'like' : 'likes'}`}
               </button>          
             }
@@ -178,6 +275,13 @@ const Comment = (props) => {
       </div>
       {!isReply && replies.length !== 0 &&
         <CommentReplies
+          setIsLikedByModalOpen={setIsLikedByModalOpen}
+          setCommentIDs={setCommentIDs}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          getPostData={getPostData}
+          isMobile={isMobile}
+          setIsLoadingPage={setIsLoadingPage}
           newReplyID={newReplyID}
           parentCommentID={commentID}
           textareaRef={textareaRef}

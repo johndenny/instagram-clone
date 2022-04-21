@@ -5,6 +5,7 @@ import './PhotoPostModal.css'
 
 const PhotoPostModal = (props) => {
   const {
+    setCommentIDs,
     setIsLocationPost,
     setIsPostLinksOpen,
     isPostLinksOpen,
@@ -54,6 +55,13 @@ const PhotoPostModal = (props) => {
     navigate(-1);
   }
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'scroll';
+    }
+  }, []);
+
   return (
     <div 
       className='photo-post-modal'
@@ -73,6 +81,7 @@ const PhotoPostModal = (props) => {
         onClick={(event) => event.stopPropagation()}
       >
         <MobilePhotoPost
+          setCommentIDs={setCommentIDs}
           setIsLocationPost={setIsLocationPost}
           setIsPostLinksOpen={setIsPostLinksOpen}
           isPostLinksOpen={isPostLinksOpen}

@@ -9,17 +9,30 @@ const db = getFirestore();
 
 const PostComments = (props) => {
   const {
+    commentText,
+    setCommentText,
+    textareaRef,
     postCommentsRef,
     setSelectedPost,
     newComments,
     setNewComments,
     userData,
     postID,
+    replyUser,
+    setReplyUser,
+    setNewReplyID,
+    selectedPost,
   } = props;
   const params = useParams();
-  const [commentText, setCommentText] = useState('');
+  // const [commentText, setCommentText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const textareaRef = useRef(null);
+  // const textareaRef = useRef(null);
+
+  useEffect(() => {
+    if (commentText === '') {
+      setReplyUser(null);
+    }
+  }, [commentText]);
 
   const commentTextHandler = (event) => {
     const { value } = event.target;
@@ -38,7 +51,7 @@ const PostComments = (props) => {
       textareaRef.current.style.height = '1px'
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
       console.log(textareaRef.current.scrollHeight);      
-  }, [commentText]);
+  }, [commentText, textareaRef]);
 
   const {
     username,
@@ -60,6 +73,7 @@ const PostComments = (props) => {
       uploadDate: Date.now(),
       username: username,
       likes: [],
+      replies: [],
     }
     await updateDoc(postRef, {
       comments: arrayUnion(commentDoc)
@@ -87,8 +101,74 @@ const PostComments = (props) => {
   const enterKeyHandler = (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      postComment();
+      replyUser === null
+        ? postComment()
+        : replyComment();
     };
+  }
+
+  const replyComment = async (event) => {
+    const {
+      displayName,
+      fullname,
+    } = userData;
+    if (event !== undefined) {
+      event.preventDefault();
+    }
+    setIsSaving(true);
+    const {
+      commentID,
+    } = replyUser;
+    const postRef = doc(db, 'postUploads', postID);
+    const postSnap = await getDoc(postRef);
+    if (postSnap.exists()) {
+      const { comments } = postSnap.data();
+      const newComments = [...comments];
+      const commentIndex = postSnap.data().comments
+        .findIndex((comment) => comment.commentID === commentID)
+      if (commentIndex !== -1) {
+        const { replies } = postSnap.data().comments[commentIndex];
+        const newReply = {
+          commentID: uuidv4(),
+          photoURL: photoURL,
+          uid: uid,
+          uploadDate: Date.now(),
+          username: displayName,
+          fullname: fullname,
+          likes: [],
+          text: commentText,
+        }
+        const newReplies = [...replies, newReply];
+        const newComment = {...comments[commentIndex], replies: newReplies};
+        newComments.splice(commentIndex, 1, newComment);
+        await updateDoc(postRef, {
+          comments: newComments
+        });
+        setIsSaving(false);
+        setReplyUser(null);
+        setCommentText('');
+        getCommentData();
+        setNewReplyID(commentID);
+      } else {
+        console.error('comment object not found');
+      };
+    } else {
+      console.error('post document not found');
+    };
+  }
+
+  const getCommentData = async () => {
+    const postRef = doc(db, 'postUploads', postID);
+    const postSnap = await getDoc(postRef);
+    if (postSnap.exists()) {
+      const newPost = [...selectedPost];
+      console.log(postSnap.data());
+      newPost.splice(0, 1, postSnap.data());
+      console.log(newPost);
+      setSelectedPost(newPost);      
+    } else {
+      console.error('error no document found');
+    }
   }
 
   return (
@@ -250,7 +330,7 @@ const PostComments = (props) => {
           className='post-comment-button'
           disabled={commentText.length === 0}
           type='button'
-          onClick={postComment}
+          onClick={replyUser === null ? postComment : replyComment}
         >
           Post
         </button>

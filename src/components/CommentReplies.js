@@ -4,6 +4,13 @@ import React, { useLayoutEffect, useState } from 'react';
 
 const CommentReplies = (props) => {
   const {
+    setIsLikedByModalOpen,
+    setCommentIDs,
+    onMouseEnter,
+    onMouseLeave,
+    setIsLoadingPage,
+    getPostData,
+    isMobile,
     newReplyID,
     parentCommentID,
     replies,
@@ -27,7 +34,7 @@ const CommentReplies = (props) => {
     if (parentCommentID === newReplyID) {
       setIsRepliesOpen(true)
     }
-  }, [newReplyID, parentCommentID])
+  }, [newReplyID, parentCommentID]);
 
   return (
     <ul className='comment-replies'>
@@ -55,6 +62,13 @@ const CommentReplies = (props) => {
                 className='comment-reply'
               >
                 <Comment
+                  setIsLikedByModalOpen={setIsLikedByModalOpen}
+                  setCommentIDs={setCommentIDs}
+                  onMouseEnter={onMouseEnter}
+                  onMouseLeave={onMouseLeave}
+                  getPostData={getPostData}
+                  isMobile={isMobile}
+                  setIsLoadingPage={setIsLoadingPage}
                   parentCommentID={parentCommentID}
                   isReply={true} 
                   textareaRef={textareaRef}

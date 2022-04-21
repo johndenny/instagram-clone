@@ -18,9 +18,11 @@
   position: absolute;
 }
 
-.photo-post-feed {
-  border: 1px solid rgba(219, 219, 219, 1);
-  border-radius: 8px;
+@media screen and (min-width: 471px) {
+  .photo-post-feed {
+    border: 1px solid rgba(219, 219, 219, 1);
+    border-radius: 8px;
+  }
 }
 
 @media screen and (min-width: 737px) {
@@ -70,6 +72,7 @@
   align-items: stretch;
   flex-direction: column;
   overflow: hidden;
+  background-color: rgba(255, 255, 255, 1);
 }
 
 .feed-post-header {
