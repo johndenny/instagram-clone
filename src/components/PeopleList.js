@@ -6,6 +6,8 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const PeopleList = (props) => {
   const {
+    isComment,
+    searchSelection,
     isTag,
     tagUserSelection,
     isRecentSearch,
@@ -37,6 +39,15 @@ const PeopleList = (props) => {
     }
   }
 
+  const onClickHandler = (username, uid) => {
+    if (isComment) {
+      searchSelection(username);
+    } else {
+      navigateUserProfile(username, uid);
+    }
+    
+  }
+
   if (isSearch) {
     return (
       <ul className='people-list'>
@@ -52,7 +63,8 @@ const PeopleList = (props) => {
             <li 
               key={uid}
               className='user-wrapper'
-              onClick={() => navigateUserProfile(username, uid)} 
+              onClick={() => onClickHandler(username, uid)} 
+              onMouseDown={(event) => event.preventDefault()}
             >
               <div
                 to={`/${username}`}

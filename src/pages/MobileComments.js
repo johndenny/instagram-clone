@@ -6,11 +6,13 @@ import { v4 as uuidv4 } from 'uuid'
 import { useParams } from 'react-router-dom';
 import Comment from '../components/Comment';
 import useWindowSize from '../hooks/useWindowSize';
+import PeopleList from '../components/PeopleList';
 
 const db = getFirestore();
 
 const MobileComments = (props) => {
   const {
+    stringToLinks,
     isMobile,
     setIsLoadingPage,
     userData,
@@ -28,10 +30,36 @@ const MobileComments = (props) => {
   const [commentsHeight, setCommentsHeight] = useState(0);
   const [replyUser, setReplyUser] = useState(null);
   const [newReplyID, setNewReplyID] = useState('');
+  const [userIndex, setUserIndex] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchString, setSearchString] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const searchTimeoutRef = useRef(null); 
 
   const commentTextHandler = (event) => {
     const { value } = event.target;
     const valueArray = value.split('');
+    const lastLetter = value.substring(value.length - 1);
+    console.log(lastLetter);
+    if (lastLetter === '@') {
+      console.log('@ found');
+      setUserIndex(value.length)
+    }
+    if (value.length < userIndex) {
+      setUserIndex(null)
+      setIsSearching(false);
+    };
+    console.log(userIndex);
+    if (userIndex !== null) {
+      console.log(value.substring(userIndex))
+      setSearchString(value.substring(userIndex));
+      const lastLetter = value.substring(value.length - 1);
+      console.log(lastLetter)
+      if (lastLetter === ' ') {
+        console.log('cleared');
+        setUserIndex(null);
+      }
+    }
     if (commentText === '' && value === ' ') {
       return
     }
@@ -40,6 +68,39 @@ const MobileComments = (props) => {
     } else {
       setCommentText(value)
     }
+  }
+
+  const getSearchResults = async () => {
+    setIsSearching(true);
+    const matchedUsers = [];
+    const searchTerm = searchString.toLowerCase();
+    const users = query(collection(db, 'users'), 
+    where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
+    const usersSnapshot = await getDocs(users);
+    usersSnapshot.forEach((user) => {
+      matchedUsers.push(user.data());
+    });
+    setSearchResults(matchedUsers);
+  }
+
+  useEffect(() => {
+    clearTimeout(searchTimeoutRef.current);
+    setSearchResults([]);
+    if (searchString !== '') {
+      searchTimeoutRef.current = setTimeout(() => {
+        getSearchResults(); 
+      }, 300);     
+    }; 
+  }, [searchString]);
+
+  const searchSelection = (username) => {
+    const slicedComment = commentText.slice(0, userIndex);
+    const name = `${username} `
+    const newCommentText = slicedComment.concat(name);
+    setCommentText(newCommentText);
+    setUserIndex(null)
+    setIsSearching(false);
+    textareaRef.current.focus();
   }
 
   useEffect(() => {
@@ -368,6 +429,7 @@ const MobileComments = (props) => {
                 value={commentText}
                 onChange={commentTextHandler}
                 onKeyDown={enterKeyHandler}
+                onBlur={() => setIsSearching(false)}
               ></textarea>
               <button 
                 className='mobile-post-comment-button'
@@ -391,6 +453,17 @@ const MobileComments = (props) => {
                 ✕
               </button>
             </div>          
+          }
+          {isSearching &&
+            <section className='comment-search-results'>
+              <PeopleList 
+                searchSelection={searchSelection}
+                isTag={false}
+                isSearch={true}
+                isComment={true}
+                allUserProfiles={searchResults}
+              />              
+            </section> 
           }
         </section>
         <div 
@@ -435,6 +508,7 @@ const MobileComments = (props) => {
               return (
                 <li key={commentID} className='comment-wrapper'>
                   <Comment
+                    stringToLinks={stringToLinks}
                     getPostData={getPostData}
                     isMobile={isMobile}
                     setIsLoadingPage={setIsLoadingPage}

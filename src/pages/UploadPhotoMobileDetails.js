@@ -1,16 +1,21 @@
 import './UploadPhotoMobileDetails.css'
 import { useNavigate } from 'react-router-dom'
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
-import { getFirestore, setDoc, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, setDoc, doc, getDoc, query, collection, where, getDocs } from 'firebase/firestore';
 import firebaseApp from '../Firebase';
 import {v4 as uuidv4} from 'uuid';
+import PeopleList from '../components/PeopleList';
 
 const storage = getStorage();
 const db = getFirestore();
 
 const UploadPhotoMobileDetails = (props) => {
   const {
+    setPhotoUploadText,
+    captionSearchString,
+    setUserIndex,
+    userIndex,
     locationBeforeUpload,
     shareMobilePost,
     tagData,
@@ -25,6 +30,43 @@ const UploadPhotoMobileDetails = (props) => {
   } = props;
   const navigate = useNavigate();
   const [sharingPost, setSharingPost] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const searchTimeoutRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  const getSearchResults = async () => {
+    setIsSearching(true);
+    const matchedUsers = [];
+    const searchTerm = captionSearchString.toLowerCase();
+    const users = query(collection(db, 'users'), 
+    where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
+    const usersSnapshot = await getDocs(users);
+    usersSnapshot.forEach((user) => {
+      matchedUsers.push(user.data());
+    });
+    setSearchResults(matchedUsers);
+  }
+
+  useEffect(() => {
+    clearTimeout(searchTimeoutRef.current);
+    setSearchResults([]);
+    if (captionSearchString !== '') {
+      searchTimeoutRef.current = setTimeout(() => {
+        getSearchResults(); 
+      }, 300);     
+    }; 
+  }, [captionSearchString]);
+
+  const searchSelection = (username) => {
+    const slicedComment = photoUploadText.slice(0, userIndex);
+    const name = `${username} `
+    const newCommentText = slicedComment.concat(name);
+    setPhotoUploadText(newCommentText);
+    setUserIndex(null)
+    setIsSearching(false);
+    textareaRef.current.focus();
+  }
 
   const shareNewPost = async () => {
     console.log('hi');
@@ -33,6 +75,10 @@ const UploadPhotoMobileDetails = (props) => {
     setSharingPost(false);
     setPhotoUploadOpen(false);
     navigate(locationBeforeUpload.pathname);
+  }
+
+  const onBlurHandler = () => {
+    setIsSearching(false);
   }
 
   useEffect(() => {
@@ -89,6 +135,8 @@ const UploadPhotoMobileDetails = (props) => {
               className='upload-textarea' 
               autoComplete='off' 
               autoCorrect='off'
+              ref={textareaRef}
+              onBlur={onBlurHandler}
             >
             </textarea>
             <div className='textarea-modal'></div>
@@ -96,6 +144,17 @@ const UploadPhotoMobileDetails = (props) => {
           <div className='upload-photo-preview-wrapper'>
             <img alt='Preview to be uploaded' className='upload-photo-preview' src={URL.createObjectURL(editedPhoto)} />
           </div>
+          {isSearching &&
+            <section className='profile-search-results'>
+              <PeopleList 
+                searchSelection={searchSelection}
+                isTag={false}
+                isSearch={true}
+                isComment={true}
+                allUserProfiles={searchResults}
+              />              
+            </section> 
+          }
         </section>
         <section className='write-alt-text-wrapper'>
           <button 

@@ -7,8 +7,8 @@
     Arial, sans-serif;
   width: 100%;
   text-align: left;
-  margin-bottom: 6px;
   cursor: pointer;
+  margin: 4px 0;
 }
 
 .view-comments-button:active {
@@ -20,6 +20,9 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .featured-comment-wrapper,
@@ -245,4 +248,42 @@
 .post-time-stamp {
   display: flex;
   cursor: pointer;
+}
+
+.comment-search-results {
+  max-height: 200px;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 1);
+  z-index: 10;
+}
+
+.comment-search-results .full-name-text {
+  font-size: 14px;
+}
+
+.comment-search-results .username-text:hover {
+  text-decoration: none;
+}
+
+.comment-search-results .people-list {
+  gap: 0;
+}
+
+.comment-search-results .user-wrapper {
+  padding: 8px 18px;
+  border-bottom: 1px solid rgba(219, 219, 219, 1);
+  cursor: pointer;
+}
+
+.comment-search-results .user-wrapper:hover {
+  background-color: rgba(250, 250, 250, 1);
+}
+
+.comment-search-results .profile-photo-frame {
+  width: 28px;
+  height: 28px;
+}
+
+.comment-search-results .user-text-wrapper {
+  gap: 0;
 }

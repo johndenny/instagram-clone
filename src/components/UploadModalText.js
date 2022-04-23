@@ -1,5 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { getFirestore, query, collection, where, getDocs } from 'firebase/firestore';
+import firebaseApp from '../Firebase';
 import './UploadModalText.css';
+import PeopleList from './PeopleList';
+
+const db = getFirestore()
 
 const UploadModalText = (props) => {
   const {
@@ -10,6 +15,12 @@ const UploadModalText = (props) => {
   const [accessibilityOpen, setAccessibilityOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [captionTextArray, setCaptionTextArray] = useState([]);
+  const [userIndex, setUserIndex] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchString, setSearchString] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const searchTimeoutRef = useRef(null);
+  const textareaRef = useRef(null);
 
   const accessibilityToggle = () => {
     accessibilityOpen 
@@ -26,6 +37,27 @@ const UploadModalText = (props) => {
   const captionTextHandler = (event) => {
     const { value } = event.target;
     const valueArray = value.split('');
+    const lastLetter = value.substring(value.length - 1);
+    console.log(lastLetter);
+    if (lastLetter === '@') {
+      console.log('@ found');
+      setUserIndex(value.length)
+    }
+    if (value.length < userIndex) {
+      setUserIndex(null)
+      setIsSearching(false);
+    };
+    console.log(userIndex);
+    if (userIndex !== null) {
+      console.log(value.substring(userIndex))
+      setSearchString(value.substring(userIndex));
+      const lastLetter = value.substring(value.length - 1);
+      console.log(lastLetter)
+      if (lastLetter === ' ') {
+        console.log('cleared');
+        setUserIndex(null);
+      }
+    }
     if ((valueArray[valueArray.length - 1] === ' ' && captionTextArray[captionTextArray.length - 1] === ' ') || valueArray.length > 2200) {
       return
     } else {
@@ -33,9 +65,42 @@ const UploadModalText = (props) => {
     }
   }
 
+  const getSearchResults = async () => {
+    setIsSearching(true);
+    const matchedUsers = [];
+    const searchTerm = searchString.toLowerCase();
+    const users = query(collection(db, 'users'), 
+    where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
+    const usersSnapshot = await getDocs(users);
+    usersSnapshot.forEach((user) => {
+      matchedUsers.push(user.data());
+    });
+    setSearchResults(matchedUsers);
+  }
+
+  useEffect(() => {
+    clearTimeout(searchTimeoutRef.current);
+    setSearchResults([]);
+    if (searchString !== '') {
+      searchTimeoutRef.current = setTimeout(() => {
+        getSearchResults(); 
+      }, 300);     
+    }; 
+  }, [searchString]);
+
   useEffect(() => {
     setCaptionTextArray(captionText.split(''));
   }, [captionText]);
+
+  const searchSelection = (username) => {
+    const slicedComment = captionText.slice(0, userIndex);
+    const name = `${username} `
+    const newCommentText = slicedComment.concat(name);
+    setCaptionText(newCommentText);
+    setUserIndex(null)
+    setIsSearching(false);
+    textareaRef.current.focus();
+  }
 
   return (
     <div className="upload-modal-text-page">
@@ -60,6 +125,8 @@ const UploadModalText = (props) => {
           autoCorrect='off'
           value={captionText}
           onChange={captionTextHandler} 
+          ref={textareaRef}
+          onBlur={() => setIsSearching(false)}
         >
         </textarea>
       </div>
@@ -77,6 +144,20 @@ const UploadModalText = (props) => {
             /2,200
           </span>
         </div>
+        {isSearching &&
+          <section 
+            className='profile-search-results'
+          >
+            <PeopleList 
+              searchSelection={searchSelection}
+              isTag={false}
+              isSearch={true}
+              isComment={true}
+              allUserProfiles={searchResults}
+            />
+          </section>
+        }
+        
       </div>
       <div className="add-location-input-wrapper">
         <input 

@@ -4,11 +4,17 @@ import firebaseApp from '../Firebase';
 import { getFirestore, doc, updateDoc, arrayUnion, query, collection, where, orderBy, getDocs, getDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid'
 import { useParams } from 'react-router-dom';
+import CommentSearchModal from './CommentSearchModal';
 
 const db = getFirestore();
+// let userIndex = null
 
 const PostComments = (props) => {
   const {
+    setIsSearching,
+    isSearching,
+    searchResults,
+    setSearchString,
     commentText,
     setCommentText,
     textareaRef,
@@ -27,6 +33,8 @@ const PostComments = (props) => {
   // const [commentText, setCommentText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   // const textareaRef = useRef(null);
+  const [isSearchModalFlipped, setIsSearchModalFlipped] = useState(false);
+  const [userIndex, setUserIndex] = useState(null);
 
   useEffect(() => {
     if (commentText === '') {
@@ -37,6 +45,33 @@ const PostComments = (props) => {
   const commentTextHandler = (event) => {
     const { value } = event.target;
     const valueArray = value.split('');
+    const lastLetter = value.substring(value.length - 1);
+    console.log(lastLetter);
+    if (lastLetter === '@') {
+      console.log('@ found');
+      setUserIndex(value.length)
+    }
+    if (value.length < userIndex) {
+      setUserIndex(null)
+      setIsSearching(false);
+    };
+    console.log(userIndex);
+    if (userIndex !== null) {
+      const distanceFromTop = event.target.getBoundingClientRect(); 
+      if (distanceFromTop.y < (200 + 76)) {
+        setIsSearchModalFlipped(true);
+      } else {
+        setIsSearchModalFlipped(false);
+      }
+      console.log(value.substring(userIndex))
+      setSearchString(value.substring(userIndex));
+      const lastLetter = value.substring(value.length - 1);
+      console.log(lastLetter)
+      if (lastLetter === ' ') {
+        console.log('cleared');
+        setUserIndex(null);
+      }
+    }
     if (commentText === '' && value === ' ') {
       return
     }
@@ -325,6 +360,7 @@ const PostComments = (props) => {
           value={commentText}
           onChange={commentTextHandler}
           onKeyDown={enterKeyHandler}
+          onBlur={() => setIsSearching(false)}
         ></textarea>
         <button 
           className='post-comment-button'
@@ -335,6 +371,18 @@ const PostComments = (props) => {
           Post
         </button>
       </form>
+      {isSearching &&
+        <CommentSearchModal
+          textareaRef={textareaRef}
+          setUserIndex={setUserIndex}
+          setIsSearching={setIsSearching}
+          userIndex={userIndex}
+          commentText={commentText}
+          setCommentText={setCommentText}
+          isSearchModalFlipped={isSearchModalFlipped}
+          searchResults={searchResults}
+        />
+      }
     </section>
   )
 }

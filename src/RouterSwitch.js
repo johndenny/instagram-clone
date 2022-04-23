@@ -91,6 +91,7 @@ const RouterSwitch = () => {
   const timerRef = useRef();
   const [isLocationPost, setIsLocationPost] = useState(false)
   const [commentIDs, setCommentIDs] = useState('');
+  const [isInboxOpen, setIsInboxOpen] = useState(false);
 
   // Profile //
 
@@ -143,6 +144,9 @@ const RouterSwitch = () => {
   const [isResizing, setIsResizing] = useState(false);
   const uploadCanvasRef = useRef(null);
   const [croppedAspectRatio, setCroppedAspectRatio] = useState(0);
+  const [userIndex, setUserIndex] = useState(null);
+  const [photoUploadTextArray, setPhotoUploadTextArray] = useState([]);
+  const [captionSearchString, setCaptionSearchString] = useState('')
 
   // SEARCH //
 
@@ -251,6 +255,10 @@ const RouterSwitch = () => {
     }; 
   }, [searchString]);
 
+  useEffect(() => {
+    console.log(searchResults);
+  }, [searchResults]);
+
   // HOMEPAGE //
 
   const onMouseEnter = (uid, ref) => {
@@ -355,6 +363,23 @@ const RouterSwitch = () => {
   }
 
   // POSTS //
+
+  const stringToLinks = (string) => {
+    const profileIndexs = [];
+    const stringArray = string.split(' ');
+    stringArray.forEach((string, index) => {
+      if (string[0] === '@')
+      profileIndexs.push(index);
+    });
+    profileIndexs.forEach((index) => {
+      const username = stringArray[index].substring(1);
+      const profileLink = `<a href='/${username}'>@${username}</a>`
+      stringArray.splice(index, 1, profileLink);
+    });
+    return (
+      stringArray.join(' ')
+    );
+  };
 
   const deletePost = async (postID) => {
     console.log(postID);
@@ -523,8 +548,40 @@ const RouterSwitch = () => {
 
   const photoUploadTextHandler = (event) => {
     const { value } = event.target;
-    setPhotoUploadText(value);
+    const valueArray = value.split('');
+    const lastLetter = value.substring(value.length - 1);
+    console.log(lastLetter);
+    if (lastLetter === '@') {
+      console.log('@ found');
+      setUserIndex(value.length)
+    }
+    if (value.length < userIndex) {
+      setUserIndex(null)
+      setIsSearching(false);
+    };
+    console.log(userIndex);
+    if (userIndex !== null) {
+      console.log(value.substring(userIndex))
+      setCaptionSearchString(value.substring(userIndex));
+      const lastLetter = value.substring(value.length - 1);
+      console.log(lastLetter)
+      if (lastLetter === ' ') {
+        console.log('cleared');
+        setUserIndex(null);
+      }
+    }
+    if ((valueArray[valueArray.length - 1] === ' ' && 
+      photoUploadTextArray[photoUploadTextArray.length - 1] === ' ') || 
+      valueArray.length > 2200) {
+      return
+    } else {
+      setPhotoUploadText(value);
+    }
   }
+
+  useEffect(() => {
+    setPhotoUploadTextArray(photoUploadText.split(''));
+  }, [photoUploadText]);
 
   useEffect(() => {
     if (!photoUploadOpen) {
@@ -1564,6 +1621,7 @@ const RouterSwitch = () => {
         }
         {(userLoggedIn && isMobile && !photoUploadOpen) &&
           <MobileNavigationBars
+            isInboxOpen={isInboxOpen}
             setLocationBeforeUpload={setLocationBeforeUpload}
             searchString={searchString}
             setSearchResults={setSearchResults}
@@ -1606,6 +1664,9 @@ const RouterSwitch = () => {
             <React.Fragment>
               <Route path='/' element={
                 <Homepage
+                  searchResults={searchResults}
+                  setSearchString={setSearchString}
+                  stringToLinks={stringToLinks}
                   setIsLocationPost={setIsLocationPost}
                   setIsPostLinksOpen={setIsPostLinksOpen}
                   isPostLinksOpen={isPostLinksOpen}
@@ -1634,7 +1695,11 @@ const RouterSwitch = () => {
                   setPhotosArray={setPhotosArray}
                 />
               } />
-              <Route path='/direct/inbox' element={<Inbox />} />
+              <Route path='/direct/inbox' element={
+                <Inbox 
+                  setIsInboxOpen={setIsInboxOpen}
+                />
+              } />
               <Route path='/explore/' element={<Explore />} />
               <Route path='/explore/search' element={
                 <SearchResults
@@ -1703,6 +1768,10 @@ const RouterSwitch = () => {
               } />
               <Route path='/create/details' element={ 
                 <UploadPhotoMobileDetails
+                  setPhotoUploadText={setPhotoUploadText}
+                  captionSearchString={captionSearchString}
+                  setUserIndex={setUserIndex}
+                  userIndex={userIndex}
                   locationBeforeUpload={locationBeforeUpload}
                   shareMobilePost={shareMobilePost}
                   tagData={tagData}
@@ -1824,6 +1893,8 @@ const RouterSwitch = () => {
           />
           <Route path='/p/:postID' element={
             <MobilePhotoPost
+              stringToLinks={stringToLinks}
+              setCommentIDs={setCommentIDs}
               setIsLocationPost={setIsLocationPost}
               setIsPostLinksOpen={setIsPostLinksOpen}
               isPostLinksOpen={isPostLinksOpen}
@@ -1852,6 +1923,7 @@ const RouterSwitch = () => {
           />
           <Route path='/p/:postID/comments' element={
             <MobileComments
+              stringToLinks={stringToLinks}
               getPostData={getPostData}
               isMobile={isMobile}
               setIsLoadingPage={setIsLoadingPage}
@@ -1923,6 +1995,7 @@ const RouterSwitch = () => {
         <Routes>
           <Route path='/p/:postID' element={
             <PhotoPostModal
+              stringToLinks={stringToLinks}
               setCommentIDs={setCommentIDs}
               setIsLocationPost={setIsLocationPost}
               setIsPostLinksOpen={setIsPostLinksOpen}

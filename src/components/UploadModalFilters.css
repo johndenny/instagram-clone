@@ -239,6 +239,7 @@
   transform: translateX(-50%);
   transform-origin: left;
   animation: scaleUp 0.3s ease-in-out;
+  z-index: 101;
 }
 
 @keyframes scaleUp {

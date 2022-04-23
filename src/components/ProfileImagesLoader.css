@@ -71,7 +71,6 @@
   display: flex;
   align-items: stretch;
   flex-direction: column;
-  overflow: hidden;
   background-color: rgba(255, 255, 255, 1);
 }
 
@@ -173,7 +172,7 @@
 }
 
 .feed-post-timestamp {
-  margin-bottom: 16px;
+  margin: 12px 0;
   padding: 0 8px;
   display: flex;
   justify-content: center;
@@ -192,7 +191,7 @@
   padding: 0 8px;
   display: flex;
   flex-direction: column;
-  margin-bottom: 6px;
+  gap: 6px;
 }
 
 .caption-username {
@@ -205,7 +204,6 @@
 }
 
 .post-caption-wrapper {
-  margin-bottom: 6px;
 }
 
 .like-filled-svg.animated {

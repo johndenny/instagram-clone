@@ -15,6 +15,9 @@ let lastPress = 0;
 
 const MobilePhotoPost = (props) => {
   const {
+    // searchResults,
+    // setSearchString,
+    stringToLinks, 
     setCommentIDs,
     setIsLocationPost,
     isPostLinksOpen,
@@ -77,13 +80,52 @@ const MobilePhotoPost = (props) => {
   const [newReplyID, setNewReplyID] = useState('');
   const [commentText, setCommentText] = useState('');
   const textareaRef = useRef();
+  const [featuredComments, setFeaturedComments] = useState([]);
+  const [searchString, setSearchString] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const searchTimeoutRef = useRef(null);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const getSearchResults = async () => {
+    setIsSearching(true);
+    const matchedUsers = [];
+    const searchTerm = searchString.toLowerCase();
+    const users = query(collection(db, 'users'), 
+    where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
+    const usersSnapshot = await getDocs(users);
+    usersSnapshot.forEach((user) => {
+      matchedUsers.push(user.data());
+    });
+    setSearchResults(matchedUsers);
+  }
+
+  useEffect(() => {
+    clearTimeout(searchTimeoutRef.current);
+    setSearchResults([]);
+    if (searchString !== '') {
+      searchTimeoutRef.current = setTimeout(() => {
+        getSearchResults(); 
+      }, 300);     
+    }; 
+  }, [searchString]);
 
   useEffect(() => {
     if (selectedPost !== '') {
-      console.log(selectedPost);
+      const {
+        comments
+      } = selectedPost[0];
+      const replyIndex = comments.findIndex((comment) => comment.replies.length > 0);
+      if (replyIndex !== -1) {
+        setFeaturedComments([comments[replyIndex], comments[replyIndex].replies[0]]);
+      } else {
+      }
+    }
+  }, [selectedPost]);
+
+  useEffect(() => {
+    if (selectedPost !== '') {
       const { uid } = userData;
       const savedIndex = selectedPost[0].saved.findIndex((user) => user === uid)
-      console.log(savedIndex);
       savedIndex === -1
         ? setIsPostSaved(false)
         : setIsPostSaved(true);         
@@ -328,7 +370,6 @@ const MobilePhotoPost = (props) => {
   }
 
   useEffect(() => {
-    console.log(selectedPost);
     if (selectedPost === '') {
       getPostData();
     }
@@ -414,6 +455,7 @@ const MobilePhotoPost = (props) => {
       uid,
       tags
     } = selectedPost[0];
+
 
     const frameWrapperHandler = () => {
       let newWidth;
@@ -737,6 +779,7 @@ const MobilePhotoPost = (props) => {
                       className='comment-wrapper'
                     >
                       <Comment
+                        stringToLinks={stringToLinks}
                         setIsLikedByModalOpen={setIsLikedByModalOpen}
                         setCommentIDs={setCommentIDs}
                         getPostData={getPostData}
@@ -834,6 +877,10 @@ const MobilePhotoPost = (props) => {
               </div>
             </footer>
             <PostComments
+              setIsSearching={setIsSearching}
+              isSearching={isSearching}
+              searchResults={searchResults}
+              setSearchString={setSearchString}
               setNewReplyID={setNewReplyID}
               selectedPost={selectedPost}
               setReplyUser={setReplyUser}
@@ -1061,6 +1108,7 @@ const MobilePhotoPost = (props) => {
                           className='comment-wrapper'
                         >
                           <Comment
+                            stringToLinks={stringToLinks}
                             setIsLikedByModalOpen={setIsLikedByModalOpen}
                             setCommentIDs={setCommentIDs}
                             getPostData={getPostData}
@@ -1158,6 +1206,10 @@ const MobilePhotoPost = (props) => {
                   </div>
                 </footer>
                 <PostComments
+                  setIsSearching={setIsSearching}
+                  isSearching={isSearching}
+                  searchResults={searchResults}
+                  setSearchString={setSearchString}
                   setNewReplyID={setNewReplyID}
                   selectedPost={selectedPost}
                   setReplyUser={setReplyUser}
@@ -1461,38 +1513,43 @@ const MobilePhotoPost = (props) => {
                       </button>                
                     }
                   </div>
-                  {comments.length > 2 &&
+                  {featuredComments.length > 0 &&
                     <ul className='featured-comments-list'>
-                      {comments.map((comment, index) => {
+                      {featuredComments.map((comment, index) => {
                         const {
-                          username,
-                          text,
-                          commentID,
-                          uid
+                          commentID
                         } = comment;
-                        if (index <= 1) {
-                          return (
-                            <li 
-                              key={commentID}
-                              className='featured-comment-wrapper'>
-                              <div className='comment-text-wrapper'>
-                                <h2 
-                                  className='comment-username'
-                                  onClick={() => navigateUserProfile(username)}
-                                  ref={(element) => featuredCommentsRef.current.push(element)}
-                                  onMouseEnter={() => onMouseEnter(uid, featuredCommentsRef.current[index])}
-                                  onMouseLeave={onMouseLeave} 
-                                >
-                                  {username}
-                                </h2>
-                                <span className='comment-text'>
-                                  {text}
-                                </span>                    
-                              </div>
-                            </li>                          
-                          )
-                        };
-                        return ''
+                        return (
+                          <li 
+                          key={commentID} 
+                          className='comment-wrapper'
+                          >
+                            <Comment
+                              stringToLinks={stringToLinks}
+                              isFeatured={true}
+                              setIsLikedByModalOpen={setIsLikedByModalOpen}
+                              setCommentIDs={setCommentIDs}
+                              getPostData={getPostData}
+                              isMobile={isMobile}
+                              setIsLoadingPage={setIsLoadingPage}
+                              isReply={index === 1 ? true : false}
+                              parentCommentID={featuredComments[0].commentID}
+                              newReplyID={newReplyID}
+                              textareaRef={textareaRef}
+                              setCommentText={setCommentText}
+                              replyUser={replyUser}
+                              setReplyUser={setReplyUser}
+                              selectedPost={selectedPost}
+                              setSelectedPost={setSelectedPost}
+                              postID={postID}
+                              userData={userData}
+                              comment={comment}
+                              navigateUserProfile={navigateUserProfile}
+                              onMouseEnter={onMouseEnter}
+                              onMouseLeave={onMouseLeave}
+                            />
+                          </li>                          
+                        );
                       })}
                     </ul>              
                   }
@@ -1506,20 +1563,33 @@ const MobilePhotoPost = (props) => {
                         } = comment;
                         return (
                           <li 
-                            key={commentID}
-                            className='new-comment-wrapper'>
-                            <div className='comment-text-wrapper'>
-                              <h2 
-                                className='comment-username'
-                                onClick={() => navigateUserProfile(username)}  
-                              >
-                                {username}
-                              </h2>
-                              <span className='comment-text'>
-                                {text}
-                              </span>                    
-                            </div>
-                          </li>                          
+                          key={commentID} 
+                          className='comment-wrapper'
+                          >
+                            <Comment
+                              stringToLinks={stringToLinks}
+                              isFeatured={true}
+                              setIsLikedByModalOpen={setIsLikedByModalOpen}
+                              setCommentIDs={setCommentIDs}
+                              getPostData={getPostData}
+                              isMobile={isMobile}
+                              setIsLoadingPage={setIsLoadingPage}
+                              isReply={false}
+                              newReplyID={newReplyID}
+                              textareaRef={textareaRef}
+                              setCommentText={setCommentText}
+                              replyUser={replyUser}
+                              setReplyUser={setReplyUser}
+                              selectedPost={selectedPost}
+                              setSelectedPost={setSelectedPost}
+                              postID={postID}
+                              userData={userData}
+                              comment={comment}
+                              navigateUserProfile={navigateUserProfile}
+                              onMouseEnter={onMouseEnter}
+                              onMouseLeave={onMouseLeave}
+                            />
+                          </li>                           
                         )
                       })}
                     </ul>                
@@ -1540,9 +1610,19 @@ const MobilePhotoPost = (props) => {
               </footer>
               {width > 736 &&
                 <PostComments
+                  setIsSearching={setIsSearching}
+                  isSearching={isSearching}
+                  searchResults={searchResults}
+                  setSearchString={setSearchString}
+                  setNewReplyID={setNewReplyID}
+                  selectedPost={selectedPost}
                   setReplyUser={setReplyUser}
+                  replyUser={replyUser}
                   textareaRef={textareaRef}
+                  setCommentText={setCommentText}
                   commentText={commentText}
+                  postCommentsRef={postCommentsRef}
+                  setSelectedPost={setSelectedPost}
                   newComments={newComments}
                   setNewComments={setNewComments}
                   userData={userData}

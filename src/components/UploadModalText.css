@@ -64,6 +64,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
+  position: relative;
 }
 
 .text-length-wrapper {
@@ -129,4 +130,48 @@
 
 .advanced-input-button {
   border-bottom: 1px solid rgba(219, 219, 219, 1);
+}
+
+.mobile-photo-upload-text .profile-search-results {
+  border-top: 1px solid rgba(219, 219, 219, 1);
+  box-shadow: none;
+}
+
+.profile-search-results {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  transform: translateY(100%);
+  max-height: 200px;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 1);
+  z-index: 10;
+  box-shadow: 0 1px 8px 0 rgba(0, 0, 0, 0.1);
+}
+
+.profile-search-results .people-list {
+  gap: 0;
+}
+
+.profile-search-results .username-text:hover {
+  text-decoration: none;
+}
+
+.profile-search-results .user-wrapper {
+  padding: 8px 18px;
+  border-bottom: 1px solid rgba(219, 219, 219, 1);
+  cursor: pointer;
+}
+
+.profile-search-results .profile-photo-frame {
+  width: 28px;
+  height: 28px;
+}
+
+.profile-search-results .user-text-wrapper {
+  gap: 0;
+}
+
+.profile-search-results .full-name-text {
+  font-size: 14px;
 }
