@@ -1,0 +1,36 @@
+.message {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.message.user {
+  align-items: flex-end;
+}
+
+.message.user .message-content {
+  background-color: rgba(239, 239, 239, 1);
+}
+
+.message-profile-photo-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.message-profile-photo-wrapper .profile-photo-frame {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  align-self: flex-end;
+}
+
+.message-content {
+  font-size: 14px;
+  padding: 16px;
+  background-color: rgba(255, 255, 255, 1);
+  border: 1px solid rgba(239, 239, 239, 1);
+  border-radius: 22px;
+  max-width: 236px;
+  min-height: 44px;
+  overflow: hidden;
+}

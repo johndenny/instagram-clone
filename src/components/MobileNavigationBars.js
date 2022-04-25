@@ -4,13 +4,22 @@ import instagramLogo from "../images/mobile-logo.png";
 import defaultProfileImage from "../images/default-profile-image.jpg";
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { v4 as uuidv4 } from 'uuid';
+import { getFirestore, setDoc, doc, query, collection, where, getDocs } from "firebase/firestore";
+import firebaseApp from "../Firebase";
+
+const db = getFirestore();
 
 const MobileNavigationBars = (props) => {
   const navigate = useNavigate();
   const params = useParams();
   const location = useLocation();
   const [currentPath, setCurrentPath] = useState('');
-  const {
+  const { 
+    profilePhotoTitle,
+    messageTitle,
+    getAllDirectMessages,
+    recipientSelection,
     isInboxOpen,
     setLocationBeforeUpload,
     setSearchResults,
@@ -33,6 +42,46 @@ const MobileNavigationBars = (props) => {
     profilePhotoURL,
   } = props;
   const searchInputRef = useRef(null);
+  const [isCreating, setIsCreating] = useState(false);
+
+  const createMessage = async () => {
+    setIsCreating(true);
+    const { 
+      displayName,
+      uid, 
+      photoURL,
+      fullname
+    } = userData;
+    const directMessageID = uuidv4();
+    const UIDs = [uid];
+    const profiles = [{
+      username: displayName,
+      uid: uid,
+      photoURL: photoURL,
+      fullname: fullname,
+    }]
+    recipientSelection.forEach((recipient) => {
+      UIDs.push(recipient.uid);
+      profiles.push(recipient);
+    })
+    const copyCheck = query(collection(db, 'directMessages'), where('UIDs', '==', UIDs));
+    const copyCheckSnap = await getDocs(copyCheck);
+    const docs = [];
+    copyCheckSnap.forEach((doc) => {
+      docs.push(doc.data());
+    })
+    if (docs.length === 1) {
+      return navigate(`/direct/t/${docs[0].directMessageID}`);
+    }
+    await setDoc(doc(db, 'directMessages', directMessageID), {
+      directMessageID: directMessageID,
+      UIDs: UIDs,
+      profiles: profiles,
+    });
+    setIsCreating(false);
+    await getAllDirectMessages();
+    navigate(`/direct/t/${directMessageID}`);
+  };
 
   const searchInputHandler = (event) => {
     const { value } = event.target;
@@ -73,12 +122,68 @@ const MobileNavigationBars = (props) => {
             <h1 className="logo-header">
               Direct
             </h1>
-            <div className="new-message-icon-wrapper">
-            <svg aria-label="New Message" className="new-message-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
-              <path d="M12.202 3.203H5.25a3 3 0 00-3 3V18.75a3 3 0 003 3h12.547a3 3 0 003-3v-6.952" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-              <path d="M10.002 17.226H6.774v-3.228L18.607 2.165a1.417 1.417 0 012.004 0l1.224 1.225a1.417 1.417 0 010 2.004z" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path><line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="16.848" x2="20.076" y1="3.924" y2="7.153"></line>
-            </svg>
-            </div>            
+            <button 
+              className="new-message-icon-wrapper"
+              onClick={() => navigate('/direct/new/')}
+            >
+              <svg aria-label="New Message" className="new-message-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                <path d="M12.202 3.203H5.25a3 3 0 00-3 3V18.75a3 3 0 003 3h12.547a3 3 0 003-3v-6.952" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+                <path d="M10.002 17.226H6.774v-3.228L18.607 2.165a1.417 1.417 0 012.004 0l1.224 1.225a1.417 1.417 0 010 2.004z" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+                <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="16.848" x2="20.076" y1="3.924" y2="7.153"></line>
+              </svg>
+            </button>            
+          </div>
+        </header> 
+      )
+    }
+    if (pathname === '/direct/new/') {
+      return (
+        <header className="mobile-navigation-header">
+          <div className="mobile-navigation-icon-wrapper">
+            <button className="back-button" onClick={goBack}>
+              <svg aria-label="Back" className="back-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
+              </svg>
+            </button>
+            <h1 className="logo-header">
+              New Message
+            </h1>
+            <button 
+              className="create-message-button"
+              onClick={createMessage}
+              disabled={recipientSelection.length === 0}
+            >
+              Next
+            </button>            
+          </div>
+        </header> 
+      )
+    }
+    if (pathname.split('/')[2] === 't') {
+      return (
+        <header className="mobile-navigation-header">
+          <div className="mobile-message-navigation-icon-wrapper">
+            <button className="back-button" onClick={goBack}>
+              <svg aria-label="Back" className="back-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
+              </svg>
+            </button>
+            <div className="profile-photo-frame">
+              <img alt="" className="profile-photo" src={profilePhotoTitle} />
+            </div>
+            <h1 className="message-username-header">
+              {messageTitle}
+            </h1>
+            <button 
+              className="message-info-button"
+            >
+              <svg aria-label="View Thread Details" className="message-info-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                <circle cx="12.001" cy="12.005" fill="none" r="10.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></circle>
+                <circle cx="11.819" cy="7.709" r="1.25"></circle>
+                <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="10.569" x2="13.432" y1="16.777" y2="16.777"></line>
+                <polyline fill="none" points="10.569 11.05 12 11.05 12 16.777" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></polyline>
+              </svg>
+            </button>            
           </div>
         </header> 
       )

@@ -1,0 +1,95 @@
+.direct-message {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex: 1;
+  justify-content: flex-end;
+  background-color: rgba(255, 255, 255, 1);
+}
+
+.direct-message-inputs {
+  padding: 16px;
+  display: flex;
+}
+
+.direct-message-input {
+  flex: 1;
+  background-color: transparent;
+  border: 0;
+  resize: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  font-size: 14px;
+  outline: none;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+.direct-message-inputs-wrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  border: 1px solid rgba(219, 219, 219, 1);
+  padding-left: 16px;
+  padding-right: 8px;
+  border-radius: 22px;
+  min-height: 44px;
+}
+
+.direct-message-inputs-wrapper button {
+  padding: 8px;
+}
+
+.message-username-header {
+  font-size: 16px;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.mobile-navigation-header .profile-photo-frame {
+  height: 24px;
+  width: 24px;
+  margin: 0;
+}
+
+.mobile-message-navigation-icon-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 8px;
+}
+
+.message-info-button {
+  padding: 8px;
+  margin-left: auto;
+}
+
+.send-message-button {
+  color: rgba(0, 149, 246, 1);
+  font-weight: 600;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.messages-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  width: 100%;
+  position: absolute;
+  gap: 8px;
+  padding: 8px 16px;
+  min-height: 100%;
+}
+
+.messages-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+  flex: 1;
+  position: relative;
+}

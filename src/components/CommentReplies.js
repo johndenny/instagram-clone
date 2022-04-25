@@ -4,6 +4,7 @@ import React, { useLayoutEffect, useState } from 'react';
 
 const CommentReplies = (props) => {
   const {
+    stringToLinks,
     setIsLikedByModalOpen,
     setCommentIDs,
     onMouseEnter,
@@ -62,6 +63,7 @@ const CommentReplies = (props) => {
                 className='comment-reply'
               >
                 <Comment
+                  stringToLinks={stringToLinks}
                   setIsLikedByModalOpen={setIsLikedByModalOpen}
                   setCommentIDs={setCommentIDs}
                   onMouseEnter={onMouseEnter}

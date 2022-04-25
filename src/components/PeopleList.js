@@ -6,6 +6,8 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const PeopleList = (props) => {
   const {
+    recipientSelection,
+    isMessage,
     isComment,
     searchSelection,
     isTag,
@@ -39,7 +41,14 @@ const PeopleList = (props) => {
     }
   }
 
-  const onClickHandler = (username, uid) => {
+  const onClickHandler = (user) => {
+    const {
+      username,
+      uid,
+    } = user;
+    if (isMessage) {
+      return searchSelection(user);
+    }
     if (isComment) {
       searchSelection(username);
     } else {
@@ -48,7 +57,7 @@ const PeopleList = (props) => {
     
   }
 
-  if (isSearch) {
+  if (isSearch || isMessage) {
     return (
       <ul className='people-list'>
         {allUserProfiles.map((user, index) => {
@@ -59,11 +68,15 @@ const PeopleList = (props) => {
             fullName,
             uid,
           } = user;
+          let selectionIndex;
+          if (isMessage) {
+            selectionIndex = recipientSelection.findIndex((recipient) => recipient.uid === uid);
+          }
           return (
             <li 
               key={uid}
               className='user-wrapper'
-              onClick={() => onClickHandler(username, uid)} 
+              onClick={() => onClickHandler(user)} 
               onMouseDown={(event) => event.preventDefault()}
             >
               <div
@@ -99,6 +112,18 @@ const PeopleList = (props) => {
                     <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" x1="20.649" x2="3.354" y1="20.649" y2="3.354"></line>
                   </svg>
                 </button>
+              }
+              {isMessage && 
+                <div className='selected-checkmark'>
+                  {selectionIndex !== -1 
+                  ? <svg aria-label="Toggle selection" className="selected-checkmark-svg" color="#0095f6" fill="#0095f6" height="24" role="img" viewBox="0 0 24 24" width="24">
+                      <path d="M12.001.504a11.5 11.5 0 1011.5 11.5 11.513 11.513 0 00-11.5-11.5zm5.706 9.21l-6.5 6.495a1 1 0 01-1.414-.001l-3.5-3.503a1 1 0 111.414-1.414l2.794 2.796L16.293 8.3a1 1 0 011.414 1.415z"></path>
+                    </svg>
+                  : <svg aria-label="Toggle selection" className="unselected-checkmark-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                    <circle cx="12.008" cy="12" fill="none" r="11.25" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.5"></circle>
+                  </svg>
+                }
+                </div>
               }
             </li>
           )

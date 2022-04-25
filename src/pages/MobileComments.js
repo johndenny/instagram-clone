@@ -114,8 +114,7 @@ const MobileComments = (props) => {
   useLayoutEffect(() => {
     if (selectedPost !== '') {
       textareaRef.current.style.height = '1px'
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-      console.log(textareaRef.current.scrollHeight);      
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;     
     }
   }, [commentText]);
 

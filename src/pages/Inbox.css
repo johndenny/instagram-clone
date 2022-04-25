@@ -14,6 +14,38 @@
   display: flex;
 }
 
+.direct-inbox {
+  display: flex;
+  flex-direction: column;
+}
+
+.direct-inbox .profile-photo-frame {
+  margin: 0;
+  height: 56px;
+  width: 56px;
+}
+
+.direct-inbox-messages {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  margin-top: 8px;
+  padding: 0;
+}
+
+.direct-message-card {
+  display: flex;
+  padding: 8px 16px;
+  gap: 16px;
+  align-items: center;
+}
+
+.direct-message-full-name {
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
 /* .animation-wrapper {
   animation: spinLoop 2s linear;
   animation-iteration-count: infinite;

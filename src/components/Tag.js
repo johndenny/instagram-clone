@@ -89,7 +89,9 @@ const Tag = (props) => {
   }
 
   useLayoutEffect(() => {
+    if (imageRef.current !== null) {
       tagOrientationHandler();
+    }
   }, [tagData]);
 
   useEffect(() => {

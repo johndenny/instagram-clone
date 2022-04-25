@@ -48,7 +48,8 @@ import FollowersModal from './components/FollowersModal';
 import FollowingModal from './components/FollowingModal';
 import SearchResults from './components/SearchResults';
 import TagPeopleMobile from './pages/TagPeopleMobile';
-import { async } from '@firebase/util';
+import NewMessage from './pages/NewMessage';
+import DirectMessage from './pages/DirectMessage';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -156,6 +157,57 @@ const RouterSwitch = () => {
   const searchTimeoutRef = useRef();
   const [isSearching, setIsSearching] = useState(false);
   const [isNoMatch, setIsNoMatch] = useState(false);
+
+  // MESSAGES //
+
+  const [recipientSelection, setRecipientSelection] = useState([]);
+  const [directMessages, setDirectMessages] = useState([]);
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [messageTitle, setMessageTitle] = useState('');
+  const [profilePhotoTitle, setProfilePhotoTitle] = useState('');
+  const [allMessages, setAllMessages] = useState(null);
+
+  const getAllDirectMessages = async () => {
+    const {
+      uid
+    } = userData;
+    const documentArray = [];
+    let allMessages = {};
+    const allDirectMessagesQuery = query(collection(db, 'directMessages'), where('UIDs', 'array-contains', uid));
+    const querySnapShot = await getDocs(allDirectMessagesQuery);
+    querySnapShot.forEach((document) => {
+      const {
+        directMessageID
+      } = document.data();
+      documentArray.push(document.data());
+      const messages = getAllMessages(directMessageID);
+      console.log(messages)
+      messages.then((value) => {
+        allMessages = {...allMessages, [directMessageID]: value}
+        setAllMessages(allMessages);
+      });
+    });
+    setDirectMessages(documentArray);
+  }
+
+  const getAllMessages = async (directMessageID) => {
+    const allMessages = [];
+    const allMessagesSnapshot = await getDocs(collection(db, directMessageID));
+    allMessagesSnapshot.forEach((doc) => {
+      allMessages.push(doc.data());
+    });
+    return allMessages;
+  }
+
+  useEffect(() => {
+    console.log(allMessages);
+  }, [allMessages]);
+
+  useEffect(() => {
+    if (userData.uid !== undefined) {
+      getAllDirectMessages();
+    };
+  }, [userData]);
 
   // SEARCH //
 
@@ -1594,6 +1646,7 @@ const RouterSwitch = () => {
 
         {(userLoggedIn && !isMobile) &&
           <NavigationBar
+            
             deleteRecentSearch={deleteRecentSearch}
             isNoMatch={isNoMatch}
             isSearching={isSearching}
@@ -1621,6 +1674,12 @@ const RouterSwitch = () => {
         }
         {(userLoggedIn && isMobile && !photoUploadOpen) &&
           <MobileNavigationBars
+            profilePhotoTitle={profilePhotoTitle}
+            messageTitle={messageTitle}
+            selectedMessage={selectedMessage}
+            directMessages={directMessages}
+            getAllDirectMessages={getAllDirectMessages}
+            recipientSelection={recipientSelection}
             isInboxOpen={isInboxOpen}
             setLocationBeforeUpload={setLocationBeforeUpload}
             searchString={searchString}
@@ -1695,9 +1754,37 @@ const RouterSwitch = () => {
                   setPhotosArray={setPhotosArray}
                 />
               } />
-              <Route path='/direct/inbox' element={
+              <Route path='/direct/inbox/' element={
                 <Inbox 
+                  userData={userData}
+                  directMessages={directMessages}
                   setIsInboxOpen={setIsInboxOpen}
+                  setSearchString={setSearchString}
+                  searchString={searchString}
+                  searchResults={searchResults}
+                />
+              } />
+              <Route path='/direct/new/' element={
+                <NewMessage 
+                  setIsInboxOpen={setIsInboxOpen}
+                  userData={userData}
+                  recipientSelection={recipientSelection}
+                  setRecipientSelection={setRecipientSelection}
+                  setSearchString={setSearchString}
+                  searchString = {searchString}
+                  searchResults = {searchResults}
+                />
+              } />
+              <Route path='/direct/t/:messageID' element={
+                <DirectMessage
+                  allMessages={allMessages}
+                  setProfilePhotoTitle={setProfilePhotoTitle}
+                  setMessageTitle={setMessageTitle}
+                  setSelectedMessage={setSelectedMessage}
+                  selectedMessage={selectedMessage}
+                  userData={userData}
+                  directMessages={directMessages}
+                  setIsInboxOpen = {setIsInboxOpen }
                 />
               } />
               <Route path='/explore/' element={<Explore />} />

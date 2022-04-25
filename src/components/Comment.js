@@ -275,6 +275,7 @@ const Comment = (props) => {
         </div>
         {!isReply && replies.length !== 0 &&
           <CommentReplies
+            stringToLinks={stringToLinks}
             setIsLikedByModalOpen={setIsLikedByModalOpen}
             setCommentIDs={setCommentIDs}
             onMouseEnter={onMouseEnter}
