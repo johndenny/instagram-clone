@@ -10,7 +10,8 @@ let previousDate = null;
 
 const DirectMessage = (props) => {
   const {
-    setMessageLinksOpen,
+    setSelectedMessage,
+    setIsMessageLinksOpen,
     allMessages,
     setProfilePhotoTitle,
     setMessageTitle,
@@ -19,11 +20,12 @@ const DirectMessage = (props) => {
     directMessages,
   } = props;
   const params = useParams();
-  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [selectedMessages, setSelectedMessages] = useState(null);
   const [messages, setMessages] = useState([]);
   const [messageString, setMessageString] = useState('');
   const textareaRef = useRef(null);
   const messagesRef = useRef(null);
+  const touchTimer = useRef(null);
   // const [previousDate, setPreviousDate] = useState(null);
 
   const messageListener = () => {
@@ -55,7 +57,7 @@ const DirectMessage = (props) => {
       messageID
     } = params;
     const threadIndex = directMessages.findIndex((message) => message.directMessageID === messageID);
-    setSelectedMessage(directMessages[threadIndex]);
+    setSelectedMessages(directMessages[threadIndex]);
     console.log(allMessages);
     // setMessages(allMessages[messageID].sort((a, z) => a.date - z.date));
     const {
@@ -80,7 +82,7 @@ const DirectMessage = (props) => {
     setProfilePhotoTitle(photoURLS[0]);
     messageListener();
     return () => {
-      setSelectedMessage(null);
+      setSelectedMessages(null);
       setMessageTitle('');
       setIsInboxOpen(false);
     }
@@ -99,15 +101,15 @@ const DirectMessage = (props) => {
   }, [messageString]);
 
   useEffect(() => {
-    console.log(selectedMessage)
-  }, [selectedMessage]);
+    console.log(selectedMessages)
+  }, [selectedMessages]);
 
   const sendMessage = async (event) => {
     event.preventDefault();
     setMessageString('');
     const {
       directMessageID,
-    } = selectedMessage;
+    } = selectedMessages;
     const {
       username,
       fullname,
@@ -132,7 +134,7 @@ const DirectMessage = (props) => {
     event.preventDefault();
     const {
       directMessageID
-    } = selectedMessage;
+    } = selectedMessages;
     const {
       username,
       fullname,
@@ -179,18 +181,30 @@ const DirectMessage = (props) => {
         } else if (yesterday.toDateString() === postDate.toDateString()) {
           return `Yesterday ${currentTime}`
         } else {
-          return `${postDate.toLocaleDateString('en-US', {
+          return `${postDate.toLocaleDateString([], {
             weekday: 'long',
           })} ${currentTime}`
         }
       } else {
-        return `${postDate.toLocaleDateString('en-US', {
+        return `${postDate.toLocaleDateString([], {
           month: 'long',
           day: 'numeric',
           year: 'numeric',
         })} ${currentTime}`
       }
     }
+  }
+
+  const touchStart = (message) => {
+    setSelectedMessage(message);
+    touchTimer.current = setTimeout(() => {
+      setIsMessageLinksOpen(true);
+    }, 1000);
+  }
+
+  const touchEnd = () => {
+    clearTimeout(touchTimer.current);
+    touchTimer.current = null;
   }
 
   return (
@@ -205,6 +219,9 @@ const DirectMessage = (props) => {
               <div 
                 key={message.messageID}
                 className={message.uid === userData.uid ? 'message user' : 'message'}
+                onTouchStart={() => touchStart(message)}
+                onTouchEnd={touchEnd}
+                onContextMenu={(event) => event.preventDefault()}
               >
                 <Message
                   formatTime={formatTime}

@@ -52,6 +52,7 @@ import TagPeopleMobile from './pages/TagPeopleMobile';
 import NewMessage from './pages/NewMessage';
 import DirectMessage from './pages/DirectMessage';
 import MobileShareModal from './components/MobileShareModal';
+import MessageLinksModal from './components/MessageLinksModal';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -1640,6 +1641,13 @@ const RouterSwitch = () => {
   
   return (
     <BrowserRouter>
+      {isMessageLinksOpen &&
+        <MessageLinksModal
+          userData={userData}
+          selectedMessage={selectedMessage}
+          setIsMessageLinksOpen={setIsMessageLinksOpen}
+        />
+      }
       {isSharePostOpen && 
         <MobileShareModal
           showNotification={showNotification}
