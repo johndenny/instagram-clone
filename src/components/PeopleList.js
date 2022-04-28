@@ -68,10 +68,39 @@ const PeopleList = (props) => {
             fullName,
             uid,
           } = user;
-          let selectionIndex;
+          let selectedIndex;
+          let isSelected;
           if (isMessage) {
-            selectionIndex = recipientSelection.findIndex((recipient) => recipient.uid === uid);
+            isSelected = recipientSelection.map((recipient) => {
+              const recipientArray = [];
+              recipient.forEach((user) => {
+                if (user.uid !== userData.uid) {
+                  recipientArray.push(user);
+                }
+              });
+              const userIndex = recipientArray.findIndex((user) => user.uid === uid);
+              console.log(recipientArray[0].uid === uid);
+              if (recipientArray.length === 1) {
+                if (userIndex !== -1) {
+                  console.log('TRUE');
+                  return true;
+                } else {
+                  console.log('FALSE');
+                  return false;
+                }
+              } else {
+                console.log('FALSE');
+                return false;
+              }
+            })
+            const booleanIndex = isSelected.findIndex((boolean) => boolean === true);
+            if (booleanIndex !== -1) {
+              isSelected = true;
+            } else {
+              isSelected = false;
+            }
           }
+          console.log(isSelected, index);
           return (
             <li 
               key={uid}
@@ -115,7 +144,7 @@ const PeopleList = (props) => {
               }
               {isMessage && 
                 <div className='selected-checkmark'>
-                  {selectionIndex !== -1 
+                  {isSelected 
                   ? <svg aria-label="Toggle selection" className="selected-checkmark-svg" color="#0095f6" fill="#0095f6" height="24" role="img" viewBox="0 0 24 24" width="24">
                       <path d="M12.001.504a11.5 11.5 0 1011.5 11.5 11.513 11.513 0 00-11.5-11.5zm5.706 9.21l-6.5 6.495a1 1 0 01-1.414-.001l-3.5-3.503a1 1 0 111.414-1.414l2.794 2.796L16.293 8.3a1 1 0 011.414 1.415z"></path>
                     </svg>

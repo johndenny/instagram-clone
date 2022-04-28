@@ -15,8 +15,8 @@ let lastPress = 0;
 
 const MobilePhotoPost = (props) => {
   const {
-    // searchResults,
-    // setSearchString,
+    setIsSharePostOpen,
+    setPostToSend,
     stringToLinks, 
     setCommentIDs,
     setIsLocationPost,
@@ -85,6 +85,11 @@ const MobilePhotoPost = (props) => {
   const [searchResults, setSearchResults] = useState([]);
   const searchTimeoutRef = useRef(null);
   const [isSearching, setIsSearching] = useState(false);
+
+  const sendPost = (selectedPost) => {
+    setPostToSend(selectedPost);
+    setIsSharePostOpen(true);
+  }
 
   const getSearchResults = async () => {
     setIsSearching(true);
@@ -370,13 +375,14 @@ const MobilePhotoPost = (props) => {
   }
 
   useEffect(() => {
+    console.log(selectedPost);
     if (selectedPost === '') {
       getPostData();
     }
   }, []);
 
   useEffect(() => () => {
-    if (params.postID !== undefined && isModal) {
+    if (params.postID !== undefined) {
       setSelectedPost('');
     }
   },[]);
@@ -1428,7 +1434,10 @@ const MobilePhotoPost = (props) => {
                       <path d="M20.656 17.008a9.993 9.993 0 10-3.59 3.615L22 22z" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></path>
                     </svg>
                   </button>
-                  <button className='feed-share-button'>
+                  <button 
+                    className='feed-share-button'
+                    onClick={() => sendPost(selectedPost)}
+                  >
                     <svg aria-label="Share Post" className="share-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
                       <line fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2" x1="22" x2="9.218" y1="3" y2="10.083"></line>
                       <polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></polygon>

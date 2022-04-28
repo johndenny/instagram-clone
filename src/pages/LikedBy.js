@@ -32,6 +32,8 @@ const LikedBy = (props) => {
         const replyIndex = replies.findIndex((reply) => reply.commentID === params.commentID);
         setLikes(replies[replyIndex].likes);
       }
+    } else {
+      setLikes(selectedPost[0].likes);
     }
   }, [location.state, params.commentID, selectedPost]);
 

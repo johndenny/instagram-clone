@@ -55,21 +55,29 @@ const MobileNavigationBars = (props) => {
     const directMessageID = uuidv4();
     const UIDs = [uid];
     const profiles = [{
-      username: displayName,
-      uid: uid,
-      photoURL: photoURL,
       fullname: fullname,
-    }]
+      photoURL: photoURL,
+      uid: uid,
+      username: displayName,
+    }];
+    console.log(recipientSelection);
     recipientSelection.forEach((recipient) => {
-      UIDs.push(recipient.uid);
-      profiles.push(recipient);
-    })
-    const copyCheck = query(collection(db, 'directMessages'), where('UIDs', '==', UIDs));
+        recipient.forEach((user) => {
+          if (user.uid !== uid) {
+            UIDs.push(user.uid);
+            profiles.push(user);
+          };
+        });        
+    });
+    const copyCheck = query(collection(db, 'directMessages'), 
+      where('UIDs', '==', UIDs));
+    console.log(UIDs);
     const copyCheckSnap = await getDocs(copyCheck);
     const docs = [];
     copyCheckSnap.forEach((doc) => {
       docs.push(doc.data());
     })
+    console.log(docs.length);
     if (docs.length === 1) {
       return navigate(`/direct/t/${docs[0].directMessageID}`);
     }
@@ -78,9 +86,9 @@ const MobileNavigationBars = (props) => {
       UIDs: UIDs,
       profiles: profiles,
     });
-    setIsCreating(false);
-    await getAllDirectMessages();
     navigate(`/direct/t/${directMessageID}`);
+    setIsCreating(false);
+    
   };
 
   const searchInputHandler = (event) => {
@@ -168,11 +176,14 @@ const MobileNavigationBars = (props) => {
                 <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
               </svg>
             </button>
-            <div className="profile-photo-frame">
-              <img alt="" className="profile-photo" src={profilePhotoTitle} />
-            </div>
+            
             <h1 className="message-username-header">
-              {messageTitle}
+              <div className="profile-photo-frame">
+                <img alt="" className="profile-photo" src={profilePhotoTitle} />
+              </div>
+              <span className="message-username-header-text">
+                {messageTitle}
+              </span>
             </h1>
             <button 
               className="message-info-button"

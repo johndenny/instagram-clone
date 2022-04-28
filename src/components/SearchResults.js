@@ -37,7 +37,6 @@ const SearchResults = (props) => {
 
   return (
     <main className='search-results'>
-      
       {searchString === '' &&
         <div className='recent-search-header'>
           <h1 className='recent-search-header-text'>

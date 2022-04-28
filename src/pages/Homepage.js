@@ -7,6 +7,8 @@ import useWindowSize from '../hooks/useWindowSize';
 
 const Homepage = (props) => {
   const {
+    setIsSharePostOpen,
+    setPostToSend,
     searchResults,
     setSearchString,
     stringToLinks,
@@ -62,6 +64,8 @@ const Homepage = (props) => {
             return (
               <div className='homepage-post' key={post[0].postID}>
                 <MobilePhotoPost
+                  setIsSharePostOpen={setIsSharePostOpen}
+                  setPostToSend={setPostToSend}
                   searchResults={searchResults}
                   setSearchString={setSearchString}
                   stringToLinks={stringToLinks}

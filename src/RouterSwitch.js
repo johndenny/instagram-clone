@@ -27,7 +27,8 @@ import {
   arrayUnion, 
   updateDoc, 
   arrayRemove, 
-  deleteDoc 
+  deleteDoc, 
+  onSnapshot
 } from 'firebase/firestore';
 import UploadPhotoMobile from './pages/UploadPhotoMobile';
 import UploadPhotoMobileDetails from './pages/UploadPhotoMobileDetails';
@@ -50,6 +51,7 @@ import SearchResults from './components/SearchResults';
 import TagPeopleMobile from './pages/TagPeopleMobile';
 import NewMessage from './pages/NewMessage';
 import DirectMessage from './pages/DirectMessage';
+import MobileShareModal from './components/MobileShareModal';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -166,28 +168,107 @@ const RouterSwitch = () => {
   const [messageTitle, setMessageTitle] = useState('');
   const [profilePhotoTitle, setProfilePhotoTitle] = useState('');
   const [allMessages, setAllMessages] = useState(null);
+  const [postToSend, setPostToSend] = useState(null);
+  const [isSharePostOpen, setIsSharePostOpen] = useState(false);
+  const [isMessageLinksOpen, setIsMessageLinksOpen] = useState(false);
+
+  //SITE WIDE//
+
+  const formatTime = (uploadDate) => {
+    const currentDate = Date.now();
+    const timePast = Date.now() - uploadDate;
+    const timeStampYear = new Date(uploadDate).getFullYear();
+    const currentYear = new Date(currentDate).getFullYear();
+    const minutesPast = timePast / 60000;
+    const hoursPast = minutesPast / 60;
+    const daysPast = hoursPast / 24;
+    switch (true) {
+      case minutesPast < 1:
+        return 'NOW';
+      case minutesPast < 60 && minutesPast > 1:
+        const minutes = Math.floor(minutesPast)
+        return `${minutes} ${
+          minutes < 1 
+            ? 'MINUTE' 
+            : 'MINUTES'
+        } AGO`;
+      case hoursPast >= 1 && hoursPast < 24:
+        const hours = Math.floor(hoursPast)
+        return `${hours} ${
+          hours < 1 
+            ? 'HOUR' 
+            : 'HOURS'
+        } AGO`;
+      case daysPast >= 1 && daysPast < 8:
+        const days = Math.floor(daysPast)
+        return `${days} ${
+          days < 1 
+            ? 'DAY' 
+            : 'DAYS'
+        } AGO`;
+      default:
+        if (timeStampYear === currentYear) {
+          return `${new Date(uploadDate)
+            .toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric',
+            })}`.toUpperCase();
+        } else {
+          return `${new Date(uploadDate)
+            .toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            })}`.toUpperCase();
+        }
+    }
+  }
+
+  const formatTimeShort = (uploadDate) => {
+    const timePast = Date.now() - uploadDate;
+    const minutesPast = timePast / 60000;
+    const hoursPast = minutesPast / 60;
+    const daysPast = hoursPast / 24;
+    const weeksPast = daysPast / 7;
+    switch (true) {
+      case minutesPast < 1:
+        return 'Now';
+      case minutesPast < 60 && minutesPast > 1:
+        return `${Math.floor(minutesPast)}m`;
+      case hoursPast >= 1 && hoursPast < 24:
+        return `${Math.floor(hoursPast)}h`;
+      case daysPast >= 1 && daysPast < 7:
+        return `${Math.floor(daysPast)}d`;
+      case weeksPast >= 1:
+        return `${Math.floor(weeksPast)}w`;
+      default:
+    }
+  };
+
+  //MESSAGES //
 
   const getAllDirectMessages = async () => {
     const {
       uid
     } = userData;
-    const documentArray = [];
-    let allMessages = {};
     const allDirectMessagesQuery = query(collection(db, 'directMessages'), where('UIDs', 'array-contains', uid));
-    const querySnapShot = await getDocs(allDirectMessagesQuery);
-    querySnapShot.forEach((document) => {
-      const {
-        directMessageID
-      } = document.data();
-      documentArray.push(document.data());
-      const messages = getAllMessages(directMessageID);
-      console.log(messages)
-      messages.then((value) => {
-        allMessages = {...allMessages, [directMessageID]: value}
-        setAllMessages(allMessages);
+    onSnapshot(allDirectMessagesQuery, (collection) => {
+      const documentArray = [];
+      let allMessages = {};      
+      collection.forEach( (document) => {
+        const {
+          directMessageID
+        } = document.data();
+        documentArray.push(document.data());
+        const messages = getAllMessages(directMessageID);
+        console.log(messages)
+        messages.then((value) => {
+          allMessages = {...allMessages, [directMessageID]: value}
+          setAllMessages(allMessages);
+        });
       });
+      setDirectMessages(documentArray);      
     });
-    setDirectMessages(documentArray);
   }
 
   const getAllMessages = async (directMessageID) => {
@@ -1559,6 +1640,21 @@ const RouterSwitch = () => {
   
   return (
     <BrowserRouter>
+      {isSharePostOpen && 
+        <MobileShareModal
+          showNotification={showNotification}
+          postToSend = {postToSend}
+          directMessages={directMessages}
+          setIsSharePostOpen={setIsSharePostOpen}
+          setIsInboxOpen={setIsInboxOpen}
+          userData={userData}
+          recipientSelection={recipientSelection}
+          setRecipientSelection={setRecipientSelection}
+          setSearchString={setSearchString}
+          searchString = {searchString}
+          searchResults = {searchResults}
+        />
+      }
       {isResizing &&
         <canvas className='upload-canvas' ref={uploadCanvasRef}>
         </canvas>
@@ -1723,6 +1819,8 @@ const RouterSwitch = () => {
             <React.Fragment>
               <Route path='/' element={
                 <Homepage
+                  setIsSharePostOpen={setIsSharePostOpen}
+                  setPostToSend={setPostToSend}
                   searchResults={searchResults}
                   setSearchString={setSearchString}
                   stringToLinks={stringToLinks}
@@ -1756,6 +1854,8 @@ const RouterSwitch = () => {
               } />
               <Route path='/direct/inbox/' element={
                 <Inbox 
+                  formatTimeShort={formatTimeShort}
+                  allMessages={allMessages}
                   userData={userData}
                   directMessages={directMessages}
                   setIsInboxOpen={setIsInboxOpen}
@@ -1766,6 +1866,7 @@ const RouterSwitch = () => {
               } />
               <Route path='/direct/new/' element={
                 <NewMessage 
+                  directMessages={directMessages}
                   setIsInboxOpen={setIsInboxOpen}
                   userData={userData}
                   recipientSelection={recipientSelection}
@@ -1777,6 +1878,7 @@ const RouterSwitch = () => {
               } />
               <Route path='/direct/t/:messageID' element={
                 <DirectMessage
+                  setIsMessageLinksOpen={setIsMessageLinksOpen}
                   allMessages={allMessages}
                   setProfilePhotoTitle={setProfilePhotoTitle}
                   setMessageTitle={setMessageTitle}

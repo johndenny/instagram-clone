@@ -2,6 +2,9 @@
   display: flex;
   flex-direction: column;
   max-width: 100vw;
+  height: 100%;
+  flex: 1;
+  position: relative;
 }
 
 .to-title-text {
@@ -57,7 +60,17 @@
   background-color: rgba(0, 149, 246, 1);
 }
 
-.user-search-results .profile-photo-frame {
+.user-search-results {
+  position: absolute;
+  top: 57px;
+  width: 100%;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 1);
+  z-index: 101;
+}
+
+.user-search-results .profile-photo-frame,
+.new-message .profile-photo-frame {
   width: 44px;
   height: 44px;
 }
@@ -72,4 +85,9 @@
 
 .selected-checkmark {
   margin-left: auto;
+}
+
+.suggested-header-text {
+  margin: 16px;
+  font-size: 14px;
 }
