@@ -53,6 +53,8 @@ import NewMessage from './pages/NewMessage';
 import DirectMessage from './pages/DirectMessage';
 import MobileShareModal from './components/MobileShareModal';
 import MessageLinksModal from './components/MessageLinksModal';
+import DirectMessageDetailsModal from './components/DirectMesssageDetailsModal';
+import DeleteChatModal from './components/DeleteChatModal';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -172,6 +174,9 @@ const RouterSwitch = () => {
   const [postToSend, setPostToSend] = useState(null);
   const [isSharePostOpen, setIsSharePostOpen] = useState(false);
   const [isMessageLinksOpen, setIsMessageLinksOpen] = useState(false);
+  const [isMessageDetailsOpen, setIsMessageDetailsOpen] = useState(false);
+  const [selectedDirectMessageID, setSelectedDirectMessageID] = useState('');
+  const [isDeleteChatOpen, setIsDeleteChatOpen] = useState(false);
 
   //SITE WIDE//
 
@@ -1641,6 +1646,24 @@ const RouterSwitch = () => {
   
   return (
     <BrowserRouter>
+      {isDeleteChatOpen &&
+        <DeleteChatModal
+          setIsDeleteChatOpen={setIsDeleteChatOpen}
+          selectedDirectMessageID={selectedDirectMessageID}
+        />
+      }
+      {isMessageDetailsOpen &&
+        <DirectMessageDetailsModal
+          messageTitle={messageTitle}
+          setMessageTitle={setMessageTitle}
+          setIsDeleteChatOpen={setIsDeleteChatOpen}
+          userData={userData}
+          setHideTopNavigation = {setHideTopNavigation}
+          directMessages={directMessages}
+          setIsMessageDetailsOpen={setIsMessageDetailsOpen}
+          selectedDirectMessageID={selectedDirectMessageID}
+        />
+      }
       {isMessageLinksOpen &&
         <MessageLinksModal
           userData={userData}
@@ -1750,7 +1773,6 @@ const RouterSwitch = () => {
 
         {(userLoggedIn && !isMobile) &&
           <NavigationBar
-            
             deleteRecentSearch={deleteRecentSearch}
             isNoMatch={isNoMatch}
             isSearching={isSearching}
@@ -1778,6 +1800,8 @@ const RouterSwitch = () => {
         }
         {(userLoggedIn && isMobile && !photoUploadOpen) &&
           <MobileNavigationBars
+            setHideTopNavigation={setHideTopNavigation}
+            setIsMessageDetailsOpen={setIsMessageDetailsOpen}
             profilePhotoTitle={profilePhotoTitle}
             messageTitle={messageTitle}
             selectedMessage={selectedMessage}
@@ -1886,6 +1910,7 @@ const RouterSwitch = () => {
               } />
               <Route path='/direct/t/:messageID' element={
                 <DirectMessage
+                  setSelectedDirectMessageID={setSelectedDirectMessageID}
                   setIsMessageLinksOpen={setIsMessageLinksOpen}
                   allMessages={allMessages}
                   setProfilePhotoTitle={setProfilePhotoTitle}

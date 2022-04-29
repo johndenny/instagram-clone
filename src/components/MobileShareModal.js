@@ -75,17 +75,19 @@ const MobileShareModal = (props) => {
           photoURL: photoURL,
           uid: uid,
           username: username,
+          isAdmin: true,
         }];
         recipientSelection[i].forEach((recipient) => {
           if (recipient.uid !== uid) {
             UIDs.push(recipient.uid);
-            profiles.push(recipient);
+            profiles.push({...recipient, isAdmin: false});
           };
         });        
         await setDoc(doc(db, 'directMessages', directMessageID), {
           directMessageID: directMessageID,
           UIDs: UIDs,
           profiles: profiles,
+          title: ''
         });
       };
       const firstID = uuidv4();

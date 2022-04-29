@@ -71,6 +71,7 @@ const Inbox = (props) => {
           const {
             profiles,
             directMessageID,
+            title,
           } = directMessage;
           const profileIndex = profiles.findIndex((profile) => profile.uid !== uid);
           const {
@@ -89,6 +90,12 @@ const Inbox = (props) => {
               UIDs.push(uid);
             };
           });
+          let chatTitle;
+          if (title === '') {
+            chatTitle = fullnames.join(', ');
+          } else {
+            chatTitle = title;
+          }
           let isSelected = null
           if (isSuggestion) {
             const selectedArray = recipientSelection.map((recipient) => {
@@ -140,7 +147,7 @@ const Inbox = (props) => {
               </div>
               <div className='direct-message-text'>
                 <span className='direct-message-full-name'>
-                  {fullnames.join(', ')}
+                  {chatTitle}
                 </span>
                 {!isSuggestion &&
                   <span className='direct-message-activity'>

@@ -16,6 +16,9 @@ const MobileNavigationBars = (props) => {
   const location = useLocation();
   const [currentPath, setCurrentPath] = useState('');
   const { 
+    setHideTopNavigation,
+    setSelectedDirectMessageID,
+    setIsMessageDetailsOpen,
     profilePhotoTitle,
     messageTitle,
     getAllDirectMessages,
@@ -59,13 +62,14 @@ const MobileNavigationBars = (props) => {
       photoURL: photoURL,
       uid: uid,
       username: displayName,
+      isAdmin: true,
     }];
     console.log(recipientSelection);
     recipientSelection.forEach((recipient) => {
         recipient.forEach((user) => {
           if (user.uid !== uid) {
             UIDs.push(user.uid);
-            profiles.push(user);
+            profiles.push({...user, isAdmin: false});
           };
         });        
     });
@@ -85,6 +89,7 @@ const MobileNavigationBars = (props) => {
       directMessageID: directMessageID,
       UIDs: UIDs,
       profiles: profiles,
+      title: '',
     });
     navigate(`/direct/t/${directMessageID}`);
     setIsCreating(false);
@@ -116,8 +121,18 @@ const MobileNavigationBars = (props) => {
     navigate('/explore/');
   }
 
+  const messageDetailsHandler = () => {
+    setIsMessageDetailsOpen(true);
+    setHideTopNavigation(true);
+  }
+
   const topNavigationHandler = () => {
     const { pathname } = location;
+    if (hideTopNavigation) {
+      return (
+        ''
+      )
+    }
     if (pathname === '/direct/inbox/') {
       return (
         <header className="mobile-navigation-header">
@@ -187,6 +202,7 @@ const MobileNavigationBars = (props) => {
             </h1>
             <button 
               className="message-info-button"
+              onClick={messageDetailsHandler}
             >
               <svg aria-label="View Thread Details" className="message-info-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
                 <circle cx="12.001" cy="12.005" fill="none" r="10.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></circle>
@@ -387,11 +403,6 @@ const MobileNavigationBars = (props) => {
             </div>            
           </div>
         </header>   
-      )
-    }
-    if (hideTopNavigation) {
-      return (
-        ''
       )
     }
     if (profileData.length === 0) {

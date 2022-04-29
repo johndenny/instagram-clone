@@ -10,6 +10,7 @@ let previousDate = null;
 
 const DirectMessage = (props) => {
   const {
+    setSelectedDirectMessageID,
     setSelectedMessage,
     setIsMessageLinksOpen,
     allMessages,
@@ -48,6 +49,7 @@ const DirectMessage = (props) => {
   };
 
   useEffect(() => {
+    setSelectedDirectMessageID(params.messageID);
     setIsInboxOpen(true);
     previousDate = null;
   }, []);
@@ -61,12 +63,13 @@ const DirectMessage = (props) => {
     console.log(allMessages);
     // setMessages(allMessages[messageID].sort((a, z) => a.date - z.date));
     const {
-      profiles
+      profiles,
+      title
     } = directMessages[threadIndex];
     const {
       uid
     } = userData;
-    const title = [];
+    const chatTitle = [];
     const photoURLS = [];
     profiles.findIndex((profile) => {
       const {
@@ -74,11 +77,15 @@ const DirectMessage = (props) => {
         photoURL
       } = profile;
       if (profile.uid !== uid) {
-        title.push(fullname);
+        chatTitle.push(fullname);
         photoURLS.push(photoURL)
       };
     });
-    setMessageTitle(title.join(', '))
+    if (title === '') {
+      setMessageTitle(chatTitle.join(', '))
+    } else {
+      setMessageTitle(title);
+    }
     setProfilePhotoTitle(photoURLS[0]);
     messageListener();
     return () => {
