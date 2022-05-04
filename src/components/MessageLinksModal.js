@@ -25,7 +25,7 @@ const MessageLinksModal = (props) => {
   const unsendHandler = async () => {
     console.log(directMessageID, messageID);
     setIsMessageLinksOpen(false);
-    await deleteDoc(doc(db, directMessageID, messageID));
+    await deleteDoc(doc(db, 'messages', messageID));
   }
 
   const copyHandler = () => {
@@ -47,6 +47,7 @@ const MessageLinksModal = (props) => {
   return (
     <div 
       className="profile-photo-modal" 
+      onClick={() => setIsMessageLinksOpen(false)}
     >
         <div 
           className="post-links-content" 

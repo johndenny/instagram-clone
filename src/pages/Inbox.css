@@ -15,6 +15,7 @@
 }
 
 .direct-inbox {
+  background-color: rgba(255, 255, 255, 1);
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -42,33 +43,40 @@
 }
 
 .direct-message-full-name {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
   font-size: 14px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
 }
 
-/* .animation-wrapper {
-  animation: spinLoop 2s linear;
-  animation-iteration-count: infinite;
-}
-
-@keyframes spinLoop {
-  from {
-    transform: rotate(-360deg);
-  }
-  to {
-    transform: rotate(0deg);
-  }
-} */
-
 .direct-message-text {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   font-size: 14px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
+  flex: 1;
+  gap: 2px;
 }
 
 .direct-message-activity {
+  margin-top: 2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
   color: rgba(142, 142, 142, 1);
+}
+
+.activity-time-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.new-message-icon-wrapper {
+  padding: 8px;
 }

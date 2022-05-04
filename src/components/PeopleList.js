@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import FollowButton from './FollowButton.js';
 import './PeopleList.css'
 import defaultProfile from '../images/default-profile-image.jpg';
@@ -6,6 +6,8 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const PeopleList = (props) => {
   const {
+    isAddPeople,
+    groupUIDs,
     recipientSelection,
     isMessage,
     isComment,
@@ -54,7 +56,6 @@ const PeopleList = (props) => {
     } else {
       navigateUserProfile(username, uid);
     }
-    
   }
 
   if (isSearch || isMessage) {
@@ -70,6 +71,7 @@ const PeopleList = (props) => {
           } = user;
           let selectedIndex;
           let isSelected;
+          let isMember = false;
           if (isMessage) {
             isSelected = recipientSelection.map((recipient) => {
               const recipientArray = [];
@@ -100,11 +102,18 @@ const PeopleList = (props) => {
               isSelected = false;
             }
           }
+          if (isAddPeople) {
+            groupUIDs.forEach((groupUID) => {
+              if (groupUID === uid) {
+                isMember = true;
+              };
+            });
+          };
           console.log(isSelected, index);
           return (
             <li 
               key={uid}
-              className='user-wrapper'
+              className={isMember ? 'user-wrapper is-member' : 'user-wrapper'}
               onClick={() => onClickHandler(user)} 
               onMouseDown={(event) => event.preventDefault()}
             >
@@ -144,7 +153,7 @@ const PeopleList = (props) => {
               }
               {isMessage && 
                 <div className='selected-checkmark'>
-                  {isSelected 
+                  {isSelected || isMember
                   ? <svg aria-label="Toggle selection" className="selected-checkmark-svg" color="#0095f6" fill="#0095f6" height="24" role="img" viewBox="0 0 24 24" width="24">
                       <path d="M12.001.504a11.5 11.5 0 1011.5 11.5 11.513 11.513 0 00-11.5-11.5zm5.706 9.21l-6.5 6.495a1 1 0 01-1.414-.001l-3.5-3.503a1 1 0 111.414-1.414l2.794 2.796L16.293 8.3a1 1 0 011.414 1.415z"></path>
                     </svg>

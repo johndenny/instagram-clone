@@ -1,14 +1,19 @@
 import './NewMessage.css';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, Fragment } from 'react';
 import PeopleList from '../components/PeopleList';
 import { getFirestore, setDoc, doc } from 'firebase/firestore';
 import firebaseApp from '../Firebase';
 import Inbox from './Inbox';
+import MessageSuggestedPeople from '../components/MessageSuggestedPeople';
 
 const db = getFirestore();
 
 const NewMessage = (props) => {
   const {
+    groupUIDs,
+    isAddPeople,
+    isSharePostOpen,
+    allMessages,
     sharePostText,
     sharePostTextHandler,
     sharePost,
@@ -21,11 +26,12 @@ const NewMessage = (props) => {
     setSearchString,
     searchString,
     searchResults
-
   } = props;
   const [selectedRecipient, setSelectedRecipient] = useState({username: null, uid: null});
   const newMessageSearchRef = useRef(null);
   const [suggestedUsers, setSuggestedUsers] = useState ([]);
+  const [inputHeight, setInputHeight] = useState(0);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     if (isModal) {
@@ -44,7 +50,9 @@ const NewMessage = (props) => {
   }, []);
 
   const onChangeHandler = (event) => {
+    const height = inputRef.current.getBoundingClientRect().height;
     const { value } = event.target;
+    setInputHeight(height);
     setSearchString(value);
   }
 
@@ -153,35 +161,53 @@ const NewMessage = (props) => {
   useEffect(() => {
     newMessageSearchRef.current.focus();
     setIsInboxOpen(true);
+    return () => {
+      setRecipientSelection([]);
+    }
   }, []);
-
-  useEffect(() => () => {
-    setRecipientSelection([]);
-  },[]);
 
   return (
     <main className='new-message'>
-      <section className='new-message-form'>
+      <section 
+        className='new-message-form'
+        ref={inputRef}
+      >
         <h2 className='to-title-text'>
           To:
         </h2>
         <section className='selected-recipients'>
           {recipientSelection.map((recipient) => {
             let username = recipient.username;
+            let chatTitle;            
             if (recipient.length !== undefined) {
-              const title = [];
+              const fullnames = [];
               const photoURLS = [];
               recipient.findIndex((profile) => {
                 const {
                   fullname,
-                  photoURL
+                  photoURL,
                 } = profile;
                 if (profile.uid !== userData.uid) {
-                  title.push(fullname);
+                  fullnames.push(fullname);
                   photoURLS.push(photoURL)
                 };
               });
-              username = title.join(', ');
+              if (fullnames.length === 2) {
+                chatTitle = fullnames.join(' and ')
+              } else if (fullnames.length > 2) {
+                const overflow = fullnames.length - 2;
+                const newFullnames = [...fullnames];
+                newFullnames.splice(2, overflow, `and ${overflow} ${
+                  overflow === 1 
+                    ? 'other' 
+                    : 'others'
+                }`);
+                chatTitle = newFullnames.join(', ');
+              } else if (fullnames.length === 0) {
+                chatTitle = 'Just You'
+              } else {
+                chatTitle = fullnames.join(', ');
+              };
             }
             const {
               uid
@@ -193,7 +219,7 @@ const NewMessage = (props) => {
                 onClick={() => recipientSelectionHandler(recipient)}
               >
                 <span className={selectedRecipient === recipient ? 'selected-recipient-username selected' : 'selected-recipient-username'}>
-                  {username}
+                  {chatTitle}
                 </span>
                 {selectedRecipient === recipient &&
                   <div 
@@ -223,8 +249,15 @@ const NewMessage = (props) => {
         />
       </section>
       {searchString !== '' &&
-        <section className='user-search-results'>
+        <section 
+          className='user-search-results'
+          style={{
+            top: `${inputHeight}px`
+          }}
+        >
           <PeopleList
+            isAddPeople = {isAddPeople}
+            groupUIDs = {groupUIDs}
             userData={userData}
             recipientSelection={recipientSelection}
             searchSelection={searchSelection}
@@ -237,17 +270,30 @@ const NewMessage = (props) => {
       <h2 className='suggested-header-text'>
         Suggested
       </h2>
-      <Inbox 
-        suggestionSelection={suggestionSelection}
-        recipientSelection={recipientSelection}
-        isSuggestion={true}
-        userData={userData}
-        directMessages={suggestedUsers}
-        setIsInboxOpen={setIsInboxOpen}
-        setSearchString={setSearchString}
-        searchString={searchString}
-        searchResults={searchResults}
-      />
+      <ul className='suggested-people'>
+        {suggestedUsers.map((directMessage) => {
+          return (
+            <Fragment key={directMessage.directMessageID}>
+              <MessageSuggestedPeople
+                isAddPeople={isAddPeople}
+                groupUIDs={groupUIDs}
+                isSharePostOpen={isSharePostOpen}
+                directMessage={directMessage}
+                allMessages={allMessages} 
+                suggestionSelection={suggestionSelection}
+                recipientSelection={recipientSelection}
+                isSuggestion={true}
+                userData={userData}
+                directMessages={suggestedUsers}
+                setIsInboxOpen={setIsInboxOpen}
+                setSearchString={setSearchString}
+                searchString={searchString}
+                searchResults={searchResults}
+              />               
+            </Fragment>
+          )   
+        })}        
+      </ul>
       {isModal &&
       <React.Fragment>
         <hr className='line-spacer'/>

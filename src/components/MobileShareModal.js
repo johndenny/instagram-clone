@@ -1,7 +1,7 @@
 import './MobileShareModal.css';
 import NewMessage from '../pages/NewMessage';
-import { useEffect, useState } from 'react';
-import { getFirestore, collection, where, query, getDocs, setDoc, doc } from 'firebase/firestore';
+import { useEffect, useLayoutEffect, useState } from 'react';
+import { getFirestore, collection, where, query, getDocs, setDoc, doc, updateDoc } from 'firebase/firestore';
 import firebaseApp from '../Firebase';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -9,6 +9,9 @@ const db = getFirestore();
 
 const MobileShareModal = (props) => {
   const {
+    isSharePostOpen,
+    getAllDirectMessages,
+    allMessages,
     showNotification,
     postToSend,
     directMessages,
@@ -30,8 +33,10 @@ const MobileShareModal = (props) => {
     }
   }, []);
 
-  useEffect(() => {
-    console.log(postToSend);
+  useLayoutEffect(() => {
+    return () => {
+      setIsInboxOpen(false);
+    }
   }, [])
 
   const sharePostTextHandler = (event) => {
@@ -55,6 +60,7 @@ const MobileShareModal = (props) => {
       recipientSelection[i].forEach((recipient) => {
         UIDs.push(recipient.uid);
       });
+      UIDs.sort();
       const copyCheck = query(collection(db, 'directMessages'), 
         where('UIDs', '==', UIDs));
       const copyCheckSnap = await getDocs(copyCheck);
@@ -82,16 +88,26 @@ const MobileShareModal = (props) => {
             UIDs.push(recipient.uid);
             profiles.push({...recipient, isAdmin: false});
           };
-        });        
+        });
+        UIDs.sort();        
         await setDoc(doc(db, 'directMessages', directMessageID), {
           directMessageID: directMessageID,
+          isGroup: UIDs.length > 2 ? true : false,
           UIDs: UIDs,
           profiles: profiles,
-          title: ''
+          title: '',
+          date: Date.now(),
         });
       };
       const firstID = uuidv4();
-      await setDoc(doc(db, directMessageID, firstID), {
+      await updateDoc(doc(db, 'directMessages', directMessageID), {
+        date: Date.now(),
+      });
+      const notRead = UIDs.filter((uid) => uid !== userData.uid);
+      await setDoc(doc(db, 'messages', firstID), {
+        likes: [],
+        recipientUIDs: UIDs,
+        notRead: notRead,
         messageID: firstID,
         directMessageID: directMessageID,
         username: username,
@@ -104,8 +120,11 @@ const MobileShareModal = (props) => {
       });
       if (sharePostText !== '') {
         const secondID = uuidv4();
-        await setDoc(doc(db, directMessageID, secondID), {
+        await setDoc(doc(db, 'messages', secondID), {
+          likes: [],
           messageID: secondID,
+          recipientUIDs: UIDs,
+          notRead: notRead,
           directMessageID: directMessageID,
           username: username,
           fullname: fullname,
@@ -117,6 +136,7 @@ const MobileShareModal = (props) => {
         });        
       }
     };
+    getAllDirectMessages();
     showNotification('Sent')
   };
 
@@ -139,6 +159,8 @@ const MobileShareModal = (props) => {
         </button>
       </header>
       <NewMessage
+        isSharePostOpen={isSharePostOpen}
+        allMessages={allMessages}
         sharePostText = {sharePostText}
         sharePostTextHandler = {sharePostTextHandler}
         isModal={true}

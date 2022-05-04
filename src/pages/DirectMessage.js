@@ -2,14 +2,21 @@ import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import './DirectMessage.css';
 import { v4 as uuidv4 } from 'uuid';
-import { getFirestore, setDoc, doc, onSnapshot, collection, orderBy } from 'firebase/firestore';
+import { getFirestore, setDoc, doc, onSnapshot, getDoc, collection, orderBy, where, updateDoc, query, arrayRemove, arrayUnion } from 'firebase/firestore';
 import Message from '../components/Message';
 
 const db = getFirestore();
 let previousDate = null;
+let lastPress = 0;
 
 const DirectMessage = (props) => {
   const {
+    messages,
+    setMessages,
+    setIsMessageLikesOpen,
+    setSelectedMessageID,
+    getLastMessage,
+    getAllDirectMessages,
     setSelectedDirectMessageID,
     setSelectedMessage,
     setIsMessageLinksOpen,
@@ -22,26 +29,44 @@ const DirectMessage = (props) => {
   } = props;
   const params = useParams();
   const [selectedMessages, setSelectedMessages] = useState(null);
-  const [messages, setMessages] = useState([]);
   const [messageString, setMessageString] = useState('');
   const textareaRef = useRef(null);
   const messagesRef = useRef(null);
   const touchTimer = useRef(null);
+  const [isGroup, setIsGroup] = useState(false);
+  const tagTimerRef = useRef(null);
   // const [previousDate, setPreviousDate] = useState(null);
 
   const messageListener = () => {
     const {
       messageID
     } = params;
-    onSnapshot (collection(db, messageID), (collection) => {
+    const messagesQuery = query(collection(db, 'messages'), 
+      where('directMessageID', '==', messageID),
+      where('recipientUIDs', 'array-contains', userData.uid),
+      orderBy('date'),
+      );
+    const messages = onSnapshot(messagesQuery, (querySnapShot) => {
       const messageArray = [];
-      collection.forEach((docuemnt) => {
+      querySnapShot.forEach( async (docuemnt) => {
+        const {
+          notRead,
+          messageID,
+          directMessageID,
+        } = docuemnt.data();
         messageArray.push(docuemnt.data());
+        console.log(docuemnt.data());
+        const notReadIndex = notRead.findIndex((read) => read === userData.uid);
+        if (notReadIndex !== -1) {
+          await updateDoc(doc(db, 'messages', messageID), {
+            notRead: arrayRemove(userData.uid)
+          });
+          await updateDoc(doc(db, 'directMessages', directMessageID), {
+            'lastMessage.notRead': arrayRemove(userData.uid)
+          })          
+        }
       });
       if (messageArray.length !== 0) {
-        messageArray.sort((a, z) => {
-          return a.date - z.date;
-        })
         setMessages(messageArray);
         console.log(messageArray) 
       }
@@ -52,6 +77,11 @@ const DirectMessage = (props) => {
     setSelectedDirectMessageID(params.messageID);
     setIsInboxOpen(true);
     previousDate = null;
+    return () => {
+      setIsInboxOpen(false)
+      setSelectedMessages(null);
+      setMessageTitle('');
+    }
   }, []);
 
   useLayoutEffect(() => {
@@ -64,36 +94,57 @@ const DirectMessage = (props) => {
     // setMessages(allMessages[messageID].sort((a, z) => a.date - z.date));
     const {
       profiles,
-      title
+      title,
+      isGroup,
     } = directMessages[threadIndex];
     const {
       uid
     } = userData;
-    const chatTitle = [];
-    const photoURLS = [];
-    profiles.findIndex((profile) => {
+    const fullnames = [];
+    const photoURLs = [];
+    profiles.forEach((profile) => {
       const {
         fullname,
         photoURL
       } = profile;
       if (profile.uid !== uid) {
-        chatTitle.push(fullname);
-        photoURLS.push(photoURL)
+        fullnames.push(fullname);
+        photoURLs.push(photoURL)
       };
     });
+    if (photoURLs.length >= 1 && isGroup) {
+      const index = profiles.findIndex((profile) => profile.uid === userData.uid);
+      photoURLs.push(profiles[index].photoURL);
+    };
+    let chatTitle;
     if (title === '') {
-      setMessageTitle(chatTitle.join(', '))
+      if (fullnames.length === 2) {
+        chatTitle = fullnames.join(' and ')
+      } else if (fullnames.length === 3) {
+        fullnames.splice(2, 1, `and ${fullnames[2]}`);
+        chatTitle = fullnames.join(', ')
+      } else if (fullnames.length > 3) {
+        const overflow = fullnames.length - 3;
+        const newFullnames = [...fullnames]
+        newFullnames.splice(3, overflow, `and ${overflow} ${
+          overflow === 1 
+            ? 'other' 
+            : 'others'
+        }`);
+        chatTitle = newFullnames.join(', ');
+      } else if (fullnames.length === 0) {
+        chatTitle = 'Just You'
+      } else {
+        chatTitle = fullnames.join(', ');
+      };
     } else {
-      setMessageTitle(title);
-    }
-    setProfilePhotoTitle(photoURLS[0]);
+      chatTitle = title;
+    };
+    setMessageTitle(chatTitle)
+    setProfilePhotoTitle(photoURLs);
     messageListener();
-    return () => {
-      setSelectedMessages(null);
-      setMessageTitle('');
-      setIsInboxOpen(false);
-    }
-  }, []);
+    setIsGroup(isGroup);
+  }, [directMessages.UIDs]);
 
   const messageStringHandler = (event) => {
     const { value } = event.target;
@@ -116,6 +167,7 @@ const DirectMessage = (props) => {
     setMessageString('');
     const {
       directMessageID,
+      UIDs,
     } = selectedMessages;
     const {
       username,
@@ -124,7 +176,10 @@ const DirectMessage = (props) => {
       uid,
     } = userData;
     const messageID = uuidv4();
-    await setDoc(doc(db, directMessageID, messageID), {
+    const message = {
+      likes: [],
+      recipientUIDs: UIDs,
+      notRead: UIDs,
       messageID: messageID,
       directMessageID: directMessageID,
       username: username,
@@ -134,13 +189,20 @@ const DirectMessage = (props) => {
       type: 'text',
       text: messageString,
       date: Date.now(),
+    }
+    await updateDoc(doc(db, 'directMessages', directMessageID), {
+      lastMessage: message,
+      date: Date.now(),
     });
+    await setDoc(doc(db, 'messages', messageID), message);
+    await getLastMessage();
   }
 
   const sendHeart = async (event) => {
     event.preventDefault();
     const {
-      directMessageID
+      directMessageID,
+      UIDs,
     } = selectedMessages;
     const {
       username,
@@ -153,7 +215,13 @@ const DirectMessage = (props) => {
     if (lastMessage.type === 'heart' && lastMessage.uid === uid) {
       return null 
     } else {
-      await setDoc(doc(db, directMessageID, messageID), {
+      await updateDoc(doc(db, 'directMessages', directMessageID), {
+        date: Date.now(),
+      });
+      await setDoc(doc(db, 'messages', messageID), {
+        likes: [],
+        recipientUIDs: UIDs,
+        notRead: UIDs,
         messageID: messageID,
         directMessageID: directMessageID,
         username: username,
@@ -163,6 +231,7 @@ const DirectMessage = (props) => {
         type: 'heart',
         date: Date.now(),
       });
+      await getLastMessage();
     };
   };
 
@@ -207,7 +276,61 @@ const DirectMessage = (props) => {
     touchTimer.current = setTimeout(() => {
       setIsMessageLinksOpen(true);
     }, 1000);
-  }
+
+    if (
+      message.type === 'post' ||
+      message.type === 'text' ||
+      message.type === 'heart') {
+        console.log(tagTimerRef.current);
+        clearTimeout(tagTimerRef.current);
+        const time = new Date().getTime();
+        const delta = time - lastPress;
+
+        const DOUBLE_PRESS_DELAY = 400;
+        if (delta < DOUBLE_PRESS_DELAY) {
+          console.log('double press');
+          likeToggle(message);
+        } else {
+          console.log('press');
+        }
+        lastPress = time;        
+      };
+  };
+
+  const likeToggle = async (message) => {
+    const documentRef = doc(db, 'messages', message.messageID);
+    const documentSnapShot = await getDoc(doc(db, 'messages', message.messageID));
+    if (documentSnapShot.exists()) {
+      const {
+        likes
+      } = documentSnapShot.data();
+      console.log(likes);
+      const index = likes.findIndex((like) => like.uid === userData.uid);
+      if (index === -1) {
+        const {
+          fullname,
+          username,
+          uid,
+          photoURL,
+        } = userData;
+        const likeID = uuidv4();
+        await updateDoc(documentRef, {
+          likes: arrayUnion({
+            likeID: likeID,
+            fullname: fullname,
+            username: username,
+            uid: uid,
+            photoURL: photoURL,
+            date: Date.now()
+          })
+        })
+      } else {
+        await updateDoc(documentRef, {
+          likes: arrayRemove(likes[index])
+        });
+      };
+    };
+  };
 
   const touchEnd = () => {
     clearTimeout(touchTimer.current);
@@ -221,16 +344,37 @@ const DirectMessage = (props) => {
         ref={messagesRef}
       >
         <div className='messages-content'>
-          {messages.map((message) => {
+          {messages.map((message, index) => {
+            if (index === 0) {
+              console.log('index is zero!');
+            }
+            const className = ['message'];
+            if (message.uid === userData.uid) {
+              className.push('user');
+            }
+            if (
+              message.type === 'post' ||
+              message.type === 'text' ||
+              message.type === 'heart') {
+                if (message.likes.length !== 0) {
+                  console.log(message.likes);
+                  className.push('liked');
+                };                
+              } 
             return (
               <div 
                 key={message.messageID}
-                className={message.uid === userData.uid ? 'message user' : 'message'}
+                className={className.join(' ')}
                 onTouchStart={() => touchStart(message)}
                 onTouchEnd={touchEnd}
                 onContextMenu={(event) => event.preventDefault()}
               >
                 <Message
+                  setSelectedMessageID = {setSelectedMessageID}
+                  setIsMessageLikesOpen = {setIsMessageLikesOpen}
+                  isGroup={isGroup}
+                  index={index}
+                  messages={messages}
                   formatTime={formatTime}
                   messagesRef={messagesRef}
                   userData={userData}

@@ -108,3 +108,19 @@
   flex: 1;
   position: relative;
 }
+
+.message-username-header .group-profile-photo-frame {
+  height: 28px;
+  width: 28px;
+}
+
+.message-username-header .profile-photo-border {
+  padding: 1px;
+  height: 20px;
+  width: 20px;
+}
+
+.message-username-header .double-profile-photo-frame {
+  width: 19px;
+  height: 19px;
+}
