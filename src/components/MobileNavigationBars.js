@@ -553,7 +553,13 @@ const MobileNavigationBars = (props) => {
                 </button> 
             </div>
             <form className="mobile-add-photo-form">
-              <input type="file" accept="image/jpeg" className="mobile-add-photo-input" id="mobile-add-photo-input" onChange={handleRouteAndUpload}/>
+              <input 
+                type="file" 
+                accept="image/jpeg" 
+                className="mobile-add-photo-input" 
+                id="mobile-add-photo-input" 
+                onChange={handleRouteAndUpload}
+              />
             </form>
           </nav>
         }      

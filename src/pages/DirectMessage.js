@@ -4,13 +4,16 @@ import './DirectMessage.css';
 import { v4 as uuidv4 } from 'uuid';
 import { getFirestore, setDoc, doc, onSnapshot, getDoc, collection, orderBy, where, updateDoc, query, arrayRemove, arrayUnion } from 'firebase/firestore';
 import Message from '../components/Message';
+import { getDownloadURL, getStorage, uploadBytes, ref } from 'firebase/storage';
 
 const db = getFirestore();
+const storage = getStorage();
 let previousDate = null;
 let lastPress = 0;
 
 const DirectMessage = (props) => {
   const {
+    formatTimeShort,
     messages,
     setMessages,
     setIsMessageLikesOpen,
@@ -32,12 +35,9 @@ const DirectMessage = (props) => {
   const [messageString, setMessageString] = useState('');
   const textareaRef = useRef(null);
   const messagesRef = useRef(null);
-  const touchTimer = useRef(null);
   const [isGroup, setIsGroup] = useState(false);
-  const tagTimerRef = useRef(null);
-  // const [previousDate, setPreviousDate] = useState(null);
 
-  const messageListener = () => {
+  useEffect(() => {
     const {
       messageID
     } = params;
@@ -55,11 +55,12 @@ const DirectMessage = (props) => {
           directMessageID,
         } = docuemnt.data();
         messageArray.push(docuemnt.data());
-        console.log(docuemnt.data());
         const notReadIndex = notRead.findIndex((read) => read === userData.uid);
         if (notReadIndex !== -1) {
           await updateDoc(doc(db, 'messages', messageID), {
-            notRead: arrayRemove(userData.uid)
+            notRead: arrayRemove(userData.uid),
+            seenBy: arrayUnion(userData.uid),
+            seenDate: Date.now()
           });
           await updateDoc(doc(db, 'directMessages', directMessageID), {
             'lastMessage.notRead': arrayRemove(userData.uid)
@@ -68,10 +69,12 @@ const DirectMessage = (props) => {
       });
       if (messageArray.length !== 0) {
         setMessages(messageArray);
-        console.log(messageArray) 
       }
     });
-  };
+    return () => {
+      messages();
+    };    
+  }, []);
 
   useEffect(() => {
     setSelectedDirectMessageID(params.messageID);
@@ -81,6 +84,7 @@ const DirectMessage = (props) => {
       setIsInboxOpen(false)
       setSelectedMessages(null);
       setMessageTitle('');
+      setMessages([]);
     }
   }, []);
 
@@ -90,8 +94,6 @@ const DirectMessage = (props) => {
     } = params;
     const threadIndex = directMessages.findIndex((message) => message.directMessageID === messageID);
     setSelectedMessages(directMessages[threadIndex]);
-    console.log(allMessages);
-    // setMessages(allMessages[messageID].sort((a, z) => a.date - z.date));
     const {
       profiles,
       title,
@@ -142,7 +144,6 @@ const DirectMessage = (props) => {
     };
     setMessageTitle(chatTitle)
     setProfilePhotoTitle(photoURLs);
-    messageListener();
     setIsGroup(isGroup);
   }, [directMessages.UIDs]);
 
@@ -157,10 +158,6 @@ const DirectMessage = (props) => {
       textareaRef.current.style.height = '1px'
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;     
   }, [messageString]);
-
-  useEffect(() => {
-    console.log(selectedMessages)
-  }, [selectedMessages]);
 
   const sendMessage = async (event) => {
     event.preventDefault();
@@ -180,6 +177,7 @@ const DirectMessage = (props) => {
       likes: [],
       recipientUIDs: UIDs,
       notRead: UIDs,
+      seenBy: [],
       messageID: messageID,
       directMessageID: directMessageID,
       username: username,
@@ -222,6 +220,7 @@ const DirectMessage = (props) => {
         likes: [],
         recipientUIDs: UIDs,
         notRead: UIDs,
+        seenBy: [],
         messageID: messageID,
         directMessageID: directMessageID,
         username: username,
@@ -237,7 +236,6 @@ const DirectMessage = (props) => {
 
   const formatTime = (date) => {
     const timePast = date - previousDate;
-    console.log(timePast, previousDate);
     if (timePast > 10800000 || timePast === null) {
       previousDate = date;
       const currentDate = new Date(Date.now());
@@ -248,7 +246,6 @@ const DirectMessage = (props) => {
       }).toLowerCase().split(' ').join('');
       const oneWeek = new Date();
       oneWeek.setDate(oneWeek.getDate() - 7);
-      console.log(postDate, oneWeek);
       if (postDate > oneWeek) {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
@@ -271,71 +268,217 @@ const DirectMessage = (props) => {
     }
   }
 
-  const touchStart = (message) => {
-    setSelectedMessage(message);
-    touchTimer.current = setTimeout(() => {
-      setIsMessageLinksOpen(true);
-    }, 1000);
-
-    if (
-      message.type === 'post' ||
-      message.type === 'text' ||
-      message.type === 'heart') {
-        console.log(tagTimerRef.current);
-        clearTimeout(tagTimerRef.current);
-        const time = new Date().getTime();
-        const delta = time - lastPress;
-
-        const DOUBLE_PRESS_DELAY = 400;
-        if (delta < DOUBLE_PRESS_DELAY) {
-          console.log('double press');
-          likeToggle(message);
-        } else {
-          console.log('press');
-        }
-        lastPress = time;        
-      };
-  };
-
   const likeToggle = async (message) => {
     const documentRef = doc(db, 'messages', message.messageID);
-    const documentSnapShot = await getDoc(doc(db, 'messages', message.messageID));
-    if (documentSnapShot.exists()) {
-      const {
-        likes
-      } = documentSnapShot.data();
-      console.log(likes);
-      const index = likes.findIndex((like) => like.uid === userData.uid);
-      if (index === -1) {
-        const {
-          fullname,
-          username,
-          uid,
-          photoURL,
-        } = userData;
-        const likeID = uuidv4();
-        await updateDoc(documentRef, {
-          likes: arrayUnion({
-            likeID: likeID,
-            fullname: fullname,
-            username: username,
-            uid: uid,
-            photoURL: photoURL,
-            date: Date.now()
-          })
-        })
-      } else {
-        await updateDoc(documentRef, {
-          likes: arrayRemove(likes[index])
-        });
-      };
-    };
+    const {
+      fullname,
+      username,
+      uid,
+      photoURL,
+    } = userData;
+    const likeID = uuidv4();
+    await updateDoc(documentRef, {
+      likes: arrayUnion({
+        likeID: likeID,
+        fullname: fullname,
+        username: username,
+        uid: uid,
+        photoURL: photoURL,
+        date: Date.now()
+      })
+    })    
   };
 
-  const touchEnd = () => {
-    clearTimeout(touchTimer.current);
-    touchTimer.current = null;
-  }
+  const photoUploadHandler = (event) => {
+    const {
+      UIDs,
+      directMessageID
+    } = selectedMessages;
+    const {
+      username,
+      fullname,
+      photoURL,
+      uid
+    } = userData;
+    const file = event.target.files[0];
+    if (file) {
+      const photo = URL.createObjectURL(file);
+      const photoMessageID = uuidv4();
+      sharePhotoUpload(photo, photoMessageID);
+      const placeholderPost = {
+        likes: [],
+        recipientUIDs: UIDs,
+        notRead: UIDs,
+        seenBy: [],
+        messageID: photoMessageID,
+        directMessageID: directMessageID,
+        username: username,
+        fullname: fullname,
+        photoURL: photoURL,
+        uid: uid,
+        type: 'photo',
+        isBlob: true,
+        photoBlob: photo,
+        date: Date.now()
+      }
+      console.log(messages);
+      setMessages([...messages, placeholderPost]);
+    };
+    event.target.value = null;
+  };
+
+  useEffect(() => {
+    console.log(messages);
+  }, [messages]);
+
+  const sharePhotoUpload = async (photo, photoMessageID) => {
+    const messageID = photoMessageID;
+    const {
+      UIDs,
+      directMessageID
+    } = selectedMessages;
+    const {
+      username,
+      fullname,
+      photoURL,
+      uid
+    } = userData;
+    const resizedPhotos = await resizePhoto(photo);
+    const {
+      photoID,
+      aspectRatio,
+      w640,
+      w480,
+      w320,
+      w240,
+      w150,
+    } = resizedPhotos;
+    const w640Ref = ref(storage, `w640_photoUploads/${photoID}.jpg`);
+    const w480Ref = ref(storage, `w480_photoUploads/${photoID}.jpg`);
+    const w320Ref = ref(storage, `w320_photoUploads/${photoID}.jpg`);
+    const w240Ref = ref(storage, `w240_photoUploads/${photoID}.jpg`);
+    const w150Ref = ref(storage, `w150_photoUploads/${photoID}.jpg`);
+    
+    const w640Upload = await uploadBytes(w640Ref, w640);
+    const w640URL = await getDownloadURL(
+      ref(storage, w640Upload.metadata.fullPath)
+    );
+    const w480Upload = await uploadBytes(w480Ref, w480);
+    const w480URL = await getDownloadURL(
+      ref(storage, w480Upload.metadata.fullPath)
+    );
+    const w320Upload = await uploadBytes(w320Ref, w320);
+    const w320URL = await getDownloadURL(
+      ref(storage, w320Upload.metadata.fullPath)
+    );
+    const w240Upload = await uploadBytes(w240Ref, w240);
+    const w240URL = await getDownloadURL(
+      ref(storage, w240Upload.metadata.fullPath)
+    );
+    const w150Upload = await uploadBytes(w150Ref, w150);
+    const w150URL = await getDownloadURL(
+      ref(storage, w150Upload.metadata.fullPath)
+    );
+    const photoURLs = {
+      photoID: photoID,
+      messageID: messageID,
+      aspectRatio: aspectRatio,
+      w640: w640URL,
+      w480: w480URL,
+      w320: w320URL,
+      w240: w240URL,
+      w150: w150URL,
+      date: Date.now()
+    };
+    const message = {
+      likes: [],
+      recipientUIDs: UIDs,
+      notRead: UIDs,
+      seenBy: [],
+      messageID: messageID,
+      directMessageID: directMessageID,
+      username: username,
+      fullname: fullname,
+      photoURL: photoURL,
+      uid: uid,
+      isBlob: false,
+      type: 'photo',
+      photoURLs: photoURLs,
+      date: Date.now(),
+    }
+    await updateDoc(doc(db, 'directMessages', directMessageID), {
+      lastMessage: message,
+      date: Date.now(),
+    });
+    await setDoc(doc(db, 'messages', messageID), message);
+  };
+
+  const resizePhoto = async (photo) => {
+    const image = new Image();
+    image.src = photo;
+    return new Promise((resolve) => {
+      let resizedPhotos = {
+        photoID: uuidv4()
+      };
+      image.onload = async () => {
+        resizedPhotos = {
+          ...resizedPhotos, 
+          aspectRatio: (image.naturalWidth / image.naturalHeight)
+        };
+        const w640 = await photoUploadResize(image, 640);
+        resizedPhotos = {...resizedPhotos, w640: w640};
+        const w480 = await photoUploadResize(image, 480);
+        resizedPhotos = {...resizedPhotos, w480: w480};
+        const w320 = await photoUploadResize(image, 320);
+        resizedPhotos = {...resizedPhotos, w320: w320};
+        const w240 = await photoUploadResize(image, 240);
+        resizedPhotos = {...resizedPhotos, w240: w240};
+        const w150 = await photoUploadResize(image, 150);
+        resizedPhotos = {...resizedPhotos, w150: w150};
+        resolve({
+          ...resizedPhotos
+        });
+      };
+    });
+  };
+
+  const photoUploadResize = (img, width) => {
+    return new Promise((resolve) => {
+      var canvas = document.createElement('canvas'),
+          ctx = canvas.getContext("2d"),
+          oc = document.createElement('canvas'),
+          octx = oc.getContext('2d');
+   
+      canvas.width = width; // destination canvas size
+      canvas.height = canvas.width * img.height / img.width;
+   
+      var cur = {
+        width: Math.floor(img.width * 0.5),
+        height: Math.floor(img.height * 0.5)
+      }
+   
+      oc.width = cur.width;
+      oc.height = cur.height;
+   
+      octx.drawImage(img, 0, 0, cur.width, cur.height);
+   
+      while (cur.width * 0.5 > width) {
+        cur = {
+          width: Math.floor(cur.width * 0.5),
+          height: Math.floor(cur.height * 0.5)
+        };
+        octx.drawImage(oc, 0, 0, cur.width * 2, cur.height * 2, 0, 0, cur.width, cur.height);
+      }
+   
+      ctx.drawImage(oc, 0, 0, cur.width, cur.height, 0, 0, canvas.width, canvas.height);
+      
+      canvas.toBlob((blob) => {
+        const image = new Image();
+        image.src = blob;
+        resolve(blob);
+      });
+    });
+  };
 
   return (
     <main className='direct-message'>
@@ -353,6 +496,7 @@ const DirectMessage = (props) => {
               className.push('user');
             }
             if (
+              message.type === 'photo' ||
               message.type === 'post' ||
               message.type === 'text' ||
               message.type === 'heart') {
@@ -365,11 +509,13 @@ const DirectMessage = (props) => {
               <div 
                 key={message.messageID}
                 className={className.join(' ')}
-                onTouchStart={() => touchStart(message)}
-                onTouchEnd={touchEnd}
                 onContextMenu={(event) => event.preventDefault()}
               >
                 <Message
+                  formatTimeShort = {formatTimeShort}
+                  setSelectedMessage = {setSelectedMessage}
+                  setIsMessageLinksOpen = {setIsMessageLinksOpen}
+                  likeToggle = {likeToggle}
                   setSelectedMessageID = {setSelectedMessageID}
                   setIsMessageLikesOpen = {setIsMessageLikesOpen}
                   isGroup={isGroup}
@@ -403,17 +549,26 @@ const DirectMessage = (props) => {
               >
                 Send
               </button>
-            : <React.Fragment>
+            : <React.Fragment>   
                 <button 
                   className='direct-message-add-photo-button'
                   type='button'
                 >
-                  <svg aria-label="Add Photo or Video" className="add-image-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
-                    <path d="M6.549 5.013A1.557 1.557 0 108.106 6.57a1.557 1.557 0 00-1.557-1.557z" fillRule="evenodd"></path>
-                    <path d="M2 18.605l3.901-3.9a.908.908 0 011.284 0l2.807 2.806a.908.908 0 001.283 0l5.534-5.534a.908.908 0 011.283 0l3.905 3.905" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></path>
-                    <path d="M18.44 2.004A3.56 3.56 0 0122 5.564h0v12.873a3.56 3.56 0 01-3.56 3.56H5.568a3.56 3.56 0 01-3.56-3.56V5.563a3.56 3.56 0 013.56-3.56z" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-                  </svg>
-                </button>         
+                  <label htmlFor='message-photo-upload'>
+                    <svg aria-label="Add Photo or Video" className="add-image-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                      <path d="M6.549 5.013A1.557 1.557 0 108.106 6.57a1.557 1.557 0 00-1.557-1.557z" fillRule="evenodd"></path>
+                      <path d="M2 18.605l3.901-3.9a.908.908 0 011.284 0l2.807 2.806a.908.908 0 001.283 0l5.534-5.534a.908.908 0 011.283 0l3.905 3.905" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></path>
+                      <path d="M18.44 2.004A3.56 3.56 0 0122 5.564h0v12.873a3.56 3.56 0 01-3.56 3.56H5.568a3.56 3.56 0 01-3.56-3.56V5.563a3.56 3.56 0 013.56-3.56z" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+                    </svg>
+                  </label>                     
+                </button>   
+                <input 
+                  accept='image/jpeg,image/png' 
+                  className='message-photo-upload'
+                  id='message-photo-upload' 
+                  type='file'
+                  onChange={photoUploadHandler}
+                />                    
                 <button 
                   className='direct-message-like-button'
                   type='button'

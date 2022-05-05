@@ -17,7 +17,8 @@ const DirectMessageInboxCard = (props) => {
     profiles,
     title,
     directMessageID,
-    lastMessage,    
+    lastMessage,
+    isGroup,    
   } = directMessage;
   const [chatTitle, setChatTitle] = useState('');
   const [activity, setActivity] = useState('');
@@ -69,6 +70,12 @@ const DirectMessageInboxCard = (props) => {
         } else {
           return `${text}`
         };
+      } else if (type === 'photo') {
+          if (uid === userData.uid) {
+            return `You sent a photo`
+          } else {
+            return `${username} sent a photo`
+        }
       } else if (type === 'group-name-change') {
         return `${username} named the group ${title}`;
       } else if (type === 'group-add-people') {

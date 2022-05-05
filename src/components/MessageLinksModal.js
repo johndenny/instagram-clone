@@ -1,8 +1,10 @@
 import { deleteDoc, doc, getFirestore } from 'firebase/firestore';
+import { getStorage, ref, deleteObject } from 'firebase/storage';
 import firebaseApp from '../Firebase';
 import './MessageLinksModal.css';
 
 const db = getFirestore();
+const storage = getStorage();
 
 const MessageLinksModal = (props) => {
   const {
@@ -16,6 +18,7 @@ const MessageLinksModal = (props) => {
     text,
     type,
     post,
+    photoURLs,
   } = selectedMessage;
 
   const stopBubbles = (event) => {
@@ -23,7 +26,26 @@ const MessageLinksModal = (props) => {
   }
 
   const unsendHandler = async () => {
-    console.log(directMessageID, messageID);
+    if (type === 'photo') {
+      const {
+        photoID
+      } = photoURLs;
+      console.log(photoID);
+      const w640Ref = ref(storage, `w640_photoUploads/${photoID}.jpg`);
+      const w480Ref = ref(storage, `w480_photoUploads/${photoID}.jpg`);
+      const w320Ref = ref(storage, `w320_photoUploads/${photoID}.jpg`);
+      const w240Ref = ref(storage, `w240_photoUploads/${photoID}.jpg`);
+      const w150Ref = ref(storage, `w150_photoUploads/${photoID}.jpg`);
+      try {
+        await deleteObject(w640Ref);
+        await deleteObject(w480Ref);
+        await deleteObject(w320Ref);
+        await deleteObject(w240Ref);
+        await deleteObject(w150Ref);
+      } catch (error) {
+        console.log(error);
+      }
+    }
     setIsMessageLinksOpen(false);
     await deleteDoc(doc(db, 'messages', messageID));
   }

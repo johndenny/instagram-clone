@@ -6,6 +6,10 @@ let lastPress = 0;
 
 const Message = (props) => {
   const {
+    formatTimeShort,
+    setSelectedMessage,
+    setIsMessageLinksOpen,
+    likeToggle,
     setIsMessageLikesOpen,
     setSelectedMessageID,
     isGroup,
@@ -28,12 +32,21 @@ const Message = (props) => {
     removedUsername,
     type,
     likes,
+    isBlob,
+    photoURLs,
+    photoBlob,
+    seenBy,
+    seenDate,
   } = message;
   const [time, setTime] = useState(null);
+  const [seenTime, setSeenTime] = useState('');
   const [isPhotoHidden, setIsPhotoHidden] = useState(false);
   const [usernames, setUsernames] = useState([]);
   const [isNotification, setIsNotification] = useState(false);
   const [usernameTitle, setUsernameTitle] = useState('');
+  const [isLiked, setIsLiked] = useState(false);
+  const touchTimer = useRef();
+  const tagTimerRef = useRef();
 
   useLayoutEffect(() => {
     console.log(messages[index].uid, uid);
@@ -42,7 +55,6 @@ const Message = (props) => {
     } else if (messages[index - 1].uid !== uid) {
       setUsernameTitle(username);
     }
-    if (message.type )
     if ((messages.length - 1) === index) {
       console.log('the-end')
       setIsPhotoHidden(false);
@@ -64,20 +76,33 @@ const Message = (props) => {
 
   useEffect(() => {
     setTime(formatTime(date));
-  }, [])
+    if (seenBy.length >= 2 && 
+        uid === userData.uid && 
+        index === messages.length -1
+        ) {
+      const date = formatTimeShort(seenDate);
+      if (date === 'Now') {
+        setSeenTime('Seen just now');
+      } else {
+        setSeenTime(`Seen ${date} ago`);
+      }
+    } else {
+      setSeenTime('');
+    }
+  }, [messages])
 
   useEffect(() => {
-    if (message.type === 'group-add-people') {
+    if (type === 'group-add-people') {
       const newArray = [...message.newUsernames]
       newArray.splice(newUsernames.length - 1, 1);
       console.log(newArray)
       setUsernames(newArray);
     }
     if (
-      message.type === 'group-add-people' ||
-      message.type === 'remove-member' ||
-      message.type === 'group-name-change' ||
-      message.type === 'member-left'
+      type === 'group-add-people' ||
+      type === 'remove-member' ||
+      type === 'group-name-change' ||
+      type === 'member-left'
     ) {
       setIsNotification(true);
       setUsernameTitle('');
@@ -87,6 +112,41 @@ const Message = (props) => {
   const likesModalHanlder = (id) => {
     setSelectedMessageID(id);
     setIsMessageLikesOpen(true);
+  }
+
+  const touchStart = (message) => {
+    setSelectedMessage(message);
+    touchTimer.current = setTimeout(() => {
+      setIsMessageLinksOpen(true);
+    }, 1000);
+
+    if (
+      message.type === 'photo' ||
+      message.type === 'post' ||
+      message.type === 'text' ||
+      message.type === 'heart') {
+        clearTimeout(tagTimerRef.current);
+        const time = new Date().getTime();
+        const delta = time - lastPress;
+
+        const DOUBLE_PRESS_DELAY = 400;
+        if (delta < DOUBLE_PRESS_DELAY) {
+          console.log('double press');
+          const index = likes.findIndex((like) => like.uid === userData.uid);
+          if (index === -1) {
+            likeToggle(message);
+            setIsLiked(true);
+          }
+        } else {
+          console.log('press');
+        }
+        lastPress = time;        
+      };
+  };
+
+  const touchEnd = () => {
+    clearTimeout(touchTimer.current);
+    touchTimer.current = null;
   }
 
   return (
@@ -112,7 +172,7 @@ const Message = (props) => {
             }  
           </div>         
         }
-        {message.type === 'member-left' &&
+        {type === 'member-left' &&
           <div 
             key={messageID}
             className='message-content notification'
@@ -127,7 +187,7 @@ const Message = (props) => {
             </div>
           </div>
         }
-        {message.type === 'remove-member' &&
+        {type === 'remove-member' &&
           <div 
             key={messageID}
             className='message-content notification'
@@ -145,7 +205,7 @@ const Message = (props) => {
             </div>
           </div>
         }
-        {message.type === 'group-add-people' &&
+        {type === 'group-add-people' &&
           <div 
             key={messageID}
             className='message-content notification'
@@ -178,7 +238,7 @@ const Message = (props) => {
             </div>
           </div>
         }
-        {message.type === 'group-name-change' &&
+        {type === 'group-name-change' &&
           <div 
             key={messageID}
             className='message-content notification'
@@ -194,10 +254,12 @@ const Message = (props) => {
             </div>
           </div>
         }
-        {message.type === 'post' &&
+        {type === 'post' &&
           <div 
             key={messageID}
             className='message-content'
+            onTouchStart={() => touchStart(message)}
+            onTouchEnd={touchEnd}
           >
             {likes.length !== 0 && 
               <div 
@@ -228,10 +290,12 @@ const Message = (props) => {
             />
           </div>
         }
-        {message.type === 'text' &&
+        {type === 'text' &&
           <div 
             key={messageID}
             className='message-content'
+            onTouchStart={() => touchStart(message)}
+            onTouchEnd={touchEnd}
           >   
             {likes.length !== 0 && 
               <div 
@@ -261,10 +325,12 @@ const Message = (props) => {
             </div>
           </div>
         }
-        {message.type === 'heart' &&
+        {type === 'heart' &&
           <div 
             key={messageID}
             className='message-content svg'
+            onTouchStart={() => touchStart(message)}
+            onTouchEnd={touchEnd}
           >
             {likes.length !== 0 && 
               <div 
@@ -294,7 +360,89 @@ const Message = (props) => {
             </svg>
           </div>
         }
-      </div>        
+        {type === 'photo' &&
+          <div 
+            className='message-photo-likes-wrapper'
+            onTouchStart={() => touchStart(message)}
+            onTouchEnd={touchEnd}
+          >
+            {likes.length !== 0 && 
+              <div 
+                className='message-like'
+                onClick = {() => likesModalHanlder(messageID)}
+              >
+                ❤️
+                {likes.length === 2 &&
+                  <Fragment>
+                    <div className='profile-photo-frame'>
+                      <img alt='' className='profile-photo' src={likes[0].photoURL} />
+                    </div>
+                    <div className='profile-photo-frame'>
+                      <img alt='' className='profile-photo' src={likes[1].photoURL} />
+                    </div>
+                  </Fragment>
+                }
+                {likes.length === 1 && isGroup &&
+                  <div className='profile-photo-frame'>
+                    <img alt='' className='profile-photo' src={likes[0].photoURL} />
+                  </div>
+                }
+              </div>
+            }
+            <div 
+              key={messageID}
+              className='message-photo-frame'
+            >
+              {isLiked &&
+                <div className='double-click-heart'>
+                  <div 
+                    className='double-click-heart-sprite'
+                    onAnimationEnd={() => setIsLiked(false)}  
+                  >
+                  </div>
+                </div>                  
+              }
+              <div 
+                className='padding-frame'
+                style={
+                  isBlob 
+                    ? {display: 'flex'} 
+                    : {paddingBottom: `${100 / photoURLs.aspectRatio}%`}
+                }
+              >
+                {isBlob &&
+                  <img
+                  alt=''
+                  className='message-photo-blob'
+                  src={photoBlob}
+                  />
+                }
+                {!isBlob &&
+                  <img 
+                    alt=''
+                    className='message-photo'
+                    sizes='236px'
+                    srcSet={`
+                      ${photoURLs.w640} 640w,
+                      ${photoURLs.w480} 480w,
+                      ${photoURLs.w320} 320w,
+                      ${photoURLs.w240} 240w,
+                      ${photoURLs.w150} 150w
+                    `}
+                  />                
+                }
+              </div>            
+            </div>
+          </div>
+        }
+      </div>
+      {seenTime !== '' &&
+        <div className='seen-by'>
+          <span className='seen-by-text'>
+            {seenTime}
+          </span>
+        </div>          
+      }
     </React.Fragment>
   );
 };

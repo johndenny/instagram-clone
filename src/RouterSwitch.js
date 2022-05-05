@@ -1194,7 +1194,7 @@ const RouterSwitch = () => {
         resizedPhotos = {...resizedPhotos, w1080: w1080};
         const w750 = await canvasCropFilterResize(image, 750, 'hide');
         resizedPhotos = {...resizedPhotos, w750: w750};
-        const w640 = await canvasCropFilterResize(image, 480, 'hide');
+        const w640 = await canvasCropFilterResize(image, 640, 'hide');
         resizedPhotos = {...resizedPhotos, w640: w640};
         const w480 = await canvasCropFilterResize(image, 480, 'hide');
         resizedPhotos = {...resizedPhotos, w480: w480};
@@ -2007,6 +2007,7 @@ const RouterSwitch = () => {
               } />
               <Route path='/direct/t/:messageID' element={
                 <DirectMessage
+                  formatTimeShort = {formatTimeShort}
                   setMessages = {setMessages}
                   messages = {messages}                  
                   setSelectedMessageID = {setSelectedMessageID}
