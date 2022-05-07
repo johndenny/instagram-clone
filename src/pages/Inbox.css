@@ -40,6 +40,19 @@
   padding: 8px 16px;
   gap: 16px;
   align-items: center;
+  cursor: pointer;
+}
+
+.direct-message-card.selected {
+  background-color: rgba(239, 239, 239, 1);
+}
+
+.direct-message-card.selected:hover {
+  background-color: rgba(239, 239, 239, 1);
+}
+
+.direct-message-card:hover {
+  background-color: rgba(250, 250, 250, 1);
 }
 
 .direct-message-full-name {

@@ -1,15 +1,18 @@
 import './NewMessage.css';
 import React, { useState, useRef, useEffect, useLayoutEffect, Fragment } from 'react';
 import PeopleList from '../components/PeopleList';
-import { getFirestore, setDoc, doc } from 'firebase/firestore';
-import firebaseApp from '../Firebase';
-import Inbox from './Inbox';
 import MessageSuggestedPeople from '../components/MessageSuggestedPeople';
+import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
+import { getFirestore, setDoc, getDoc, doc, query, collection, where, getDocs } from "firebase/firestore";
+import firebaseApp from "../Firebase";
 
 const db = getFirestore();
 
 const NewMessage = (props) => {
   const {
+    isMobile,
+    setIsNewMessageOpen,
     groupUIDs,
     isAddPeople,
     isSharePostOpen,
@@ -25,13 +28,79 @@ const NewMessage = (props) => {
     recipientSelection,
     setSearchString,
     searchString,
-    searchResults
+    searchResults,
+    getAllDirectMessages,
   } = props;
   const [selectedRecipient, setSelectedRecipient] = useState({username: null, uid: null});
   const newMessageSearchRef = useRef(null);
   const [suggestedUsers, setSuggestedUsers] = useState ([]);
-  const [inputHeight, setInputHeight] = useState(0);
   const inputRef = useRef(null);
+  const navigate = useNavigate();
+  const [isCreating, setIsCreating] = useState(false);
+
+  const createMessage = async () => {
+    setIsCreating(true);
+    const { 
+      uid, 
+    } = userData;
+    const directMessageID = uuidv4();
+    const UIDs = [uid];
+    console.log(recipientSelection);
+    recipientSelection.forEach((recipient) => {
+        recipient.forEach((user) => {
+          if (user.uid !== uid) {
+            UIDs.push(user.uid);
+          };
+        });        
+    });
+    UIDs.sort();
+    const copyCheck = query(collection(db, 'directMessages'), 
+      where('UIDs', '==', UIDs));
+    console.log(UIDs);
+    const copyCheckSnap = await getDocs(copyCheck);
+    const docs = [];
+    copyCheckSnap.forEach((doc) => {
+      docs.push(doc.data());
+    })
+    console.log(docs.length);
+    if (docs.length === 1) {
+      return navigate(`/direct/t/${docs[0].directMessageID}`);
+    }
+    let profiles;
+    const profilePromises = UIDs.map( async (UID) => {
+      const documentSnapshot = await getDoc(doc(db, 'users', UID));
+      const {
+        fullname,
+        username,
+        photoURL,
+        uid,
+      } = documentSnapshot.data();
+      return {
+        fullname,
+        username,
+        photoURL,
+        uid,
+      }
+    })
+    await Promise.all(profilePromises).then((array) => {
+      profiles = array
+    })
+    console.log(profiles);
+    await setDoc(doc(db, 'directMessages', directMessageID), {
+      directMessageID: directMessageID,
+      isGroup: UIDs.length > 2 ? true : false,
+      UIDs: UIDs,
+      profiles,
+      adminUIDs: [uid],
+      title: '',
+      date: Date.now(),
+    });
+    if (!isMobile) {
+      setIsNewMessageOpen(false);
+    }
+    navigate(`/direct/t/${directMessageID}`);
+    setIsCreating(false);
+  };
 
   useEffect(() => {
     if (isModal) {
@@ -50,9 +119,7 @@ const NewMessage = (props) => {
   }, []);
 
   const onChangeHandler = (event) => {
-    const height = inputRef.current.getBoundingClientRect().height;
     const { value } = event.target;
-    setInputHeight(height);
     setSearchString(value);
   }
 
@@ -168,6 +235,41 @@ const NewMessage = (props) => {
 
   return (
     <main className='new-message'>
+      {!isSharePostOpen &&
+        <header className="mobile-navigation-header">
+          <div className="mobile-navigation-icon-wrapper">
+            {!isMobile
+              ? <button
+                  className='back-button'
+                  onClick={() => setIsNewMessageOpen(false)}
+                >
+                  <svg aria-label="Close" className="close-svg" color="#262626" fill="#262626" height="18" role="img" viewBox="0 0 24 24" width="18">
+                    <polyline fill="none" points="20.643 3.357 12 12 3.353 20.647" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3"></polyline>
+                    <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" x1="20.649" x2="3.354" y1="20.649" y2="3.354"></line>
+                  </svg>
+                </button>
+              : <button 
+                  className="back-button" 
+                  onClick={() => navigate(-1)}
+                >
+                  <svg aria-label="Back" className="back-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                    <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
+                  </svg>
+                </button>
+            }
+            <h1 className="logo-header">
+              New Message
+            </h1>
+            <button 
+              className="create-message-button"
+              onClick={createMessage}
+              disabled={recipientSelection.length === 0}
+            >
+              Next
+            </button>            
+          </div>
+        </header>       
+      }
       <section 
         className='new-message-form'
         ref={inputRef}
@@ -248,83 +350,84 @@ const NewMessage = (props) => {
           ref={newMessageSearchRef}
         />
       </section>
-      {searchString !== '' &&
-        <section 
-          className='user-search-results'
-          style={{
-            top: `${inputHeight}px`
-          }}
-        >
-          <PeopleList
-            isAddPeople = {isAddPeople}
-            groupUIDs = {groupUIDs}
-            userData={userData}
-            recipientSelection={recipientSelection}
-            searchSelection={searchSelection}
-            allUserProfiles={searchResults}
-            isSearch={true}
-            isMessage={true}
-          />
-        </section>      
-      }
-      <h2 className='suggested-header-text'>
-        Suggested
-      </h2>
-      <ul className='suggested-people'>
-        {suggestedUsers.map((directMessage) => {
-          return (
-            <Fragment key={directMessage.directMessageID}>
-              <MessageSuggestedPeople
-                isAddPeople={isAddPeople}
-                groupUIDs={groupUIDs}
-                isSharePostOpen={isSharePostOpen}
-                directMessage={directMessage}
-                allMessages={allMessages} 
-                suggestionSelection={suggestionSelection}
-                recipientSelection={recipientSelection}
-                isSuggestion={true}
-                userData={userData}
-                directMessages={suggestedUsers}
-                setIsInboxOpen={setIsInboxOpen}
-                setSearchString={setSearchString}
-                searchString={searchString}
-                searchResults={searchResults}
-              />               
-            </Fragment>
-          )   
-        })}        
-      </ul>
-      {isModal &&
-      <React.Fragment>
-        <hr className='line-spacer'/>
-          <footer className='mobile-share-modal-footer'>
-            <div 
-              className='mobile-share-input-wrapper'
-              style={{
-                height: `${recipientSelection.length === 0 ? 0 : 64}px`
-              }}
-            >
-              {recipientSelection.length !== 0 &&
-                <input 
-                  className='mobile-share-text-input'
-                  type='text'
-                  placeholder='Write a message...'
-                  autoComplete='off'
-                  onChange={sharePostTextHandler}
-                  value={sharePostText}
-                />             
-              }
-            </div>
-            <button
-              onClick={sharePost} 
-              className='send-share-button'
-              disabled={recipientSelection.length === 0}
-            >
-              {recipientSelection.length > 1 ? 'Send Seperately' : 'Send'}
-            </button>
-          </footer>          
-      </React.Fragment>
-      }
+      <section className='new-message-content'>
+        {searchString !== '' &&
+          <section 
+            className='user-search-results'
+          >
+            <PeopleList
+              isAddPeople = {isAddPeople}
+              groupUIDs = {groupUIDs}
+              userData={userData}
+              recipientSelection={recipientSelection}
+              searchSelection={searchSelection}
+              allUserProfiles={searchResults}
+              isSearch={true}
+              isMessage={true}
+            />
+          </section>      
+        }
+        <h2 className='suggested-header-text'>
+          Suggested
+        </h2>
+        <ul className='suggested-people'>
+          
+          {suggestedUsers.map((directMessage) => {
+            return (
+              <Fragment key={directMessage.directMessageID}>
+                <MessageSuggestedPeople
+                  isAddPeople={isAddPeople}
+                  groupUIDs={groupUIDs}
+                  isSharePostOpen={isSharePostOpen}
+                  directMessage={directMessage}
+                  allMessages={allMessages} 
+                  suggestionSelection={suggestionSelection}
+                  recipientSelection={recipientSelection}
+                  isSuggestion={true}
+                  userData={userData}
+                  directMessages={suggestedUsers}
+                  setIsInboxOpen={setIsInboxOpen}
+                  setSearchString={setSearchString}
+                  searchString={searchString}
+                  searchResults={searchResults}
+                />               
+              </Fragment>
+            )   
+          })}        
+        </ul>
+        {isModal &&
+        <React.Fragment>
+          <hr className='line-spacer'/>
+            <footer className='mobile-share-modal-footer'>
+              <div 
+                className='mobile-share-input-wrapper'
+                style={{
+                  height: `${recipientSelection.length === 0 ? 0 : 64}px`
+                }}
+              >
+                {recipientSelection.length !== 0 &&
+                  <input 
+                    className='mobile-share-text-input'
+                    type='text'
+                    placeholder='Write a message...'
+                    autoComplete='off'
+                    onChange={sharePostTextHandler}
+                    value={sharePostText}
+                  />             
+                }
+              </div>
+              <button
+                onClick={sharePost} 
+                className='send-share-button'
+                disabled={recipientSelection.length === 0}
+              >
+                {recipientSelection.length > 1 ? 'Send Seperately' : 'Send'}
+              </button>
+            </footer>          
+        </React.Fragment>
+        }        
+      </section>
+
 
     </main>
   )

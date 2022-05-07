@@ -5,6 +5,7 @@
   flex: 1;
   justify-content: flex-end;
   background-color: rgba(255, 255, 255, 1);
+  position: relative;
 }
 
 .direct-message-inputs {
@@ -75,6 +76,7 @@
 }
 
 .message-info-button {
+  cursor: pointer;
   display: flex;
   padding: 8px;
   justify-content: flex-end;

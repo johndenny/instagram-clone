@@ -77,6 +77,13 @@ const UploadPhotoModal = (props) => {
   const maxVerticalRatio = 1080/1350;
   const flippedVerticalRatio = 1350/1080;
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflowY = 'scroll';
+    }
+  }, []);
+
   const currentPageToggle = () => {
     if (currentPage === 'crop') {
       setCurrentPage('filter');

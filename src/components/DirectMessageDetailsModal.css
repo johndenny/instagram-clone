@@ -1,6 +1,6 @@
 .direct-message-details-modal {
   background-color: rgba(255, 255, 255, 1);
-  position: fixed;
+  position: absolute;
   top: 0;
   bottom: 0;
   width: 100%;

@@ -45,7 +45,7 @@ const NavigationBar = (props) => {
   }, [location]);
 
   const openDropDown = (event) => {
-    if (event.target.className === 'modal') {
+    if (event.target.className === 'drop-down-modal') {
       setDropDownOpen(false);
       setCurrentPath(location.pathname);
     } else {

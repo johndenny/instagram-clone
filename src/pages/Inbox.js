@@ -1,35 +1,48 @@
 import { Fragment, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import DirectMessageInboxCard from '../components/DirectMessageInboxCard';
+import { updateDoc, arrayRemove, getFirestore, query, collection, where, orderBy, getDocs, onSnapshot, getDoc, doc} from 'firebase/firestore';
 import './Inbox.css';
-import { getFirestore, collection, orderBy, limit, query, getDocs } from 'firebase/firestore';
 
 const db = getFirestore();
 
 const Inbox = (props) => {
   const {
-    getLastMessage,
-    getAllDirectMessages,
-    lastMessages,
-    allDirectMessageIDs,
-    getAllMessages,
-    formatTimeShort,
-    allMessages,
-    suggestionSelection,
-    recipientSelection,
-    isSuggestion,
-    userData,
+    setDirectMessages,
     directMessages,
+    isGettingDirectMessages,
+    formatTimeShort,
+    userData,
     setIsInboxOpen,
   } = props;
-  const navigate = useNavigate();
-  const [allDirectMessages, setAllDirectMessages] = useState([]);
 
   useEffect(() => { 
     setIsInboxOpen(true);
     return () => setIsInboxOpen(false);
   }, []);
 
+  useEffect(() => {
+    console.log(userData.uid);
+    if (userData.uid === undefined) {
+      return null;
+    };
+    const {
+      uid
+    } = userData;
+    const allDirectMessagesQuery = query(collection(db, 'directMessages'), 
+      where('UIDs', 'array-contains', uid), orderBy('date', 'desc'));
+    const listener = onSnapshot(allDirectMessagesQuery, (collection) => {
+      console.log('listening');
+      const documentArray = [];
+      collection.forEach((document) => {
+        documentArray.push(document.data());
+      });
+      setDirectMessages(documentArray);
+    });
+    return () => {
+      console.log('listener closed');
+      listener();
+    } 
+  }, [userData]);
 
   return (
     <main className='direct-inbox'>
@@ -38,17 +51,18 @@ const Inbox = (props) => {
           {directMessages.map((directMessage) => {
             const {
               directMessageID
-            } = directMessage;           
+            } = directMessage;
             return (
               <Fragment key={directMessageID}>
                 <DirectMessageInboxCard
-                  lastMessages={lastMessages}
+                  isGettingDirectMessages={isGettingDirectMessages}
+                  directMessages={directMessages}
                   formatTimeShort={formatTimeShort}
                   userData = {userData}
                   directMessage={directMessage}
                 />              
               </Fragment>
-            )
+            )              
           })}
         </ul>      
       }

@@ -15,7 +15,7 @@ const ProfileDropDown = (props) => {
 
   return (
     <React.Fragment>
-    <div className='modal' onClick={openDropDown}></div>
+    <div className='drop-down-modal' onClick={openDropDown}></div>
     <div className='profile-drop-down'>
       <div className='drop-down-triangle'></div>
       <div className='profile-buttons-wrapper'>

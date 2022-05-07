@@ -1,4 +1,5 @@
 import React, { Fragment, useRef, useEffect, useLayoutEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import './Message.css';
 import MessagePost from './MessagePost';
 
@@ -47,19 +48,17 @@ const Message = (props) => {
   const [isLiked, setIsLiked] = useState(false);
   const touchTimer = useRef();
   const tagTimerRef = useRef();
+  const params = useParams();
 
   useLayoutEffect(() => {
-    console.log(messages[index].uid, uid);
     if (index === 0) {
       setUsernameTitle(username);
     } else if (messages[index - 1].uid !== uid) {
       setUsernameTitle(username);
     }
     if ((messages.length - 1) === index) {
-      console.log('the-end')
       setIsPhotoHidden(false);
     } else {
-      console.log(messages[index + 1]);
       if (
         messages[index + 1].type === 'group-add-people' || 
         messages[index + 1].type === 'remove-member' || 
@@ -163,7 +162,7 @@ const Message = (props) => {
         </span>
       }
       <div className={uid === userData.uid ? 'message-profile-photo-wrapper current-user' : 'message-profile-photo-wrapper'}>
-        {!isNotification &&
+        {!isNotification && uid !== userData.uid &&
           <div className={'message-profile-photo-spacer'}>
             {userData.uid !== uid && !isPhotoHidden &&
               <div className='profile-photo-frame'>
@@ -171,6 +170,15 @@ const Message = (props) => {
               </div>
             }  
           </div>         
+        }
+        {uid === userData.uid &&
+          <button className='message-links-button'>
+            <svg aria-label="Unsend" className='message-links-svg' color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+              <circle cx="12" cy="12" r="1.5"></circle>
+              <circle cx="6" cy="12" r="1.5"></circle>
+              <circle cx="18" cy="12" r="1.5"></circle>
+            </svg>
+          </button>
         }
         {type === 'member-left' &&
           <div 

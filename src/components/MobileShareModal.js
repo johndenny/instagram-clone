@@ -9,6 +9,7 @@ const db = getFirestore();
 
 const MobileShareModal = (props) => {
   const {
+    isMobile,
     isSharePostOpen,
     getAllDirectMessages,
     allMessages,
@@ -57,8 +58,10 @@ const MobileShareModal = (props) => {
     console.log(recipientSelection);
     for (let i = 0; i < recipientSelection.length; i++) {
       const UIDs = [];
+      const profiles = [];
       recipientSelection[i].forEach((recipient) => {
         UIDs.push(recipient.uid);
+        profiles.push(recipient);
       });
       UIDs.sort();
       const copyCheck = query(collection(db, 'directMessages'), 
@@ -76,35 +79,25 @@ const MobileShareModal = (props) => {
       } else {
         directMessageID = uuidv4();
         const UIDs = [uid];
-        const profiles = [{
-          fullname: fullname,
-          photoURL: photoURL,
-          uid: uid,
-          username: username,
-          isAdmin: true,
-        }];
         recipientSelection[i].forEach((recipient) => {
           if (recipient.uid !== uid) {
             UIDs.push(recipient.uid);
-            profiles.push({...recipient, isAdmin: false});
           };
         });
-        UIDs.sort();        
+        UIDs.sort();     
         await setDoc(doc(db, 'directMessages', directMessageID), {
           directMessageID: directMessageID,
           isGroup: UIDs.length > 2 ? true : false,
           UIDs: UIDs,
-          profiles: profiles,
+          profiles,
+          adminUIDs: [uid],
           title: '',
           date: Date.now(),
         });
       };
       const firstID = uuidv4();
-      await updateDoc(doc(db, 'directMessages', directMessageID), {
-        date: Date.now(),
-      });
       const notRead = UIDs.filter((uid) => uid !== userData.uid);
-      await setDoc(doc(db, 'messages', firstID), {
+      const post = {
         likes: [],
         recipientUIDs: UIDs,
         notRead: notRead,
@@ -118,32 +111,43 @@ const MobileShareModal = (props) => {
         type: 'post',
         post: postToSend,
         date: Date.now(),
-      });
-      if (sharePostText !== '') {
-        const secondID = uuidv4();
-        await setDoc(doc(db, 'messages', secondID), {
-          likes: [],
-          messageID: secondID,
-          recipientUIDs: UIDs,
-          notRead: notRead,
-          seenBy: [],
-          directMessageID: directMessageID,
-          username: username,
-          fullname: fullname,
-          photoURL: photoURL,
-          uid: uid,
-          type: 'text',
-          text: sharePostText,
-          date: Date.now(),
-        });        
       }
+      const secondID = uuidv4();
+      const textPost = {
+        likes: [],
+        messageID: secondID,
+        recipientUIDs: UIDs,
+        notRead: notRead,
+        seenBy: [],
+        directMessageID: directMessageID,
+        username: username,
+        fullname: fullname,
+        photoURL: photoURL,
+        uid: uid,
+        type: 'text',
+        text: sharePostText,
+        date: Date.now(),
+      }     
+      if (sharePostText === '') {
+        await setDoc(doc(db, 'messages', firstID), post);
+        await updateDoc(doc(db, 'directMessages', directMessageID), {
+          lastMessage: post,
+          date: Date.now(),
+        });         
+      } else {
+        await setDoc(doc(db, 'messages', firstID), post);
+        await setDoc(doc(db, 'messages', secondID), textPost);
+        await updateDoc(doc(db, 'directMessages', directMessageID), {
+          lastMessage: textPost,
+          date: Date.now(),
+        }); 
+      };
     };
-    getAllDirectMessages();
     showNotification('Sent')
   };
 
   return (
-    <main className='mobile-share-modal'>
+    <main className={isMobile ? 'mobile-share-modal' : 'mobile-share'}>
       <header className='mobile-share-modal-header'>
         <div className='mobile-share-spacer'>
         </div>

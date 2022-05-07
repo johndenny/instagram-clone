@@ -7,6 +7,7 @@ const db = getFirestore();
 
 const DirectMessageDetailsModal = (props) => {
   const {
+    isMobile,
     setIsAddPeopleOpen,
     setSelectedMemberUID,
     setIsMemberModalOpen,
@@ -24,6 +25,7 @@ const DirectMessageDetailsModal = (props) => {
   const [titleString, setTitleString] = useState('');
   const [isUserAdmin, setIsUserAdmin] = useState('');
   const [isGroup, setIsGroup] = useState(false);
+  const [adminUIDs, setAdminUIDs] = useState([]);
 
   const textInputHandler = (event) => {
     const {
@@ -41,7 +43,8 @@ const DirectMessageDetailsModal = (props) => {
     setIsGroup(directMessages[index].isGroup);
     console.log(directMessages, index, selectedDirectMessageID);
     setMemebers(directMessages[index].profiles);
-    setUIDs(directMessages[index].UIDs)
+    setUIDs(directMessages[index].UIDs);
+    setAdminUIDs(directMessages[index].adminUIDs)
     return () => {
       setHideTopNavigation(false);
     }
@@ -97,29 +100,31 @@ const DirectMessageDetailsModal = (props) => {
 
   return (
     <main className='direct-message-details-modal'>
-      <header className='direct-message-details-header'>
-        <button 
-          className='back-button-header'
-          onClick={() => setIsMessageDetailsOpen(false)}
-        >
-          <svg aria-label="Back" className="back-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
-            <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
-          </svg>
-        </button>
-        <h1 className='details-header-text'>
-          Details
-        </h1>
-        <div className='header-spacer'>
-          {messageTitle !== titleString &&
-            <button 
-              className='done-button'
-              onClick={saveTitle}
-            >
-              Done
-            </button>
-          }
-        </div>
-      </header>
+      {isMobile &&
+        <header className='direct-message-details-header'>
+          <button 
+            className='back-button-header'
+            onClick={() => setIsMessageDetailsOpen(false)}
+          >
+            <svg aria-label="Back" className="back-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+              <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
+            </svg>
+          </button>
+          <h1 className='details-header-text'>
+            Details
+          </h1>
+          <div className='header-spacer'>
+            {messageTitle !== titleString &&
+              <button 
+                className='done-button'
+                onClick={saveTitle}
+              >
+                Done
+              </button>
+            }
+          </div>
+        </header>      
+      }
       <section className='direct-message-details-content'>
         {isGroup && isUserAdmin &&
           <form className='group-name-form'>
@@ -157,8 +162,13 @@ const DirectMessageDetailsModal = (props) => {
                 fullname,
                 photoURL,
                 uid,
-                isAdmin,
               } = member;
+              let isAdmin = false;
+              adminUIDs.forEach((UID) => {
+                if (UID === uid) {
+                  isAdmin = true;
+                };
+              });
               if (!isGroup && uid === userData.uid) {
                 return null
               } else {

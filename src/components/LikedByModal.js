@@ -19,6 +19,13 @@ const LikedByModal = (props) => {
   } = props;
   const [likes, setLikes] = useState([]);
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflowY = 'scroll';
+    }
+  }, []);
+
   const stopBubbles = (event) => {
     event.stopPropagation();
   }

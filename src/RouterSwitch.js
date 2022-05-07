@@ -59,6 +59,9 @@ import DeleteChatModal from './components/DeleteChatModal';
 import DirectMessageMemberModal from './components/DirectMessageMemberModal';
 import AddPeopleModal from './components/AddPeopleModal';
 import MessageLikesMobile from './components/MessageLikesMobile';
+import DesktopDirectMessages from './pages/DesktopDirectMessages';
+import NewMessageModal from './components/NewMessageModal';
+import SharePostModal from './components/SharePostModal';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -181,14 +184,14 @@ const RouterSwitch = () => {
   const [isMessageDetailsOpen, setIsMessageDetailsOpen] = useState(false);
   const [selectedDirectMessageID, setSelectedDirectMessageID] = useState('');
   const [isDeleteChatOpen, setIsDeleteChatOpen] = useState(false);
-  const [allDirectMessageIDs, setAllDirectMessageIDs] = useState([]);
-  const [lastMessages, setLastMessages] = useState([]);
   const [notReadCount, setNotReadCount] = useState(0);
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
   const [selectedMemberUID, setSelectedMemberUID] = useState('');
   const [isAddPeopleOpen, setIsAddPeopleOpen] = useState(false);
   const [selectedMessageID, setSelectedMessageID] = useState('');
   const [isMessageLikesOpen, setIsMessageLikesOpen] = useState(false);
+  const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
+  const [isGettingDirectMessages, setIsGettingDirectMessages] = useState(false);
 
   //SITE WIDE//
 
@@ -265,26 +268,6 @@ const RouterSwitch = () => {
 
   //MESSAGES //
 
-  const getAllDirectMessages = async () => {
-    await getLastMessage();
-    const {
-      uid
-    } = userData;
-    const allDirectMessagesQuery = query(collection(db, 'directMessages'), 
-      where('UIDs', 'array-contains', uid), orderBy('date', 'desc'));
-    onSnapshot(allDirectMessagesQuery, (collection) => {
-      const documentArray = [];
-      const IDs = []; 
-      collection.forEach((document) => {
-        IDs.push(document.data().directMessageID);
-        documentArray.push(document.data());
-      });
-      console.log(IDs);
-      setAllDirectMessageIDs(IDs);
-      setDirectMessages(documentArray);   
-    });
-  }
-
   const getNotReadMessages = () => {
     const notReadQuery = query(collection(db, 'messages'), 
       where('notRead', 'array-contains', userData.uid)
@@ -299,48 +282,8 @@ const RouterSwitch = () => {
     })
   }
 
-  const getLastMessage = async () => {
-    const {
-      uid
-    } = userData;
-    const allDirectMessagesQuery = query(collection(db, 'directMessages'), 
-      where('UIDs', 'array-contains', uid), orderBy('date', 'desc'));
-    const allDirectMessagesSnapShot = await getDocs(allDirectMessagesQuery);
-    const lastMessagesPromise = new Promise((resolve) => {
-      const lastMessages = [];
-      allDirectMessagesSnapShot.forEach( async (document) => {
-        const {
-          directMessageID
-        } = document.data();
-        const messagesQuery = query(collection(db, 'messages'),
-          where('directMessageID', '==', directMessageID), 
-          where('recipientUIDs', 'array-contains', uid), 
-          orderBy('date', 'desc'), 
-          limit(1));
-        const messagesSnapShot = await getDocs(messagesQuery);
-        messagesSnapShot.forEach((document) => lastMessages.push(document.data()));
-      });    
-      resolve(lastMessages)  
-    })
-    lastMessagesPromise.then((lastMessages) => {
-      setLastMessages(lastMessages);
-    });
-  };
-
-  const getAllMessages = async (directMessageID) => {
-    const allMessages = [];
-    const messageQuery = query(collection(db, directMessageID), 
-      where('recipientUIDs', 'array-contains', userData.uid))
-    const allMessagesSnapshot = await getDocs(messageQuery);
-    allMessagesSnapshot.forEach((doc) => {
-      allMessages.push(doc.data());
-    });
-    return allMessages;
-  }
-
   useEffect(() => {
     if (userData.uid !== undefined) {
-      getAllDirectMessages();
       getNotReadMessages();
     };
   }, [userData]);
@@ -1563,20 +1506,6 @@ const RouterSwitch = () => {
     }
   }
 
-  // const getPhotoURLs = async (document) => {
-  //   const { photos } = document
-  //   let urlArray = [document];
-  //   for (let i = 0; i < photos.length; i++) {
-  //     const photoURLs = doc(db, 'photoUploads', photos[i]);
-  //     const photoURLSnap = await getDoc(photoURLs);
-  //     if (photoURLSnap.exists()) {
-  //       urlArray.push(photoURLSnap.data());
-  //     }
-  //   }
-  //   console.log(urlArray);
-  //   return urlArray
-  // }
-
   const getPhotoURLs = async (document) => {
     const { postID } = document;
     const photoArray = [document];
@@ -1695,6 +1624,21 @@ const RouterSwitch = () => {
   
   return (
     <BrowserRouter>
+      {isNewMessageOpen &&
+        <NewMessageModal
+          isMobile = {isMobile}
+          setIsNewMessageOpen = {setIsNewMessageOpen}
+          isSharePostOpen={isSharePostOpen}
+          directMessages={directMessages}
+          setIsInboxOpen={setIsInboxOpen}
+          userData={userData}
+          recipientSelection={recipientSelection}
+          setRecipientSelection={setRecipientSelection}
+          setSearchString={setSearchString}
+          searchString = {searchString}
+          searchResults = {searchResults}
+        />
+      }
       {isMessageLikesOpen &&
         <MessageLikesMobile 
           userData = {userData}
@@ -1729,16 +1673,14 @@ const RouterSwitch = () => {
       }
       {isDeleteChatOpen &&
         <DeleteChatModal
-          getLastMessage = {getLastMessage}
           directMessages = {directMessages}
-          getAllDirectMessages={getAllDirectMessages}
           setIsMessageDetailsOpen={setIsMessageDetailsOpen}
           userData={userData}
           setIsDeleteChatOpen={setIsDeleteChatOpen}
           selectedDirectMessageID={selectedDirectMessageID}
         />
       }
-      {isMessageDetailsOpen &&
+      {/* {isMessageDetailsOpen &&
         <DirectMessageDetailsModal
           setIsAddPeopleOpen={setIsAddPeopleOpen}
           setSelectedMemberUID={setSelectedMemberUID}
@@ -1752,7 +1694,7 @@ const RouterSwitch = () => {
           setIsMessageDetailsOpen={setIsMessageDetailsOpen}
           selectedDirectMessageID={selectedDirectMessageID}
         />
-      }
+      } */}
       {isMessageLinksOpen &&
         <MessageLinksModal
           userData={userData}
@@ -1760,10 +1702,27 @@ const RouterSwitch = () => {
           setIsMessageLinksOpen={setIsMessageLinksOpen}
         />
       }
-      {isSharePostOpen && 
-        <MobileShareModal
+      {isSharePostOpen &&
+        <SharePostModal
+          isMobile = {isMobile}
           isSharePostOpen={isSharePostOpen}
-          getAllDirectMessages={getAllDirectMessages}
+          showNotification={showNotification}
+          postToSend = {postToSend}
+          directMessages={directMessages}
+          setIsSharePostOpen={setIsSharePostOpen}
+          setIsInboxOpen={setIsInboxOpen}
+          userData={userData}
+          recipientSelection={recipientSelection}
+          setRecipientSelection={setRecipientSelection}
+          setSearchString={setSearchString}
+          searchString = {searchString}
+          searchResults = {searchResults}
+        />
+      }
+      {isSharePostOpen && isMobile && 
+        <MobileShareModal
+          isMobile = {isMobile}
+          isSharePostOpen={isSharePostOpen}
           showNotification={showNotification}
           postToSend = {postToSend}
           directMessages={directMessages}
@@ -1898,7 +1857,6 @@ const RouterSwitch = () => {
             messageTitle={messageTitle}
             selectedMessage={selectedMessage}
             directMessages={directMessages}
-            getAllDirectMessages={getAllDirectMessages}
             recipientSelection={recipientSelection}
             isInboxOpen={isInboxOpen}
             setLocationBeforeUpload={setLocationBeforeUpload}
@@ -1977,23 +1935,27 @@ const RouterSwitch = () => {
                 />
               } />
               <Route path='/direct/inbox/' element={
-                <Inbox
-                  getLastMessage = {getLastMessage}
-                  getAllDirectMessages = {getAllDirectMessages}
-                  lastMessages={lastMessages}
-                  allDirectMessageIDs={allDirectMessageIDs}
-                  getAllMessages={getAllMessages} 
-                  formatTimeShort={formatTimeShort}
-                  userData={userData}
-                  directMessages={directMessages}
-                  setIsInboxOpen={setIsInboxOpen}
-                  setSearchString={setSearchString}
-                  searchString={searchString}
-                  searchResults={searchResults}
-                />
+                isMobile 
+                  ? <Inbox
+                      setDirectMessages = {setDirectMessages}
+                      formatTimeShort={formatTimeShort}
+                      userData={userData}
+                      directMessages={directMessages}
+                      setIsInboxOpen={setIsInboxOpen}
+                    />
+                  : <DesktopDirectMessages
+                      setDirectMessages = {setDirectMessages}
+                      isGettingDirectMessages = {isGettingDirectMessages}
+                      isInbox = {true}
+                      setIsNewMessageOpen = {setIsNewMessageOpen}
+                      formatTimeShort={formatTimeShort}
+                      userData={userData}
+                      directMessages={directMessages}
+                      setIsInboxOpen={setIsInboxOpen}
+                    />
               } />
               <Route path='/direct/new/' element={
-                <NewMessage 
+                <NewMessage
                   isSharePostOpen={isSharePostOpen}
                   directMessages={directMessages}
                   setIsInboxOpen={setIsInboxOpen}
@@ -2006,24 +1968,62 @@ const RouterSwitch = () => {
                 />
               } />
               <Route path='/direct/t/:messageID' element={
-                <DirectMessage
-                  formatTimeShort = {formatTimeShort}
-                  setMessages = {setMessages}
-                  messages = {messages}                  
-                  setSelectedMessageID = {setSelectedMessageID}
-                  setIsMessageLikesOpen = {setIsMessageLikesOpen}
-                  getLastMessage={getLastMessage}
-                  getAllDirectMessages={getAllDirectMessages}
-                  setSelectedDirectMessageID={setSelectedDirectMessageID}
-                  setIsMessageLinksOpen={setIsMessageLinksOpen}
-                  setProfilePhotoTitle={setProfilePhotoTitle}
-                  setMessageTitle={setMessageTitle}
-                  setSelectedMessage={setSelectedMessage}
-                  selectedMessage={selectedMessage}
-                  userData={userData}
-                  directMessages={directMessages}
-                  setIsInboxOpen = {setIsInboxOpen }
-                />
+                isMobile
+                  ? <DirectMessage
+                      isMobile = {isMobile}
+                      isMessageDetailsOpen = {isMessageDetailsOpen}
+                      setIsAddPeopleOpen={setIsAddPeopleOpen}
+                      setSelectedMemberUID={setSelectedMemberUID}
+                      setIsMemberModalOpen={setIsMemberModalOpen}
+                      messageTitle={messageTitle}
+                      setMessageTitle={setMessageTitle}
+                      setIsDeleteChatOpen={setIsDeleteChatOpen}
+                      userData={userData}
+                      setHideTopNavigation = {setHideTopNavigation}
+                      directMessages={directMessages}
+                      setIsMessageDetailsOpen={setIsMessageDetailsOpen}
+                      selectedDirectMessageID={selectedDirectMessageID}
+                      formatTimeShort = {formatTimeShort}
+                      setMessages = {setMessages}
+                      messages = {messages}                  
+                      setSelectedMessageID = {setSelectedMessageID}
+                      setIsMessageLikesOpen = {setIsMessageLikesOpen}
+                      setSelectedDirectMessageID={setSelectedDirectMessageID}
+                      setIsMessageLinksOpen={setIsMessageLinksOpen}
+                      setProfilePhotoTitle={setProfilePhotoTitle}
+                      setSelectedMessage={setSelectedMessage}
+                      selectedMessage={selectedMessage}
+                      setIsInboxOpen = {setIsInboxOpen }
+                    />
+                  : <DesktopDirectMessages
+                      isMessageDetailsOpen = {isMessageDetailsOpen}
+                      setIsAddPeopleOpen={setIsAddPeopleOpen}
+                      setSelectedMemberUID={setSelectedMemberUID}
+                      setIsMemberModalOpen={setIsMemberModalOpen}
+                      messageTitle={messageTitle}
+                      setMessageTitle={setMessageTitle}
+                      setIsDeleteChatOpen={setIsDeleteChatOpen}
+                      userData={userData}
+                      setHideTopNavigation = {setHideTopNavigation}
+                      directMessages={directMessages}
+                      setIsMessageDetailsOpen={setIsMessageDetailsOpen}
+                      selectedDirectMessageID={selectedDirectMessageID}
+                      setDirectMessages = {setDirectMessages}
+                      setIsNewMessageOpen = {setIsNewMessageOpen}
+                      profilePhotoTitle = {profilePhotoTitle}
+                      isInbox = {false}
+                      formatTimeShort={formatTimeShort}
+                      setIsInboxOpen={setIsInboxOpen}
+                      setMessages = {setMessages}
+                      messages = {messages}                  
+                      setSelectedMessageID = {setSelectedMessageID}
+                      setIsMessageLikesOpen = {setIsMessageLikesOpen}
+                      setSelectedDirectMessageID={setSelectedDirectMessageID}
+                      setIsMessageLinksOpen={setIsMessageLinksOpen}
+                      setProfilePhotoTitle={setProfilePhotoTitle}
+                      setSelectedMessage={setSelectedMessage}
+                      selectedMessage={selectedMessage}
+                    />
               } />
               <Route path='/explore/' element={<Explore />} />
               <Route path='/explore/search' element={

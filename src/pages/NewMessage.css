@@ -7,6 +7,13 @@
   position: relative;
 }
 
+.new-message-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  position: relative;
+}
+
 .to-title-text {
   margin: 0;
   font-size: 16px;
@@ -63,6 +70,7 @@
 .user-search-results {
   position: absolute;
   width: 100%;
+  top: 0;
   bottom: 0;
   background-color: rgba(255, 255, 255, 1);
   z-index: 101;
@@ -89,4 +97,13 @@
 .suggested-header-text {
   margin: 16px;
   font-size: 14px;
+}
+
+.back-button {
+  flex-basis: 32px;
+  cursor: pointer;
+}
+
+.close-share-modal {
+  cursor: pointer;
 }

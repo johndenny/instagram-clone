@@ -5,25 +5,32 @@ import { v4 as uuidv4 } from 'uuid';
 import { getFirestore, setDoc, doc, onSnapshot, getDoc, collection, orderBy, where, updateDoc, query, arrayRemove, arrayUnion } from 'firebase/firestore';
 import Message from '../components/Message';
 import { getDownloadURL, getStorage, uploadBytes, ref } from 'firebase/storage';
+import DirectMessageDetailsModal from '../components/DirectMesssageDetailsModal';
 
 const db = getFirestore();
 const storage = getStorage();
 let previousDate = null;
-let lastPress = 0;
 
 const DirectMessage = (props) => {
   const {
+    isMobile,
+    isMessageDetailsOpen,
+    setIsAddPeopleOpen,
+    setSelectedMemberUID,
+    setIsMemberModalOpen,
+    messageTitle,
+    setIsDeleteChatOpen,
+    setHideTopNavigation,
+    setIsMessageDetailsOpen,
+    selectedDirectMessageID,
     formatTimeShort,
     messages,
     setMessages,
     setIsMessageLikesOpen,
     setSelectedMessageID,
-    getLastMessage,
-    getAllDirectMessages,
     setSelectedDirectMessageID,
     setSelectedMessage,
     setIsMessageLinksOpen,
-    allMessages,
     setProfilePhotoTitle,
     setMessageTitle,
     userData,
@@ -67,17 +74,16 @@ const DirectMessage = (props) => {
           })          
         }
       });
-      if (messageArray.length !== 0) {
         setMessages(messageArray);
-      }
-    });
+        previousDate = null;
+    });      
     return () => {
       messages();
+      previousDate = null;
     };    
-  }, []);
+  }, [params.messageID]);
 
   useEffect(() => {
-    setSelectedDirectMessageID(params.messageID);
     setIsInboxOpen(true);
     previousDate = null;
     return () => {
@@ -87,6 +93,14 @@ const DirectMessage = (props) => {
       setMessages([]);
     }
   }, []);
+
+  useEffect(() => {
+    setSelectedDirectMessageID(params.messageID);
+    return () => {
+      setIsMessageDetailsOpen(false);
+      setMessages([]);
+    }
+  }, [params.messageID]);
 
   useLayoutEffect(() => {
     const {
@@ -145,7 +159,7 @@ const DirectMessage = (props) => {
     setMessageTitle(chatTitle)
     setProfilePhotoTitle(photoURLs);
     setIsGroup(isGroup);
-  }, [directMessages.UIDs]);
+  }, [directMessages.UIDs, params.messageID]);
 
   const messageStringHandler = (event) => {
     const { value } = event.target;
@@ -172,11 +186,17 @@ const DirectMessage = (props) => {
       photoURL,
       uid,
     } = userData;
+    const notRead = [];
+    UIDs.forEach((UID) => {
+      if (UID !== uid) {
+        notRead.push(UID);
+      };
+    });
     const messageID = uuidv4();
     const message = {
       likes: [],
       recipientUIDs: UIDs,
-      notRead: UIDs,
+      notRead,
       seenBy: [],
       messageID: messageID,
       directMessageID: directMessageID,
@@ -193,7 +213,6 @@ const DirectMessage = (props) => {
       date: Date.now(),
     });
     await setDoc(doc(db, 'messages', messageID), message);
-    await getLastMessage();
   }
 
   const sendHeart = async (event) => {
@@ -230,7 +249,6 @@ const DirectMessage = (props) => {
         type: 'heart',
         date: Date.now(),
       });
-      await getLastMessage();
     };
   };
 
@@ -481,16 +499,30 @@ const DirectMessage = (props) => {
   };
 
   return (
+
     <main className='direct-message'>
+      {isMessageDetailsOpen &&
+        <DirectMessageDetailsModal
+          isMobile = {isMobile}
+          setIsAddPeopleOpen={setIsAddPeopleOpen}
+          setSelectedMemberUID={setSelectedMemberUID}
+          setIsMemberModalOpen={setIsMemberModalOpen}
+          messageTitle={messageTitle}
+          setMessageTitle={setMessageTitle}
+          setIsDeleteChatOpen={setIsDeleteChatOpen}
+          userData={userData}
+          setHideTopNavigation = {setHideTopNavigation}
+          directMessages={directMessages}
+          setIsMessageDetailsOpen={setIsMessageDetailsOpen}
+          selectedDirectMessageID={selectedDirectMessageID}
+        />        
+      }
       <div 
         className='messages-wrapper'
         ref={messagesRef}
       >
         <div className='messages-content'>
           {messages.map((message, index) => {
-            if (index === 0) {
-              console.log('index is zero!');
-            }
             const className = ['message'];
             if (message.uid === userData.uid) {
               className.push('user');
@@ -501,7 +533,6 @@ const DirectMessage = (props) => {
               message.type === 'text' ||
               message.type === 'heart') {
                 if (message.likes.length !== 0) {
-                  console.log(message.likes);
                   className.push('liked');
                 };                
               } 

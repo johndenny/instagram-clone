@@ -3,15 +3,17 @@ import { useNavigate } from "react-router-dom";
 import "./DirectMessageInboxCard.css";
 import { getFirestore, collection, orderBy, limit, query, getDocs } from 'firebase/firestore';
 import defaultProfileImage from "../images/default-profile-image.jpg";
+import { useParams } from "react-router-dom";
 
 const db = getFirestore();
 
 const DirectMessageInboxCard = (props) => {
   const {
-    lastMessages,
+    isGettingDirectMessages,
     userData,
     directMessage,
     formatTimeShort,
+    directMessages
   } = props;
   const {
     profiles,
@@ -26,13 +28,26 @@ const DirectMessageInboxCard = (props) => {
   const [isEmpty, setIsEmpty] = useState(false);
   const [isNotRead, setIsNotRead] = useState(false);
   const [photoURLs, setPhotoURLs] = useState('');
+  const [isSelected, setIsSelected] = useState(false);
   const navigate = useNavigate();
+  const params = useParams();
+
+  useEffect(() => {
+    if (params.messageID === directMessageID) {
+      setIsSelected(true);
+    } else {
+      setIsSelected(false);
+    }
+  },[params]);
 
   const activityHandler = () => {
-    let message;
     let timeStamp;
-    console.log(lastMessage);
+    console.log(lastMessage, profiles.length);
+    if (lastMessage === undefined) {
+      return ''
+    }
     const index = lastMessage.recipientUIDs.findIndex((recipient) => recipient === userData.uid)
+    console.log(index);
     if (index !== -1) {
       const {
         notRead,
@@ -45,13 +60,13 @@ const DirectMessageInboxCard = (props) => {
         removedUsername,
         uid
       } = lastMessage
+      console.log(lastMessage);
       const notReadIndex = notRead.findIndex((uid) => uid === userData.uid);
       if (notReadIndex !== -1) {
         setIsNotRead(true);
       }
       timeStamp = formatTimeShort(date);
       setDate(timeStamp);
-      console.log(message);
       if (type === 'post') {
         if (uid === userData.uid) {
           return `You sent a post`;
@@ -91,66 +106,69 @@ const DirectMessageInboxCard = (props) => {
   };
 
 
-  useLayoutEffect(() => {
-    const fullnames = [];
-    const photoURLs = [];
-    profiles.forEach((profile, index) => {
-      const {
-        fullname,
-        uid,
-        photoURL,
-      } = profile;
-      if (uid !== userData.uid) {
-        fullnames.push(fullname);
-        if (photoURL === '') {
-          photoURLs.push(defaultProfileImage);
-        } else {
-          photoURLs.push(photoURL);
-        }
-      };
-    });
-    if (photoURLs.length >= 1 && directMessage.isGroup) {
-      const index = profiles.findIndex((profile) => profile.uid === userData.uid);
-      photoURLs.push(profiles[index].photoURL);
-    };
-    let chatTitle;
-    if (title === '') {
-      if (fullnames.length === 2) {
-        chatTitle = fullnames.join(' and ')
-      } else if (fullnames.length === 3) {
-        fullnames.splice(2, 1, `and ${fullnames[2]}`);
-        chatTitle = fullnames.join(', ')
-      } else if (fullnames.length > 3) {
-        const overflow = fullnames.length - 3;
-        const newFullnames = [...fullnames]
-        newFullnames.splice(3, overflow, `and ${overflow} ${
-          overflow === 1 
-            ? 'other' 
-            : 'others'
-        }`);
-        chatTitle = newFullnames.join(', ');
-      } else if (fullnames.length === 0) {
-        chatTitle = 'Just You'
-      } else {
-        chatTitle = fullnames.join(', ');
-      };
-    } else {
-      chatTitle = title;
-    };
-    setChatTitle(chatTitle);
-    setPhotoURLs(photoURLs);
-  },[directMessage]);
-
   useEffect(() => {
-    setActivity(activityHandler);
-  },[lastMessages]);
+    console.log(directMessages)
+    if (profiles.length !== 0) {
+      console.log('hello!!!!!!!!!!!!!!!!!!!!!!!!!!!11111')
+      const fullnames = [];
+      const photoURLs = [];
+      console.log(directMessage);
+      profiles.forEach((profile, index) => {
+        const {
+          fullname,
+          uid,
+          photoURL,
+        } = profile;
+        if (uid !== userData.uid) {
+          fullnames.push(fullname);
+          if (photoURL === '') {
+            photoURLs.push(defaultProfileImage);
+          } else {
+            photoURLs.push(photoURL);
+          }
+        };
+      });
+      if (photoURLs.length >= 1 && directMessage.isGroup) {
+        const index = profiles.findIndex((profile) => profile.uid === userData.uid);
+        photoURLs.push(profiles[index].photoURL);
+      };
+      let chatTitle;
+      if (title === '') {
+        if (fullnames.length === 2) {
+          chatTitle = fullnames.join(' and ')
+        } else if (fullnames.length === 3) {
+          fullnames.splice(2, 1, `and ${fullnames[2]}`);
+          chatTitle = fullnames.join(', ')
+        } else if (fullnames.length > 3) {
+          const overflow = fullnames.length - 3;
+          const newFullnames = [...fullnames]
+          newFullnames.splice(3, overflow, `and ${overflow} ${
+            overflow === 1 
+              ? 'other' 
+              : 'others'
+          }`);
+          chatTitle = newFullnames.join(', ');
+        } else if (fullnames.length === 0) {
+          chatTitle = 'Just You'
+        } else {
+          chatTitle = fullnames.join(', ');
+        };
+      } else {
+        chatTitle = title;
+      };
+      setChatTitle(chatTitle);
+      setPhotoURLs(photoURLs);
+      setActivity(activityHandler);
+      console.log(photoURLs);
+    }
+  }, [directMessages, params.messageID]); 
 
   if (isEmpty) {
     return null;
   } else {
     return (
       <li 
-        className='direct-message-card'
+        className={isSelected ? 'direct-message-card selected' : 'direct-message-card'}
         onClick={() => navigate(`/direct/t/${directMessageID}/`)}
       >
         {photoURLs.length > 1 &&

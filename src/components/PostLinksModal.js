@@ -15,6 +15,12 @@ const PostLinksModal = (props) => {
   } = props;
   const [isDeleteClicked, setIsDeleteClicked] = useState(false);
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflowY = 'scroll';
+    }
+  }, []);
 
   const stopBubbles = (event) => {
     event.stopPropagation();

@@ -12,6 +12,7 @@
   padding: 0 16px;
   align-items: center;
   gap: 16px;
+  position: relative;
 }
 
 .suggested-person .profile-photo-frame {

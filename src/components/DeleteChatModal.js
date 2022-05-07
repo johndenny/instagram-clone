@@ -10,7 +10,6 @@ const db = getFirestore();
 const DeleteChatModal = (props) => {
   const {
     directMessages,
-    getLastMessage,
     getAllDirectMessages,
     setIsMessageDetailsOpen,
     userData,

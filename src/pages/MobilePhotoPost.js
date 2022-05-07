@@ -86,6 +86,15 @@ const MobilePhotoPost = (props) => {
   const searchTimeoutRef = useRef(null);
   const [isSearching, setIsSearching] = useState(false);
 
+  useEffect(() => {
+    if (isModal) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflowY = 'scroll';
+      }      
+    }
+  }, []);
+
   const sendPost = (selectedPost) => {
     setPostToSend(selectedPost);
     setIsSharePostOpen(true);
