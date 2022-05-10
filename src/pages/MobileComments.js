@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './MobileComments.css'
 import firebaseApp from '../Firebase';
-import { getFirestore, doc, updateDoc, arrayUnion, query, collection, where, orderBy, getDocs, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, arrayUnion, query, collection, where, orderBy, getDocs, getDoc, documentId } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid'
 import { useParams } from 'react-router-dom';
 import Comment from '../components/Comment';
@@ -35,6 +35,7 @@ const MobileComments = (props) => {
   const [searchString, setSearchString] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const searchTimeoutRef = useRef(null); 
+  const [isSearchHashTag, setIsSearchHashTag] = useState(false);
 
   const commentTextHandler = (event) => {
     const { value } = event.target;
@@ -43,11 +44,17 @@ const MobileComments = (props) => {
     console.log(lastLetter);
     if (lastLetter === '@') {
       console.log('@ found');
-      setUserIndex(value.length)
+      setUserIndex(value.length);
+      setIsSearchHashTag(false);
+    } else if (lastLetter === '#') {
+      console.log('# found')
+      setUserIndex(value.length);
+      setIsSearchHashTag(true);
     }
     if (value.length < userIndex) {
       setUserIndex(null)
       setIsSearching(false);
+      setIsSearchHashTag(false);
     };
     console.log(userIndex);
     if (userIndex !== null) {
@@ -74,11 +81,24 @@ const MobileComments = (props) => {
     setIsSearching(true);
     const matchedUsers = [];
     const searchTerm = searchString.toLowerCase();
-    const users = query(collection(db, 'users'), 
-    where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
-    const usersSnapshot = await getDocs(users);
+    let searchQuery;
+    if (isSearchHashTag) {
+      searchQuery = query(collection(db, 'hashTags'), 
+        where(documentId(), '>=', searchTerm), where(documentId(), '<=', searchTerm+ '\uf8ff' ));
+    } else {
+      searchQuery = query(collection(db, 'users'), 
+        where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
+    }
+    const usersSnapshot = await getDocs(searchQuery);
     usersSnapshot.forEach((user) => {
-      matchedUsers.push(user.data());
+      if (isSearchHashTag) {
+        matchedUsers.push({
+          hashTag: user.id,
+          ...user.data()
+        });
+      } else {
+        matchedUsers.push(user.data());
+      };
     });
     setSearchResults(matchedUsers);
   }
@@ -93,9 +113,9 @@ const MobileComments = (props) => {
     }; 
   }, [searchString]);
 
-  const searchSelection = (username) => {
+  const searchSelection = (text) => {
     const slicedComment = commentText.slice(0, userIndex);
-    const name = `${username} `
+    const name = `${text} `
     const newCommentText = slicedComment.concat(name);
     setCommentText(newCommentText);
     setUserIndex(null)
@@ -453,7 +473,7 @@ const MobileComments = (props) => {
               </button>
             </div>          
           }
-          {isSearching &&
+          {isSearching && !isSearchHashTag &&
             <section className='comment-search-results'>
               <PeopleList 
                 searchSelection={searchSelection}
@@ -463,6 +483,28 @@ const MobileComments = (props) => {
                 allUserProfiles={searchResults}
               />              
             </section> 
+          }
+          {isSearching && isSearchHashTag && 
+            <ul 
+              className='comment-search-results'
+            >
+              {searchResults.map((hashTag) => {
+                return (
+                  <li 
+                    className='hash-tag-search-result'
+                    onClick={() => searchSelection(hashTag.hashTag)}
+                    onMouseDown={(event) => event.preventDefault()}
+                  >
+                    <span className='hash-tag-text'>
+                      #{hashTag.hashTag}
+                    </span>
+                    <span className='hast-tag-post-length'>
+                      {hashTag.posts.length} posts
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
           }
         </section>
         <div 

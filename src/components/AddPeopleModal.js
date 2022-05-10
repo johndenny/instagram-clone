@@ -8,6 +8,7 @@ const db = getFirestore();
 
 const AddPeopleModal = (props) => {
   const {
+    isMobile,
     setIsAddPeopleOpen,
     allMessages,
     directMessages,
@@ -59,6 +60,7 @@ const AddPeopleModal = (props) => {
     await setDoc(doc(db, 'messages', messageID), {
        recipientUIDs: newUIDs,
        notRead: newUIDs,
+       seenBy: [],
        messageID: messageID,
        directMessageID: selectedDirectMessageID,
        username: username,
@@ -71,43 +73,89 @@ const AddPeopleModal = (props) => {
     });
     setIsAddPeopleOpen(false);
   }
-
-  return (
-    <main className='add-people-modal'>
-      <header className='add-people-header'>
-        <button 
-          className='back-button-header'
-          onClick={() => setIsAddPeopleOpen(false)}
+  if (isMobile) {
+    return (
+      <main className='add-people-modal'>
+        <header className='add-people-header'>
+          <button 
+            className='back-button-header'
+            onClick={() => setIsAddPeopleOpen(false)}
+          >
+            <svg aria-label="Back" className="back-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+              <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
+            </svg>
+          </button>
+          <h1 className='header-text'>
+            Add People
+          </h1>
+          <div 
+            className='next-button'
+            onClick={addPeople}
+          >
+            Next
+          </div>
+        </header>
+        <NewMessage
+          isAddPeople={true}
+          groupUIDs={groupUIDs}
+          allMessages={allMessages}
+          directMessages={directMessages}
+          setIsInboxOpen={setIsInboxOpen}
+          userData={userData}
+          recipientSelection={recipientSelection}
+          setRecipientSelection={setRecipientSelection}
+          setSearchString={setSearchString}
+          searchString = {searchString}
+          searchResults = {searchResults}
+        />
+      </main>
+    );
+  } else {
+    return (
+      <div 
+        className='modal'
+        onClick={() => setIsAddPeopleOpen(false)}
+      >
+        <main 
+          className='add-people-modal-content'
+          onClick={(event) => event.stopPropagation()}
         >
-          <svg aria-label="Back" className="back-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
-            <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
-          </svg>
-        </button>
-        <h1 className='header-text'>
-          Add People
-        </h1>
-        <div 
-          className='next-button'
-          onClick={addPeople}
-        >
-          Next
-        </div>
-      </header>
-      <NewMessage
-        isAddPeople={true}
-        groupUIDs={groupUIDs}
-        allMessages={allMessages}
-        directMessages={directMessages}
-        setIsInboxOpen={setIsInboxOpen}
-        userData={userData}
-        recipientSelection={recipientSelection}
-        setRecipientSelection={setRecipientSelection}
-        setSearchString={setSearchString}
-        searchString = {searchString}
-        searchResults = {searchResults}
-      />
-    </main>
-  );
+          <header className='add-people-header'>
+            <button 
+              className='back-button-header'
+              onClick={() => setIsAddPeopleOpen(false)}
+            >
+              <svg aria-label="Back" className="back-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
+              </svg>
+            </button>
+            <h1 className='header-text'>
+              Add People
+            </h1>
+            <div 
+              className='next-button'
+              onClick={addPeople}
+            >
+              Next
+            </div>
+          </header>
+          <NewMessage
+            isAddPeople={true}
+            groupUIDs={groupUIDs}
+            allMessages={allMessages}
+            directMessages={directMessages}
+            setIsInboxOpen={setIsInboxOpen}
+            userData={userData}
+            recipientSelection={recipientSelection}
+            setRecipientSelection={setRecipientSelection}
+            setSearchString={setSearchString}
+            searchString = {searchString}
+            searchResults = {searchResults}
+          />
+        </main>      
+      </div>      
+    );
+  };
 };
 
 export default AddPeopleModal;

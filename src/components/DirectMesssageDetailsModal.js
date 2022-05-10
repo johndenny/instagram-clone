@@ -23,9 +23,9 @@ const DirectMessageDetailsModal = (props) => {
   const [members, setMemebers] = useState([]);
   const [UIDs, setUIDs] = useState([]); 
   const [titleString, setTitleString] = useState('');
-  const [isUserAdmin, setIsUserAdmin] = useState('');
   const [isGroup, setIsGroup] = useState(false);
   const [adminUIDs, setAdminUIDs] = useState([]);
+  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
 
   const textInputHandler = (event) => {
     const {
@@ -35,20 +35,26 @@ const DirectMessageDetailsModal = (props) => {
   }
 
   useLayoutEffect(() => {
-    setTitleString(messageTitle);
     const index = directMessages.findIndex((message) => message.directMessageID === selectedDirectMessageID);
-    const profiles = directMessages[index].profiles;
-    const profileIndex = profiles.findIndex((profile) => profile.uid === userData.uid);
-    setIsUserAdmin(profiles[profileIndex].isAdmin);
-    setIsGroup(directMessages[index].isGroup);
-    console.log(directMessages, index, selectedDirectMessageID);
-    setMemebers(directMessages[index].profiles);
-    setUIDs(directMessages[index].UIDs);
-    setAdminUIDs(directMessages[index].adminUIDs)
+    const {
+      isGroup,
+      profiles,
+      UIDs,
+      adminUIDs
+    } = directMessages[index];
+    setTitleString(messageTitle);
+    setIsGroup(isGroup);
+    setMemebers(profiles);
+    setUIDs(UIDs);
+    setAdminUIDs(adminUIDs);
+    const adminIndex = adminUIDs.findIndex((uid) => uid === userData.uid);
+    if (adminIndex !== -1) {
+      setIsCurrentUserAdmin(true);
+    };
     return () => {
       setHideTopNavigation(false);
     }
-  },[directMessages.UIDs, messageTitle]);
+  },[messageTitle, directMessages]);
 
   const saveTitle = async () => {
     await updateDoc(doc(db, 'directMessages', selectedDirectMessageID), {
@@ -126,7 +132,7 @@ const DirectMessageDetailsModal = (props) => {
         </header>      
       }
       <section className='direct-message-details-content'>
-        {isGroup && isUserAdmin &&
+        {isGroup && isCurrentUserAdmin &&
           <form className='group-name-form'>
             <label className='group-name-label' htmlFor='group-name-input'>
               Group Name:
@@ -146,7 +152,7 @@ const DirectMessageDetailsModal = (props) => {
             <h2 className='group-members-header-text'>
               Members
             </h2>
-            {isGroup && isUserAdmin &&
+            {isGroup && isCurrentUserAdmin &&
               <button 
                 className='add-people-button'
                 onClick={() => setIsAddPeopleOpen(true)}
@@ -169,6 +175,7 @@ const DirectMessageDetailsModal = (props) => {
                   isAdmin = true;
                 };
               });
+              
               if (!isGroup && uid === userData.uid) {
                 return null
               } else {
@@ -193,7 +200,7 @@ const DirectMessageDetailsModal = (props) => {
                         </span>
                     }
                     </div>
-                    {isGroup && uid !== userData.uid && isUserAdmin &&
+                    {isGroup && uid !== userData.uid && isCurrentUserAdmin &&
                       <button 
                         className='group-member-options-button'
                         onClick={() => modalOpenHandler(uid)}

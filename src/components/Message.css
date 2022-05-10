@@ -21,6 +21,7 @@
   width: 100%;
   display: flex;
   justify-content: flex-start;
+  align-items: center;
   gap: 8px;
   position: relative;
 }
@@ -108,6 +109,7 @@
 .message-profile-photo-spacer {
   display: flex;
   flex-basis: 24px;
+  align-self: flex-end;
 }
 
 .first-usernames,
@@ -118,7 +120,7 @@
 .message-username-title {
   font-size: 12px;
   color: rgba(142, 142, 142, 1);
-  margin-left: 32px;
+  margin-left: 48px;
   margin-bottom: 4px;
 }
 
@@ -133,7 +135,12 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  z-index: 3;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.message-like:active {
+  opacity: 0.7;
 }
 
 .message-profile-photo-wrapper.current-user .message-like {
@@ -173,6 +180,12 @@
   color: rgba(142, 142, 142, 1);
 }
 
+.message-links-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
 .message-links-button {
   display: none;
   padding: 8px;
@@ -180,10 +193,14 @@
   opacity: 0.5;
 }
 
+.message-links-button.selected {
+  display: inline-block;
+}
+
 .message-links-button:hover {
   opacity: 1;
 }
 
-.message-profile-photo-wrapper:hover > .message-links-button {
+.message-profile-photo-wrapper:hover .message-links-button {
   display: inline-block;
 }

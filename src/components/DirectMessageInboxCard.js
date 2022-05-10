@@ -64,6 +64,8 @@ const DirectMessageInboxCard = (props) => {
       const notReadIndex = notRead.findIndex((uid) => uid === userData.uid);
       if (notReadIndex !== -1) {
         setIsNotRead(true);
+      } else {
+        setIsNotRead(false);
       }
       timeStamp = formatTimeShort(date);
       setDate(timeStamp);
@@ -107,9 +109,7 @@ const DirectMessageInboxCard = (props) => {
 
 
   useEffect(() => {
-    console.log(directMessages)
     if (profiles.length !== 0) {
-      console.log('hello!!!!!!!!!!!!!!!!!!!!!!!!!!!11111')
       const fullnames = [];
       const photoURLs = [];
       console.log(directMessage);

@@ -1,12 +1,17 @@
+import { arrayRemove, updateDoc, getFirestore, doc } from 'firebase/firestore';
 import React, { Fragment, useRef, useEffect, useLayoutEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import './Message.css';
+import MessagePopUp from './MessagePopUp';
 import MessagePost from './MessagePost';
 
 let lastPress = 0;
+const db = getFirestore();
 
 const Message = (props) => {
   const {
+    copyHandler,
+    unsendHandler,
     formatTimeShort,
     setSelectedMessage,
     setIsMessageLinksOpen,
@@ -16,8 +21,8 @@ const Message = (props) => {
     isGroup,
     messages,
     index,
-    formatTime,
-    messageRef,
+    // formatTime,
+    messagesRef,
     userData,
     message
   } = props;
@@ -48,7 +53,49 @@ const Message = (props) => {
   const [isLiked, setIsLiked] = useState(false);
   const touchTimer = useRef();
   const tagTimerRef = useRef();
-  const params = useParams();
+  const [isPopUpOpen, setIsPopUpOpen] = useState(false);
+  const [isPopUpAnimating, setIsPopUpAnimating] = useState(false);
+
+  useEffect(() => {
+    messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+  }, [seenBy]);
+
+  const formatTime = () => {
+    const previousIndex = index - 1
+    let timePast;
+    if (previousIndex > -1) {
+      timePast = date - messages[previousIndex].date;
+    }
+    if (timePast > 10800000 || index === 0) {
+      const currentDate = new Date(Date.now());
+      const postDate = new Date(date);
+      const currentTime = postDate.toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit'
+      }).toLowerCase().split(' ').join('');
+      const oneWeek = new Date();
+      oneWeek.setDate(oneWeek.getDate() - 7);
+      if (postDate > oneWeek) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (currentDate.toDateString() === postDate.toDateString()) {
+          return currentTime;
+        } else if (yesterday.toDateString() === postDate.toDateString()) {
+          return `Yesterday ${currentTime}`
+        } else {
+          return `${postDate.toLocaleDateString([], {
+            weekday: 'long',
+          })} ${currentTime}`
+        }
+      } else {
+        return `${postDate.toLocaleDateString([], {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        })} ${currentTime}`
+      }
+    }
+  }
 
   useLayoutEffect(() => {
     if (index === 0) {
@@ -74,8 +121,8 @@ const Message = (props) => {
   }, [messages]);
 
   useEffect(() => {
-    setTime(formatTime(date));
-    if (seenBy.length >= 2 && 
+    setTime(formatTime);
+    if (seenBy.length >= 1 && 
         uid === userData.uid && 
         index === messages.length -1
         ) {
@@ -143,9 +190,27 @@ const Message = (props) => {
       };
   };
 
+  const unlikeMessage = async () => {
+    const index = likes.findIndex((like) => like.uid === userData.uid);
+    if (index !== -1) {
+      await updateDoc(doc(db, 'messages', messageID), {
+        likes: arrayRemove(likes[index])
+      });
+    }
+  }
+
   const touchEnd = () => {
     clearTimeout(touchTimer.current);
     touchTimer.current = null;
+  }
+
+  const popUpToggle = () => {
+    setSelectedMessage(message)
+    if (isPopUpOpen) {
+      setIsPopUpAnimating(true);
+    } else {
+      setIsPopUpOpen(true);
+    }
   }
 
   return (
@@ -171,14 +236,42 @@ const Message = (props) => {
             }  
           </div>         
         }
-        {uid === userData.uid &&
-          <button className='message-links-button'>
-            <svg aria-label="Unsend" className='message-links-svg' color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
-              <circle cx="12" cy="12" r="1.5"></circle>
-              <circle cx="6" cy="12" r="1.5"></circle>
-              <circle cx="18" cy="12" r="1.5"></circle>
-            </svg>
-          </button>
+        {uid === userData.uid && 
+          (
+            message.type === 'photo' ||
+            message.type === 'post' ||
+            message.type === 'text' ||
+            message.type === 'heart'
+          ) &&
+          <div className='message-links-wrapper right'>
+            {isPopUpOpen &&
+              <MessagePopUp
+                copyHandler = {copyHandler}
+                unsendHandler = {unsendHandler}
+                userData = {userData}
+                unlikeMessage = {unlikeMessage}
+                message = {message}
+                likeToggle = {likeToggle}
+                isPopUpAnimating = {isPopUpAnimating}
+                setIsPopUpAnimating = {setIsPopUpAnimating}
+                setIsPopUpOpen = {setIsPopUpOpen }
+              />            
+            }
+            <button 
+              className={
+                isPopUpOpen 
+                  ? 'message-links-button selected'
+                  : 'message-links-button'
+                }
+              onClick={popUpToggle}
+            >
+              <svg aria-label="Unsend" className='message-links-svg' color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                <circle cx="12" cy="12" r="1.5"></circle>
+                <circle cx="6" cy="12" r="1.5"></circle>
+                <circle cx="18" cy="12" r="1.5"></circle>
+              </svg>
+            </button>            
+          </div>
         }
         {type === 'member-left' &&
           <div 
@@ -293,7 +386,6 @@ const Message = (props) => {
               </div>
             }           
             <MessagePost
-              messageRef={messageRef}
               message={message}
             />
           </div>
@@ -441,6 +533,43 @@ const Message = (props) => {
                 }
               </div>            
             </div>
+          </div>
+        }
+        {uid !== userData.uid && 
+          (
+            message.type === 'photo' ||
+            message.type === 'post' ||
+            message.type === 'text' ||
+            message.type === 'heart'
+          ) &&
+          <div className='message-links-wrapper left'>
+            {isPopUpOpen &&
+              <MessagePopUp
+                copyHandler = {copyHandler}
+                unsendHandler = {unsendHandler}
+                userData = {userData}
+                unlikeMessage = {unlikeMessage}
+                message = {message}
+                likeToggle = {likeToggle}
+                isPopUpAnimating = {isPopUpAnimating}
+                setIsPopUpAnimating = {setIsPopUpAnimating}
+                setIsPopUpOpen = {setIsPopUpOpen }
+              />            
+            }
+            <button 
+              className={
+                isPopUpOpen 
+                  ? 'message-links-button selected'
+                  : 'message-links-button'
+                }
+              onClick={popUpToggle}
+            >
+              <svg aria-label="Unsend" className='message-links-svg' color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                <circle cx="12" cy="12" r="1.5"></circle>
+                <circle cx="6" cy="12" r="1.5"></circle>
+                <circle cx="18" cy="12" r="1.5"></circle>
+              </svg>
+            </button>            
           </div>
         }
       </div>

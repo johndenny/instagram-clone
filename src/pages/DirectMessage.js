@@ -9,10 +9,11 @@ import DirectMessageDetailsModal from '../components/DirectMesssageDetailsModal'
 
 const db = getFirestore();
 const storage = getStorage();
-let previousDate = null;
 
 const DirectMessage = (props) => {
   const {
+    copyHandler,
+    unsendHandler,
     isMobile,
     isMessageDetailsOpen,
     setIsAddPeopleOpen,
@@ -75,17 +76,15 @@ const DirectMessage = (props) => {
         }
       });
         setMessages(messageArray);
-        previousDate = null;
+        messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     });      
     return () => {
       messages();
-      previousDate = null;
     };    
   }, [params.messageID]);
 
   useEffect(() => {
     setIsInboxOpen(true);
-    previousDate = null;
     return () => {
       setIsInboxOpen(false)
       setSelectedMessages(null);
@@ -251,40 +250,6 @@ const DirectMessage = (props) => {
       });
     };
   };
-
-  const formatTime = (date) => {
-    const timePast = date - previousDate;
-    if (timePast > 10800000 || timePast === null) {
-      previousDate = date;
-      const currentDate = new Date(Date.now());
-      const postDate = new Date(date);
-      const currentTime = postDate.toLocaleTimeString([], {
-        hour: 'numeric',
-        minute: '2-digit'
-      }).toLowerCase().split(' ').join('');
-      const oneWeek = new Date();
-      oneWeek.setDate(oneWeek.getDate() - 7);
-      if (postDate > oneWeek) {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        if (currentDate.toDateString() === postDate.toDateString()) {
-          return currentTime;
-        } else if (yesterday.toDateString() === postDate.toDateString()) {
-          return `Yesterday ${currentTime}`
-        } else {
-          return `${postDate.toLocaleDateString([], {
-            weekday: 'long',
-          })} ${currentTime}`
-        }
-      } else {
-        return `${postDate.toLocaleDateString([], {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        })} ${currentTime}`
-      }
-    }
-  }
 
   const likeToggle = async (message) => {
     const documentRef = doc(db, 'messages', message.messageID);
@@ -543,6 +508,8 @@ const DirectMessage = (props) => {
                 onContextMenu={(event) => event.preventDefault()}
               >
                 <Message
+                  copyHandler = {copyHandler}
+                  unsendHandler = {unsendHandler}
                   formatTimeShort = {formatTimeShort}
                   setSelectedMessage = {setSelectedMessage}
                   setIsMessageLinksOpen = {setIsMessageLinksOpen}
@@ -552,7 +519,6 @@ const DirectMessage = (props) => {
                   isGroup={isGroup}
                   index={index}
                   messages={messages}
-                  formatTime={formatTime}
                   messagesRef={messagesRef}
                   userData={userData}
                   message={message}

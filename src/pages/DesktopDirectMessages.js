@@ -6,6 +6,8 @@ import { useParams } from 'react-router-dom';
 
 const DesktopDirectMessages = (props) => {
   const {
+    copyHandler,
+    unsendHandler,
     isMessageDetailsOpen,
     setIsAddPeopleOpen,
     setSelectedMemberUID,
@@ -192,6 +194,8 @@ const DesktopDirectMessages = (props) => {
               </button>
             </header>
             <DirectMessage
+              copyHandler = {copyHandler}
+              unsendHandler = {unsendHandler}
               isMessageDetailsOpen = {isMessageDetailsOpen}
               setIsAddPeopleOpen={setIsAddPeopleOpen}
               setSelectedMemberUID={setSelectedMemberUID}

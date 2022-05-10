@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import PeopleList from './PeopleList';
 import './SearchResults.css';
 
 const SearchResults = (props) => {
   const {
+    isSearchHashTag,
     deleteRecentSearch,
     isNoMatch,
     isSearching,
@@ -217,7 +219,7 @@ const SearchResults = (props) => {
           unfollowModalHandler={unfollowModalHandler}
         />         
       }
-      {searchString !== '' &&
+      {searchString !== '' && !isSearchHashTag &&
         <PeopleList
           isSearch={true}
           saveRecentSearch={saveRecentSearch}
@@ -231,6 +233,41 @@ const SearchResults = (props) => {
           isFollowLoading={isFollowLoading}
           unfollowModalHandler={unfollowModalHandler}
         />      
+      }
+      {isSearchHashTag &&
+        <ul className='hash-tag-search-list'>
+          {searchResults.map((result) => {
+            return (
+              <li className='hash-tag-search-list-wrapper'>
+                <Link 
+                  to={`/explore/tags/${result.hashTag}/`}
+                  className='hash-tag-search-item'
+                >
+                  <div className='profile-photo-frame'>
+                    <svg aria-label="Hashtag" className='hash-tag-svg' color="#262626" fill="#262626" height="16" role="img" viewBox="0 0 24 24" width="16">
+                      <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="4.728" x2="20.635" y1="7.915" y2="7.915"></line>
+                      <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="3.364" x2="19.272" y1="15.186" y2="15.186"></line>
+                      <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="17.009" x2="13.368" y1="2" y2="22"></line>
+                      <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="10.64" x2="7" y1="2" y2="22"></line>
+                    </svg>
+
+                  </div>
+                  <div className='hash-tag-search-text'>
+                    <span className='hash-tag-title'>
+                      #{result.hashTag}
+                    </span>
+                    <span className='hash-tag-post-count'>
+                      <span className='hash-tag-post-number'>
+                        {result.posts.length}
+                      </span>
+                      posts
+                    </span>
+                  </div>                  
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       }
     </main>
   );

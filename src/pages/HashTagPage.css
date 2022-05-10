@@ -1,0 +1,39 @@
+.hash-tag-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.hash-tag-content {
+  display: flex;
+  flex-direction: column;
+  padding-top: 16px;
+}
+
+.hash-tag-information {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  gap: 16px;
+}
+
+.hash-tag-information .profile-photo-frame {
+  height: 72px;
+  width: 72px;
+  margin: 0;
+}
+
+.hash-tag-post-count {
+  display: flex;
+  gap: 6px;
+}
+
+.post-count {
+  font-weight: 600;
+}
+
+.most-recent-header {
+  margin: 0;
+  font-size: 14px;
+  padding: 16px;
+  color: rgba(142, 142, 142, 1);
+}

@@ -65,3 +65,37 @@
   padding: 8px;
   cursor: pointer;
 }
+
+.hash-tag-search-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  padding-top: 16px;
+}
+
+.hash-tag-search-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  gap: 16px;
+}
+
+.hash-tag-search-item .profile-photo-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.hash-tag-search-text {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  gap: 2px;
+  color: rgba(32, 32, 32, 1);
+}
+
+.hash-tag-post-number,
+.hash-tag-title {
+  font-weight: 600;
+}

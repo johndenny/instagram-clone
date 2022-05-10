@@ -235,7 +235,7 @@ const NewMessage = (props) => {
 
   return (
     <main className='new-message'>
-      {!isSharePostOpen &&
+      {!isSharePostOpen && !isAddPeople &&
         <header className="mobile-navigation-header">
           <div className="mobile-navigation-icon-wrapper">
             {!isMobile

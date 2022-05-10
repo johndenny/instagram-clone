@@ -29,7 +29,8 @@ import {
   arrayRemove, 
   deleteDoc, 
   onSnapshot,
-  limit
+  limit,
+  documentId
 } from 'firebase/firestore';
 import UploadPhotoMobile from './pages/UploadPhotoMobile';
 import UploadPhotoMobileDetails from './pages/UploadPhotoMobileDetails';
@@ -62,6 +63,9 @@ import MessageLikesMobile from './components/MessageLikesMobile';
 import DesktopDirectMessages from './pages/DesktopDirectMessages';
 import NewMessageModal from './components/NewMessageModal';
 import SharePostModal from './components/SharePostModal';
+import MessageLikesModal from './components/MessageLikesModal';
+import { type } from '@testing-library/user-event/dist/type';
+import HashTagPage from './pages/HashTagPage';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -169,6 +173,7 @@ const RouterSwitch = () => {
   const searchTimeoutRef = useRef();
   const [isSearching, setIsSearching] = useState(false);
   const [isNoMatch, setIsNoMatch] = useState(false);
+  const [isSearchHashTag, setIsSearchHashTag] = useState(false);
 
   // MESSAGES //
 
@@ -192,6 +197,9 @@ const RouterSwitch = () => {
   const [isMessageLikesOpen, setIsMessageLikesOpen] = useState(false);
   const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
   const [isGettingDirectMessages, setIsGettingDirectMessages] = useState(false);
+
+  //HASH TAG //
+  const [hashTagString, setHashTagString] = useState('');
 
   //SITE WIDE//
 
@@ -362,12 +370,28 @@ const RouterSwitch = () => {
     setIsNoMatch(false);
     setIsSearching(true);
     const matchedUsers = [];
-    const searchTerm = searchString.toLowerCase();
-    const users = query(collection(db, 'users'), 
-    where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
-    const usersSnapshot = await getDocs(users);
+    let searchTerm = searchString.toLowerCase();
+    let searchQuery;
+    if (isSearchHashTag) {
+      searchTerm = searchTerm.slice(1);
+      searchQuery = query(collection(db, 'hashTags'), 
+        where(documentId(), '>=', searchTerm), where(documentId(), '<=', searchTerm+ '\uf8ff' ));
+    } else {
+      searchQuery = query(collection(db, 'users'), 
+        where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
+    }
+    console.log(searchQuery);
+    console.log(searchTerm)
+    const usersSnapshot = await getDocs(searchQuery);
     usersSnapshot.forEach((user) => {
-      matchedUsers.push(user.data());
+      if (isSearchHashTag) {
+        matchedUsers.push({
+          hashTag: user.id,
+          ...user.data()
+        });
+      } else {
+        matchedUsers.push(user.data());
+      };
     });
     if (matchedUsers.length === 0) {
       setIsNoMatch(true);
@@ -377,6 +401,7 @@ const RouterSwitch = () => {
   }
 
   useEffect(() => {
+    console.log(searchString);
     clearTimeout(searchTimeoutRef.current);
     setSearchResults([]);
     if (searchString !== '') {
@@ -497,14 +522,24 @@ const RouterSwitch = () => {
 
   const stringToLinks = (string) => {
     const profileIndexs = [];
+    const hashTagIndexs = [];
     const stringArray = string.split(' ');
     stringArray.forEach((string, index) => {
-      if (string[0] === '@')
-      profileIndexs.push(index);
+      if (string[0] === '@') {
+        profileIndexs.push(index);
+      };
+      if (string[0] === '#') {
+        hashTagIndexs.push(index);
+      }
     });
     profileIndexs.forEach((index) => {
       const username = stringArray[index].substring(1);
       const profileLink = `<a href='/${username}'>@${username}</a>`
+      stringArray.splice(index, 1, profileLink);
+    });
+    hashTagIndexs.forEach((index) => {
+      const hashTag = stringArray[index].substring(1);
+      const profileLink = `<a href='/explore/tags/${hashTag}/'>#${hashTag}</a>`
       stringArray.splice(index, 1, profileLink);
     });
     return (
@@ -513,11 +548,26 @@ const RouterSwitch = () => {
   };
 
   const deletePost = async (postID) => {
-    console.log(postID);
+    const notificationsQuery = query(collection(db, 'notifications'), where('postID', '==', postID))
+    const notificationSnapshot = await getDocs(notificationsQuery);
+    notificationSnapshot.forEach( async (document) => {
+      const {
+        notificationID
+      } = document.data();
+      await deleteDoc(doc(db, 'notifications', notificationID));
+    });
     const deleteRef = doc(db, 'postUploads', postID)
     const deleteDocument = await getDoc(deleteRef);
-    console.log(deleteDocument.data());
-    const { photos } = deleteDocument.data();
+    const { 
+      photos,
+      hashTags, 
+    } = deleteDocument.data();
+    hashTags.forEach( async (hashTag) => {
+      await deleteDoc(doc(db, hashTag, postID));
+      await updateDoc(doc(db, 'hashTags', hashTag), {
+        posts: arrayRemove(postID)
+      });
+    });
     photos.map( async (photo, index) => {
       await deletePhoto(photo[index]);
     });
@@ -685,10 +735,15 @@ const RouterSwitch = () => {
     if (lastLetter === '@') {
       console.log('@ found');
       setUserIndex(value.length)
+    } else if (lastLetter === '#') {
+      console.log('# found');
+      setUserIndex(value.length);
+      setIsSearchHashTag(true);
     }
     if (value.length < userIndex) {
-      setUserIndex(null)
+      setUserIndex(null);
       setIsSearching(false);
+      setIsSearchHashTag(false);
     };
     console.log(userIndex);
     if (userIndex !== null) {
@@ -1032,7 +1087,6 @@ const RouterSwitch = () => {
       const img = new Image();
       img.onload = () => {
           canvasCropFilterResize(img, 1080, 'display').then((blob) => {
-            console.log('editedPhoto:', editedPhoto);
             setEditedPhoto(blob);
           })    
       };
@@ -1043,7 +1097,6 @@ const RouterSwitch = () => {
   const shareMobilePost = async () => {
     const postID = uuidv4();
     const resizedPhotos = await resizePhoto();
-    console.log(resizedPhotos);
     const {
       photoID,
       aspectRatio,
@@ -1055,6 +1108,12 @@ const RouterSwitch = () => {
       w240,
       w150,
     } = resizedPhotos;
+    const {
+      username,
+      photoURL,
+      uid,
+    } = userData;
+
     const w1080Ref = ref(storage, `w1080_photoUploads/${photoID}.jpg`);
     const w750Ref = ref(storage, `w750_photoUploads/${photoID}.jpg`);
     const w640Ref = ref(storage, `w640_photoUploads/${photoID}.jpg`);
@@ -1105,7 +1164,54 @@ const RouterSwitch = () => {
       w150: w150URL,
       uploadDate: Date.now(),
     }
-    console.log(photoURLS);
+
+    // hash tags //
+    const hashTags = hashTagHandler(photoUploadText);
+    console.log(hashTags);
+    for (let index = 0; index < hashTags.length; index++) {
+      await setDoc(doc(db, hashTags[index], postID), {
+        postID,
+        date: Date.now(),
+      });
+      await setDoc(doc(db, 'hashTags', hashTags[index]), {
+        posts: arrayUnion(postID)
+      });
+    };
+
+    // 'textTags' referes to profile tags in post caption, 'profileTagHandler' gets UIDs from usernames //
+    const textTags = await profileTagHandler(photoUploadText);
+    for (let index = 0; index < textTags.length; index++) {
+      const notificationID = uuidv4();
+      await setDoc(doc(db, 'notifications', notificationID), {
+        notificationID,
+        recipientUID: textTags[index],
+        postID,
+        profile: {
+          username,
+          photoURL,
+          uid,
+        },
+        type: 'mention'
+      });
+    };
+    console.log(textTags);
+
+    // photo tags //
+    for (let index = 0; index < tagIDs.length; index++) {
+      const notificationID = uuidv4();
+      await setDoc(doc(db, 'notifications', notificationID), {
+        notificationID,
+        recipientUID: tagIDs[index],
+        postID,
+        profile: {
+          username,
+          photoURL,
+          uid,
+        },
+        type: 'photo-tag'
+      });
+    };
+
     await setDoc(doc(db, 'photoUploads', photoID), photoURLS);
     await setDoc(doc(db, 'postUploads', postID), {
       postID: postID,
@@ -1115,6 +1221,7 @@ const RouterSwitch = () => {
       likes: [],
       saved: [],
       tags: tagIDs,
+      hashTags,
       uid: userData.uid,
       username: userData.displayName,
       photoURL: userData.photoURL,
@@ -1122,6 +1229,42 @@ const RouterSwitch = () => {
     });
     console.log('photo uploaded', w1080URL);
   }
+
+  const hashTagHandler = (text) => {
+    const textArray = text.split(' ');
+    const hashTags = [];
+    textArray.forEach((word) => {
+      if (word[0] === '#') {
+        hashTags.push(word.slice(1));
+      };
+    });
+    return hashTags;
+  };
+
+  const profileTagHandler = async (text) => {
+    const textArray = text.split(' ');
+    const usernames = [];
+    textArray.forEach((word) => {
+      if (word[0] === '@') {
+        usernames.push(word);
+      };
+    });
+    const UIDs = [];
+    for (let index = 0; index < usernames.length; index++) {
+      const username = usernames[index].slice(1);
+      const profileQuery = query(collection(db, 'users'), where('username', '==', username));
+      const profileSnapshot = await getDocs(profileQuery);
+      profileSnapshot.forEach((document) => {
+        console.log(document.data());
+        const {
+          uid,
+        } = document.data();
+        UIDs.push(uid);        
+      })
+    };
+    console.log(UIDs)
+    return UIDs;
+  };
 
   const resizePhoto = async () => {
     setIsResizing(true);
@@ -1606,21 +1749,56 @@ const RouterSwitch = () => {
     checkForMobile();
   }, []);
 
-  useEffect(() => {
-    console.log(profileData);
-  },[profileData]);
+  const unsendHandler = async () => {
+    const {
+      type,
+      photoURLs,
+      messageID,
+    } = selectedMessage;
+    if (type === 'photo') {
+      const {
+        photoID
+      } = photoURLs;
+      console.log(photoID);
+      const w640Ref = ref(storage, `w640_photoUploads/${photoID}.jpg`);
+      const w480Ref = ref(storage, `w480_photoUploads/${photoID}.jpg`);
+      const w320Ref = ref(storage, `w320_photoUploads/${photoID}.jpg`);
+      const w240Ref = ref(storage, `w240_photoUploads/${photoID}.jpg`);
+      const w150Ref = ref(storage, `w150_photoUploads/${photoID}.jpg`);
+      try {
+        await deleteObject(w640Ref);
+        await deleteObject(w480Ref);
+        await deleteObject(w320Ref);
+        await deleteObject(w240Ref);
+        await deleteObject(w150Ref);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    setIsMessageLinksOpen(false);
+    await deleteDoc(doc(db, 'messages', messageID));
+  }
 
-  useEffect(() => {
-    console.log('navigate:', profileNavigate);
-  }, [profileNavigate]);
-
-  useEffect(() => {
-    console.log(profileModalTimeoutID);
-  },[profileModalTimeoutID]);
-
-  useEffect(() => {
-    console.log(commentIDs);
-  },[commentIDs]); 
+  const copyHandler = () => {
+    const {
+      type,
+      text,
+      post,
+    } = selectedMessage;
+    let copyText;
+    if (type === 'text') {
+      copyText = text;
+    } else if (type === 'post') {
+      copyText = `https://${window.location.host}/p/${post[0].postID}`
+    }
+    navigator.clipboard.writeText(copyText)
+      .then(() => {
+        console.log('copy sucessful');
+      }, (err) => {
+        console.log('error: copy unsucessful');
+      })
+    setIsMessageLinksOpen(false);
+  }
   
   return (
     <BrowserRouter>
@@ -1639,8 +1817,16 @@ const RouterSwitch = () => {
           searchResults = {searchResults}
         />
       }
-      {isMessageLikesOpen &&
+      {isMessageLikesOpen && isMobile &&
         <MessageLikesMobile 
+          userData = {userData}
+          messages = {messages}
+          setIsMessageLikesOpen = {setIsMessageLikesOpen}
+          selectedMessageID = {selectedMessageID}
+        />
+      }
+      {isMessageLikesOpen &&
+        <MessageLikesModal
           userData = {userData}
           messages = {messages}
           setIsMessageLikesOpen = {setIsMessageLikesOpen}
@@ -1649,6 +1835,7 @@ const RouterSwitch = () => {
       }
       {isAddPeopleOpen &&
         <AddPeopleModal
+          isMobile = {isMobile}
           selectedDirectMessageID = {selectedDirectMessageID}
           setIsAddPeopleOpen = {setIsAddPeopleOpen}
           isModal={true}
@@ -1680,23 +1867,10 @@ const RouterSwitch = () => {
           selectedDirectMessageID={selectedDirectMessageID}
         />
       }
-      {/* {isMessageDetailsOpen &&
-        <DirectMessageDetailsModal
-          setIsAddPeopleOpen={setIsAddPeopleOpen}
-          setSelectedMemberUID={setSelectedMemberUID}
-          setIsMemberModalOpen={setIsMemberModalOpen}
-          messageTitle={messageTitle}
-          setMessageTitle={setMessageTitle}
-          setIsDeleteChatOpen={setIsDeleteChatOpen}
-          userData={userData}
-          setHideTopNavigation = {setHideTopNavigation}
-          directMessages={directMessages}
-          setIsMessageDetailsOpen={setIsMessageDetailsOpen}
-          selectedDirectMessageID={selectedDirectMessageID}
-        />
-      } */}
       {isMessageLinksOpen &&
         <MessageLinksModal
+          copyHandler = {copyHandler}
+          unsendHandler = {unsendHandler}
           userData={userData}
           selectedMessage={selectedMessage}
           setIsMessageLinksOpen={setIsMessageLinksOpen}
@@ -1823,6 +1997,7 @@ const RouterSwitch = () => {
 
         {(userLoggedIn && !isMobile) &&
           <NavigationBar
+            notReadCount = {notReadCount}
             deleteRecentSearch={deleteRecentSearch}
             isNoMatch={isNoMatch}
             isSearching={isSearching}
@@ -1850,6 +2025,8 @@ const RouterSwitch = () => {
         }
         {(userLoggedIn && isMobile && !photoUploadOpen) &&
           <MobileNavigationBars
+            setIsSearchHashTag = {setIsSearchHashTag}
+            hashTagString = {hashTagString}
             notReadCount={notReadCount}
             setHideTopNavigation={setHideTopNavigation}
             setIsMessageDetailsOpen={setIsMessageDetailsOpen}
@@ -1996,6 +2173,8 @@ const RouterSwitch = () => {
                       setIsInboxOpen = {setIsInboxOpen }
                     />
                   : <DesktopDirectMessages
+                      copyHandler = {copyHandler}
+                      unsendHandler = {unsendHandler}
                       isMessageDetailsOpen = {isMessageDetailsOpen}
                       setIsAddPeopleOpen={setIsAddPeopleOpen}
                       setSelectedMemberUID={setSelectedMemberUID}
@@ -2025,9 +2204,29 @@ const RouterSwitch = () => {
                       selectedMessage={selectedMessage}
                     />
               } />
-              <Route path='/explore/' element={<Explore />} />
+              <Route path='/explore/' element={
+                <Explore 
+                  getPhotoURLs = {getPhotoURLs}
+                  isMobile = {isMobile}
+                  getPostData = {getPostData}
+                  setIsLoadingPage = {setIsLoadingPage}
+                  setBackgroundLocation = {setBackgroundLocation}
+                />
+              }/>
+              <Route path='/explore/tags/:hashTag' element={
+                <HashTagPage
+                  hashTagString = {hashTagString}
+                  setHashTagString = {setHashTagString}
+                  getPhotoURLs = {getPhotoURLs}
+                  isMobile = {isMobile}
+                  getPostData = {getPostData}
+                  setIsLoadingPage = {setIsLoadingPage}
+                  setBackgroundLocation = {setBackgroundLocation}
+                />
+              }/>
               <Route path='/explore/search' element={
                 <SearchResults
+                  isSearchHashTag = {isSearchHashTag}
                   deleteRecentSearch={deleteRecentSearch}
                   isNoMatch={isNoMatch}
                   clearRecentSearch={clearRecentSearch}
@@ -2093,6 +2292,8 @@ const RouterSwitch = () => {
               } />
               <Route path='/create/details' element={ 
                 <UploadPhotoMobileDetails
+                  isSearchHashTag = {isSearchHashTag}
+                  setCaptionSearchString = {setCaptionSearchString}
                   setPhotoUploadText={setPhotoUploadText}
                   captionSearchString={captionSearchString}
                   setUserIndex={setUserIndex}
@@ -2256,6 +2457,7 @@ const RouterSwitch = () => {
               setDataLoading={setDataLoading}
               selectedPost={selectedPost}
               setSelectedPost={setSelectedPost}
+              setIsSearchHashTag = {setIsSearchHashTag}
             />}
           />
           <Route path='/p/:postID/liked_by' element={

@@ -2,7 +2,7 @@ import './UploadPhotoMobileDetails.css'
 import { useNavigate } from 'react-router-dom'
 import React, { useEffect, useRef, useState } from 'react';
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
-import { getFirestore, setDoc, doc, getDoc, query, collection, where, getDocs } from 'firebase/firestore';
+import { getFirestore, documentId, setDoc, doc, getDoc, query, collection, where, getDocs } from 'firebase/firestore';
 import firebaseApp from '../Firebase';
 import {v4 as uuidv4} from 'uuid';
 import PeopleList from '../components/PeopleList';
@@ -12,6 +12,8 @@ const db = getFirestore();
 
 const UploadPhotoMobileDetails = (props) => {
   const {
+    isSearchHashTag,
+    setCaptionSearchString,
     setPhotoUploadText,
     captionSearchString,
     setUserIndex,
@@ -39,11 +41,24 @@ const UploadPhotoMobileDetails = (props) => {
     setIsSearching(true);
     const matchedUsers = [];
     const searchTerm = captionSearchString.toLowerCase();
-    const users = query(collection(db, 'users'), 
-    where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
-    const usersSnapshot = await getDocs(users);
+    let searchQuery;
+    if (isSearchHashTag) {
+      searchQuery = query(collection(db, 'hashTags'), 
+        where(documentId(), '>=', searchTerm), where(documentId(), '<=', searchTerm+ '\uf8ff' ));
+    } else {
+      searchQuery = query(collection(db, 'users'), 
+        where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
+    }
+    const usersSnapshot = await getDocs(searchQuery);
     usersSnapshot.forEach((user) => {
-      matchedUsers.push(user.data());
+      if (isSearchHashTag) {
+        matchedUsers.push({
+          hashTag: user.id,
+          ...user.data()
+        });
+      } else {
+        matchedUsers.push(user.data());
+      };
     });
     setSearchResults(matchedUsers);
   }
@@ -58,9 +73,9 @@ const UploadPhotoMobileDetails = (props) => {
     }; 
   }, [captionSearchString]);
 
-  const searchSelection = (username) => {
+  const searchSelection = (text) => {
     const slicedComment = photoUploadText.slice(0, userIndex);
-    const name = `${username} `
+    const name = `${text} `
     const newCommentText = slicedComment.concat(name);
     setPhotoUploadText(newCommentText);
     setUserIndex(null)
@@ -82,6 +97,7 @@ const UploadPhotoMobileDetails = (props) => {
   }
 
   useEffect(() => {
+    setCaptionSearchString('');
     setPhotoUploadOpen(true);
   }, []);
   
@@ -144,7 +160,7 @@ const UploadPhotoMobileDetails = (props) => {
           <div className='upload-photo-preview-wrapper'>
             <img alt='Preview to be uploaded' className='upload-photo-preview' src={URL.createObjectURL(editedPhoto)} />
           </div>
-          {isSearching &&
+          {isSearching && !isSearchHashTag &&
             <section className='profile-search-results'>
               <PeopleList 
                 searchSelection={searchSelection}
@@ -154,6 +170,28 @@ const UploadPhotoMobileDetails = (props) => {
                 allUserProfiles={searchResults}
               />              
             </section> 
+          }
+          {isSearching && isSearchHashTag && 
+            <ul 
+              className='profile-search-results'
+            >
+              {searchResults.map((hashTag) => {
+                return (
+                  <li 
+                    className='hash-tag-search-result'
+                    onClick={() => searchSelection(hashTag.hashTag)}
+                    onMouseDown={(event) => event.preventDefault()}
+                  >
+                    <span className='hash-tag-text'>
+                      #{hashTag.hashTag}
+                    </span>
+                    <span className='hast-tag-post-length'>
+                      {hashTag.posts.length} posts
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
           }
         </section>
         <section className='write-alt-text-wrapper'>

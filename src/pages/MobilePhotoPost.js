@@ -1492,8 +1492,10 @@ const MobilePhotoPost = (props) => {
                       <span>&nbsp;</span>
                       {postCaption.length > 125 &&
                         <span className='post-caption-text'>
-                          <span className='first-caption-section'>
-                            {postCaption.substring(0, 125)}
+                          <span 
+                            className='first-caption-section'
+                            dangerouslySetInnerHTML={{__html: `${stringToLinks(postCaption.substring(0, 125))}`}} 
+                          >
                           </span>
                           {postHidden &&
                             <React.Fragment>
@@ -1505,15 +1507,19 @@ const MobilePhotoPost = (props) => {
                             </React.Fragment>                     
                           }
                           {!postHidden &&
-                            <span className='second-caption-section'>
-                              {postCaption.substring(125)}
+                            <span 
+                              className='second-caption-section'
+                              dangerouslySetInnerHTML={{__html: `${stringToLinks(postCaption.substring(125))}`}} 
+                            >
                             </span>
                           }
                         </span>                  
                       }
                       {postCaption.length < 125 &&
-                        <span className='post-caption-text'>
-                          {postCaption}                      
+                        <span 
+                          className='post-caption-text'
+                          dangerouslySetInnerHTML={{__html: `${stringToLinks(postCaption)}`}} 
+                        >                    
                         </span>
                       }
                     </div>                    

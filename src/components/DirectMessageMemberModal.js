@@ -1,4 +1,4 @@
-import { updateDoc, getFirestore, doc, setDoc, arrayRemove, getDoc, } from 'firebase/firestore';
+import { updateDoc, getFirestore, doc, setDoc, arrayRemove, getDoc, arrayUnion, } from 'firebase/firestore';
 import './DirectMessageMemberModal.css';
 import { v4 as uuidv4 } from 'uuid';
 import { useLayoutEffect, useState } from 'react';
@@ -17,9 +17,9 @@ const DirectMessageMemberModal = (props) => {
 
   useLayoutEffect(() => {
     const index = directMessages.findIndex((message) => message.directMessageID === selectedDirectMessageID);
-    const profiles = directMessages[index].profiles;
-    const profileIndex = profiles.findIndex((profile) => profile.uid === selectedMemberUID);
-    if (profiles[profileIndex].isAdmin) {
+    const { adminUIDs } = directMessages[index];
+    const profileIndex = adminUIDs.findIndex((uid) => uid === selectedMemberUID);
+    if (profileIndex !== -1) {
       setIsUserAdmin(true);
     } else {
       setIsUserAdmin(false);
@@ -28,31 +28,30 @@ const DirectMessageMemberModal = (props) => {
 
   const adminToggle = async () => {
     const index = directMessages.findIndex((message) => message.directMessageID === selectedDirectMessageID);
-    const profiles = directMessages[index].profiles;
-    const profileIndex = profiles.findIndex((profile) => profile.uid === selectedMemberUID);
-    const newProfiles = [...profiles]
-    let newProfile;
-    if (profiles[profileIndex].isAdmin) {
-      newProfile = {...profiles[profileIndex], isAdmin: false};
+    const { adminUIDs } = directMessages[index];
+    const adminIndex = adminUIDs.findIndex((uid) => uid === selectedMemberUID);
+    console.log(adminIndex, selectedMemberUID)
+    if (adminIndex === -1) {
+      await updateDoc(doc(db, 'directMessages', selectedDirectMessageID), {
+        adminUIDs: arrayUnion(selectedMemberUID)
+      });      
     } else {
-      newProfile = {...profiles[profileIndex], isAdmin: true};
-         
-    }
-    newProfiles.splice(profileIndex, 1, newProfile);
-    await updateDoc(doc(db, 'directMessages', selectedDirectMessageID), {
-      profiles: newProfiles
-    });
+      await updateDoc(doc(db, 'directMessages', selectedDirectMessageID), {
+        adminUIDs: arrayRemove(selectedMemberUID)
+      });      
+    };
     setIsMemberModalOpen(false);   
   };
 
   const removeMember = async () => {
     const index = directMessages.findIndex((message) => message.directMessageID === selectedDirectMessageID);
-    const profiles = directMessages[index].profiles;
+    const { profiles } = directMessages[index];
     const profileIndex = profiles.findIndex((profile) => profile.uid === selectedMemberUID);
     const messageRef = doc(db, 'directMessages', selectedDirectMessageID)
     await updateDoc(messageRef, {
       UIDs: arrayRemove(selectedMemberUID),
-      profiles: arrayRemove(profiles[profileIndex])
+      profiles: arrayRemove(profiles[profileIndex]),
+      adminUIDs: arrayRemove(selectedMemberUID)
     });
     let UIDs;
     const messageSnap = await getDoc(messageRef);
@@ -69,6 +68,7 @@ const DirectMessageMemberModal = (props) => {
     await setDoc(doc(db, 'messages', messageID), {
        recipientUIDs: UIDs,
        notRead: UIDs,
+       seenBy: [],
        messageID: messageID,
        directMessageID: selectedDirectMessageID,
        username: username,

@@ -5,7 +5,6 @@ import './MessagePost.css';
 const MessagePost = (props) => {
   const {
     message,
-    messagesRef
   } = props;
   const {
     username,

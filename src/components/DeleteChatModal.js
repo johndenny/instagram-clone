@@ -1,6 +1,6 @@
 import './DeleteChatModal.css';
 import firebaseApp from '../Firebase';
-import { getFirestore, setDoc, doc, query, collection, where, getDocs, getDoc, updateDoc, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { getFirestore, setDoc, doc, query, collection, where, getDocs, getDoc, updateDoc, arrayRemove, deleteDoc, arrayUnion } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { useState } from 'react';
@@ -10,7 +10,6 @@ const db = getFirestore();
 const DeleteChatModal = (props) => {
   const {
     directMessages,
-    getAllDirectMessages,
     setIsMessageDetailsOpen,
     userData,
     setIsDeleteChatOpen,
@@ -58,15 +57,21 @@ const DeleteChatModal = (props) => {
       const docRef = doc(db, 'directMessages', selectedDirectMessageID)
       await updateDoc(docRef, {
         profiles: arrayRemove(profiles[profileIndex]),
-        UIDs: arrayRemove(userData.uid)
+        UIDs: arrayRemove(userData.uid),
+        adminUIDs: arrayRemove(userData.uid)
       })
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const {
-          UIDs
+          UIDs,
+          adminUIDs
         } = docSnap.data();
         if (UIDs.length === 0) {
           await deleteDoc(docRef);
+        } else if (adminUIDs.length === 0) {
+          await updateDoc(docRef, {
+            adminUIDs: arrayUnion(UIDs[0])
+          });
         } else {
           const messageID = uuidv4();
           const {
@@ -78,6 +83,7 @@ const DeleteChatModal = (props) => {
           await setDoc(doc(db, 'messages', messageID), {
             recipientUIDs: UIDs,
             notRead: UIDs,
+            seenBy: [],
             messageID: messageID,
             directMessageID: selectedDirectMessageID,
             username: username,
