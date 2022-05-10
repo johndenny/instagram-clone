@@ -314,6 +314,23 @@ const RouterSwitch = () => {
     getUserProfileDoc(userData);
   }
 
+  const deleteRecentHashTagSearch = async (event, hashTag) => {
+    event.stopPropagation();
+    event.preventDefault();
+    const { recentSearch } = userData;
+    const index = recentSearch.findIndex((search) => search.hashTag === hashTag);
+    const currentUserDataRef = doc(db, 'users', userData.uid);
+    if (index !== -1) {
+      await updateDoc(currentUserDataRef, {
+        recentSearch: arrayRemove(recentSearch[index])
+      });
+      console.log('success: recentSearch removed');
+    } else {
+      console.log('error: recentSearch delete');
+    }
+    getUserProfileDoc(userData);
+  }
+
   const clearRecentSearch = async () => {
     const currentUserDataRef = doc(db, 'users', userData.uid); 
     await updateDoc(currentUserDataRef, {recentSearch: []});
@@ -365,6 +382,45 @@ const RouterSwitch = () => {
     }
     getUserProfileDoc(userData);
   }
+
+  const saveRecentHashTagSearch = async (hash) => {
+    console.log('saveRecentHashTag', hash);
+    const {
+      hashTag,
+      posts
+    } = hash;
+    const currentUserDataRef = doc(db, 'users', userData.uid);
+    const currentUserDataSnapshot = await getDoc(currentUserDataRef);
+    if (currentUserDataSnapshot.exists()) {
+      const {
+        recentSearch
+      } = currentUserDataSnapshot.data();
+      const index = recentSearch.findIndex((search) => search.hashTag === hashTag);
+      console.log(index);
+      if (index === -1) {
+        await updateDoc(currentUserDataRef, {
+          recentSearch: arrayUnion({
+            hashTag,
+            postCount: posts.length,
+            uploadDate: Date.now(),
+          })
+        });
+      } else {
+        await updateDoc(currentUserDataRef, {
+          recentSearch: arrayRemove(recentSearch[index])
+        });
+        await updateDoc(currentUserDataRef, {
+          recentSearch: arrayUnion({
+            hashTag,
+            postCount: posts.length,
+            uploadDate: Date.now(),
+          })
+        });
+      };
+    };
+    getUserProfileDoc(userData);
+    setSearchString('');
+  };
 
   const getSearchResults = async () => {
     setIsNoMatch(false);
@@ -2226,6 +2282,8 @@ const RouterSwitch = () => {
               }/>
               <Route path='/explore/search' element={
                 <SearchResults
+                  deleteRecentHashTagSearch = {deleteRecentHashTagSearch}
+                  saveRecentHashTagSearch = {saveRecentHashTagSearch}
                   isSearchHashTag = {isSearchHashTag}
                   deleteRecentSearch={deleteRecentSearch}
                   isNoMatch={isNoMatch}

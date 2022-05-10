@@ -5,6 +5,8 @@ import './SearchResults.css';
 
 const SearchResults = (props) => {
   const {
+    deleteRecentHashTagSearch,
+    saveRecentHashTagSearch,
     isSearchHashTag,
     deleteRecentSearch,
     isNoMatch,
@@ -35,6 +37,7 @@ const SearchResults = (props) => {
       return z.uploadDate - a.uploadDate; 
     })
     setSortedRecentSearch(sortedArray);
+    console.log(userData.recentSearch);
   },[userData])
 
   return (
@@ -204,6 +207,7 @@ const SearchResults = (props) => {
       }
       {userData.recentSearch.length > 0 && searchString === '' &&        
         <PeopleList
+          deleteRecentHashTagSearch = {deleteRecentHashTagSearch}
           isRecentSearch={true}
           deleteRecentSearch={deleteRecentSearch}
           isSearch={true}
@@ -238,7 +242,10 @@ const SearchResults = (props) => {
         <ul className='hash-tag-search-list'>
           {searchResults.map((result) => {
             return (
-              <li className='hash-tag-search-list-wrapper'>
+              <li 
+                className='hash-tag-search-list-wrapper'
+                onClick={() => saveRecentHashTagSearch(result)}
+              >
                 <Link 
                   to={`/explore/tags/${result.hashTag}/`}
                   className='hash-tag-search-item'
