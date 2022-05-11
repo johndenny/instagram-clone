@@ -662,25 +662,53 @@ const RouterSwitch = () => {
       photoURL,
       uid,
       displayName,
-      fullname
+      fullname,
+      username
     } = userData;
     const postRef = doc(db, 'postUploads', postID);
     const postSnap = await getDoc(postRef);
     if (postSnap.exists()) {
-      const { likes } = postSnap.data();
+      const { 
+        likes,
+      } = postSnap.data();
       const likeIndex = likes.findIndex((like) => like.uid === uid)
       if (likeIndex === -1) {
+        const likeID = uuidv4();
         await updateDoc(postRef, {
           likes: arrayUnion({
-            likeID: uuidv4(),
+            likeID,
             photoURL: photoURL,
             uid: uid,
             uploadDate: Date.now(),
             username: displayName,
             fullName: fullname
           })
-        });          
+        });
+        const notificationID = uuidv4();
+        await setDoc(doc(db, 'notifications', notificationID), {
+          notificationID,
+          originID: likeID,
+          recipientUID: postSnap.data().uid,
+          postID,
+          profile: {
+            username,
+            photoURL,
+            uid,
+          },
+          type: 'like',
+          source: 'post',
+          date: Date.now()
+        })      
       } else {
+        const {
+          likeID
+        } = likes[likeIndex]
+        const notificationQuery = query(collection(db, 'notifications'), 
+          where('originID', '==', likeID));
+        const notificationSnapshot = await getDocs(notificationQuery);
+        notificationSnapshot.forEach( async (document) => {
+          await deleteDoc(doc(db, 'notifications', document.data().notificationID))
+        });
         await updateDoc(postRef, {
           likes: arrayRemove(likes[likeIndex])
         });        

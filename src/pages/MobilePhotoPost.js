@@ -1,6 +1,6 @@
 import './MobilePhotoPost.css'
 import firebaseApp from '../Firebase';
-import { getFirestore, documentId, query, collection, where, orderBy, getDocs, doc, getDoc, updateDoc, arrayUnion, arrayRemove} from 'firebase/firestore';
+import { setDoc, deleteDoc, getFirestore, documentId, query, collection, where, orderBy, getDocs, doc, getDoc, updateDoc, arrayUnion, arrayRemove} from 'firebase/firestore';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
@@ -237,23 +237,28 @@ const MobilePhotoPost = (props) => {
   }
 
   const likeHandler = async () => {
+    console.log('hello');
     const {
       photoURL,
       uid,
       displayName,
-      fullname
+      fullname,
+      username
     } = userData;
-    const { postID } = selectedPost[0];   
-    const alreadyLiked = selectedPost[0].likes
-      .findIndex((like) => like.uid === uid);
+    const { 
+      postID,
+      likes, 
+    } = selectedPost[0];   
+    const alreadyLiked = likes.findIndex((like) => like.uid === uid);
     if (alreadyLiked === -1) {
       setIsButtonLiked(true);
       const newLikes = [...selectedPost[0].likes];
       const newPost = {...selectedPost[0], likes: newLikes};
       const newArray = [...selectedPost];
       const allPost = [...photosArray];
+      const likeID = uuidv4();
       newLikes.push({
-        likeID: uuidv4(),
+        likeID,
         photoURL: photoURL,
         uid: uid,
         uploadDate: Date.now(),
