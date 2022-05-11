@@ -1,4 +1,16 @@
-import { arrayUnion, getDoc, updateDoc, doc, getFirestore } from 'firebase/firestore';
+import { 
+  arrayUnion, 
+  getDoc, 
+  updateDoc, 
+  doc, 
+  getFirestore, 
+  setDoc, 
+  deleteDoc,
+  query,
+  collection,
+  where,
+  getDocs
+} from 'firebase/firestore';
 import firebaseApp from '../Firebase';
 import { useEffect, useRef, useState } from 'react';
 import './Comment.css';
@@ -83,20 +95,45 @@ const Comment = (props) => {
             const likeIndex = likes.findIndex((like) => like.uid === uid);
             if (likeIndex === -1) {
               setIsLiked(true);
+              const likeID = uuidv4();
               const newLike = {
-                likeID: uuidv4(),
+                likeID,
                 photoURL: photoURL,
                 uid: uid,
                 uploadDate: Date.now(),
                 username: displayName,
                 fullname: fullname,
               };
+              const notificationID = uuidv4();
+              await setDoc(doc(db, 'notifications', notificationID), {
+                notificationID,
+                originID: likeID,
+                recipientUID: replies[replyIndex].uid,
+                postID,
+                profile: {
+                  username,
+                  photoURL,
+                  uid,
+                },
+                type: 'like',
+                source: 'comment',
+                date: Date.now()
+              })
               const newLikes = [...likes, newLike];
               // comment is reply in props
               const newReply = {...comment, likes: newLikes}
               newReplies.splice(replyIndex, 1, newReply);
               newComment = {...comments[commentIndex], replies: newReplies}              
             } else {
+              const {
+                likeID
+              } = likes[likeIndex]
+              const notificationQuery = query(collection(db, 'notifications'), 
+                where('originID', '==', likeID));
+              const notificationSnapshot = await getDocs(notificationQuery);
+              notificationSnapshot.forEach( async (document) => {
+                await deleteDoc(doc(db, 'notifications', document.data().notificationID))
+              });
               const newLikes = [...likes];
               newLikes.splice(likeIndex, 1);
               const newReply = {...comment, likes: newLikes};
@@ -114,14 +151,30 @@ const Comment = (props) => {
           const likeIndex = likes.findIndex((like) => like.uid === uid)
           if (likeIndex === -1) {
             setIsLiked(true);
+            const likeID = uuidv4();
             const newLike = {
-              likeID: uuidv4(),
+              likeID,
               photoURL: photoURL,
               uid: uid,
               uploadDate: Date.now(),
               username: displayName,
               fullname: fullname,
             };
+            const notificationID = uuidv4();
+            await setDoc(doc(db, 'notifications', notificationID), {
+              notificationID,
+              originID: likeID,
+              recipientUID: comments[commentIndex].uid,
+              postID,
+              profile: {
+                username,
+                photoURL,
+                uid,
+              },
+              type: 'like',
+              source: 'comment',
+              date: Date.now()
+            })
             const newLikes = [...likes, newLike];
             const newComment = {...comment, likes: newLikes};
             newComments.splice(commentIndex, 1, newComment);
@@ -129,6 +182,18 @@ const Comment = (props) => {
               comments: newComments
             });
           } else {
+            const {
+              likeID
+            } = likes[likeIndex]
+            const notificationQuery = query(collection(db, 'notifications'), 
+              where('originID', '==', likeID));
+            const notificationSnapshot = await getDocs(notificationQuery);
+            notificationSnapshot.forEach( async (document) => {
+              const {
+                notificationID,
+              } = document.data();
+              await deleteDoc(doc(db, 'notifications', notificationID));
+            });
             const newLikes = [...likes];
             newLikes.splice(likeIndex, 1);
             const newComment = {...comment, likes: newLikes};
