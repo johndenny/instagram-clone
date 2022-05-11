@@ -1,6 +1,6 @@
 import './MobilePhotoPost.css'
 import firebaseApp from '../Firebase';
-import { getFirestore, query, collection, where, orderBy, getDocs, doc, getDoc, updateDoc, arrayUnion, arrayRemove} from 'firebase/firestore';
+import { getFirestore, documentId, query, collection, where, orderBy, getDocs, doc, getDoc, updateDoc, arrayUnion, arrayRemove} from 'firebase/firestore';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
@@ -85,6 +85,7 @@ const MobilePhotoPost = (props) => {
   const [searchResults, setSearchResults] = useState([]);
   const searchTimeoutRef = useRef(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [isSearchHashTag, setIsSearchHashTag] = useState(false);
 
   useEffect(() => {
     if (isModal) {
@@ -104,11 +105,24 @@ const MobilePhotoPost = (props) => {
     setIsSearching(true);
     const matchedUsers = [];
     const searchTerm = searchString.toLowerCase();
-    const users = query(collection(db, 'users'), 
-    where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
-    const usersSnapshot = await getDocs(users);
+    let searchQuery;
+    if (isSearchHashTag) {
+      searchQuery = query(collection(db, 'hashTags'), 
+        where(documentId(), '>=', searchTerm), where(documentId(), '<=', searchTerm+ '\uf8ff' ));
+    } else {
+      searchQuery = query(collection(db, 'users'), 
+        where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
+    }
+    const usersSnapshot = await getDocs(searchQuery);
     usersSnapshot.forEach((user) => {
-      matchedUsers.push(user.data());
+      if (isSearchHashTag) {
+        matchedUsers.push({
+          hashTag: user.id,
+          ...user.data()
+        });
+      } else {
+        matchedUsers.push(user.data());
+      };
     });
     setSearchResults(matchedUsers);
   }
@@ -892,6 +906,8 @@ const MobilePhotoPost = (props) => {
               </div>
             </footer>
             <PostComments
+              isSearchHashTag = {isSearchHashTag}
+              setIsSearchHashTag = {setIsSearchHashTag}
               setIsSearching={setIsSearching}
               isSearching={isSearching}
               searchResults={searchResults}
@@ -1221,6 +1237,8 @@ const MobilePhotoPost = (props) => {
                   </div>
                 </footer>
                 <PostComments
+                  isSearchHashTag = {isSearchHashTag}
+                  setIsSearchHashTag = {setIsSearchHashTag}
                   setIsSearching={setIsSearching}
                   isSearching={isSearching}
                   searchResults={searchResults}
@@ -1634,6 +1652,8 @@ const MobilePhotoPost = (props) => {
               </footer>
               {width > 736 &&
                 <PostComments
+                  isSearchHashTag = {isSearchHashTag}
+                  setIsSearchHashTag = {setIsSearchHashTag}
                   setIsSearching={setIsSearching}
                   isSearching={isSearching}
                   searchResults={searchResults}

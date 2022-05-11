@@ -1,8 +1,10 @@
+import { useEffect } from 'react';
 import './CommentSearchModal.css';
 import PeopleList from './PeopleList';
 
 const CommentSearchModal = (props) => {
   const {
+    isSearchHashTag,
     textareaRef,
     setUserIndex,
     setIsSearching,
@@ -23,6 +25,10 @@ const CommentSearchModal = (props) => {
     textareaRef.current.focus();
   }
 
+  useEffect(() => {
+    console.log(isSearchHashTag);
+  },[]);
+
   return (
     <section 
       className='comment-search-modal'
@@ -37,13 +43,42 @@ const CommentSearchModal = (props) => {
         }
       }
     >
-      <PeopleList
-        searchSelection={searchSelection}
-        isTag={false}
-        isSearch={true}
-        isComment={true}
-        allUserProfiles={searchResults}
-      />  
+      {!isSearchHashTag &&
+        <PeopleList
+          searchSelection={searchSelection}
+          isTag={false}
+          isSearch={true}
+          isComment={true}
+          allUserProfiles={searchResults}
+        />       
+      }
+      {isSearchHashTag &&
+        <ul 
+          className='comment-search-results'
+        >
+          {searchResults.map((hash) => {
+            const {
+              hashTag,
+              posts
+            } = hash;
+            return (
+              <li 
+                className='hash-tag-search-result'
+                key={hashTag}
+                onClick={() => searchSelection(hashTag)}
+                onMouseDown={(event) => event.preventDefault()}
+              >
+                <span className='hash-tag-text'>
+                  #{hashTag}
+                </span>
+                <span className='hast-tag-post-length'>
+                  {posts.length} posts
+                </span>
+              </li>
+            );
+          })}
+        </ul>       
+      }
     </section>
   )
 }

@@ -5,6 +5,7 @@ import './SearchResults.css';
 
 const SearchResults = (props) => {
   const {
+    setIsSearchClicked,
     deleteRecentHashTagSearch,
     saveRecentHashTagSearch,
     isSearchHashTag,
@@ -39,6 +40,11 @@ const SearchResults = (props) => {
     setSortedRecentSearch(sortedArray);
     console.log(userData.recentSearch);
   },[userData])
+
+  const hashTagClickHandler = (result) => {
+    setIsSearchClicked(false);
+    saveRecentHashTagSearch(result)
+  }
 
   return (
     <main className='search-results'>
@@ -207,6 +213,7 @@ const SearchResults = (props) => {
       }
       {userData.recentSearch.length > 0 && searchString === '' &&        
         <PeopleList
+          setIsSearchClicked = {setIsSearchClicked}
           deleteRecentHashTagSearch = {deleteRecentHashTagSearch}
           isRecentSearch={true}
           deleteRecentSearch={deleteRecentSearch}
@@ -244,7 +251,7 @@ const SearchResults = (props) => {
             return (
               <li 
                 className='hash-tag-search-list-wrapper'
-                onClick={() => saveRecentHashTagSearch(result)}
+                onClick={() => hashTagClickHandler(result)}
               >
                 <Link 
                   to={`/explore/tags/${result.hashTag}/`}

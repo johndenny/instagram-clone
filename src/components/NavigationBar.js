@@ -8,6 +8,10 @@ import SearchDropDown from './SearchDropDown';
 
 const NavigationBar = (props) => {
   const {
+    deleteRecentHashTagSearch,
+    saveRecentHashTagSearch,
+    isSearchHashTag,
+    setIsSearchHashTag,
     notReadCount,
     deleteRecentSearch,
     isNoMatch,
@@ -69,6 +73,11 @@ const NavigationBar = (props) => {
     const { value } = event.target;
     if (value !== '') {
       searchInputRef.current.focus();
+    }
+    if (value[0] === '#') {
+      setIsSearchHashTag(true);
+    } else {
+      setIsSearchHashTag(false);
     }
     setSearchString(value);
   }
@@ -136,6 +145,10 @@ const NavigationBar = (props) => {
             }
             {isSearchClicked &&
               <SearchDropDown
+                setIsSearchClicked = {setIsSearchClicked}
+                deleteRecentHashTagSearch = {deleteRecentHashTagSearch}
+                saveRecentHashTagSearch = {saveRecentHashTagSearch}
+                isSearchHashTag = {isSearchHashTag}
                 deleteRecentSearch={deleteRecentSearch}
                 isNoMatch={isNoMatch}
                 isSearching={isSearching}

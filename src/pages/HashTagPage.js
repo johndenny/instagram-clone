@@ -56,15 +56,23 @@ const HashTagPage = (props) => {
           <div className='profile-photo-frame'>
             <img alt='' className='profile-photo' src={featuredPhoto}/>
           </div>
-          <span className='hash-tag-post-count'>
-            <span className='post-count'>
-              {postCount}
-            </span> 
-            {postCount.length === 1
-              ? 'post'
-              : 'posts'
+          <div className='hash-tag-page-text-wrapper'>
+            {!isMobile &&
+              <h1 className='hash-tag-header-text'>
+                #{hashTagString}
+              </h1>            
             }
-          </span>
+            <span className='hash-tag-post-count'>
+              <span className='post-count'>
+                {postCount}
+              </span> 
+              {postCount.length === 1
+                ? 'post'
+                : 'posts'
+              }
+            </span>            
+          </div>
+
         </div>
         <div className='most-recent-photos'>
           <h2 className='most-recent-header'>

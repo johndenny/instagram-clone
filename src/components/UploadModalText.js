@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { getFirestore, query, collection, where, getDocs } from 'firebase/firestore';
+import { getFirestore, query, collection, where, getDocs, documentId } from 'firebase/firestore';
 import firebaseApp from '../Firebase';
 import './UploadModalText.css';
 import PeopleList from './PeopleList';
@@ -21,6 +21,7 @@ const UploadModalText = (props) => {
   const [searchResults, setSearchResults] = useState([]);
   const searchTimeoutRef = useRef(null);
   const textareaRef = useRef(null);
+  const [isSearchHashTag, setIsSearchHashTag] = useState(false);
 
   const accessibilityToggle = () => {
     accessibilityOpen 
@@ -42,10 +43,15 @@ const UploadModalText = (props) => {
     if (lastLetter === '@') {
       console.log('@ found');
       setUserIndex(value.length)
+    } else if (lastLetter === '#') {
+      console.log('# found');
+      setUserIndex(value.length);
+      setIsSearchHashTag(true);
     }
     if (value.length < userIndex) {
-      setUserIndex(null)
+      setUserIndex(null);
       setIsSearching(false);
+      setIsSearchHashTag(false);
     };
     console.log(userIndex);
     if (userIndex !== null) {
@@ -58,7 +64,9 @@ const UploadModalText = (props) => {
         setUserIndex(null);
       }
     }
-    if ((valueArray[valueArray.length - 1] === ' ' && captionTextArray[captionTextArray.length - 1] === ' ') || valueArray.length > 2200) {
+    if ((valueArray[valueArray.length - 1] === ' ' && 
+      captionTextArray[captionTextArray.length - 1] === ' ') || 
+      valueArray.length > 2200) {
       return
     } else {
       setCaptionText(value);
@@ -69,11 +77,24 @@ const UploadModalText = (props) => {
     setIsSearching(true);
     const matchedUsers = [];
     const searchTerm = searchString.toLowerCase();
-    const users = query(collection(db, 'users'), 
-    where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
-    const usersSnapshot = await getDocs(users);
+    let searchQuery;
+    if (isSearchHashTag) {
+      searchQuery = query(collection(db, 'hashTags'), 
+        where(documentId(), '>=', searchTerm), where(documentId(), '<=', searchTerm+ '\uf8ff' ));
+    } else {
+      searchQuery = query(collection(db, 'users'), 
+        where('username', '>=', searchTerm), where('username', '<=', searchTerm+ '\uf8ff' ));
+    }
+    const usersSnapshot = await getDocs(searchQuery);
     usersSnapshot.forEach((user) => {
-      matchedUsers.push(user.data());
+      if (isSearchHashTag) {
+        matchedUsers.push({
+          hashTag: user.id,
+          ...user.data()
+        });
+      } else {
+        matchedUsers.push(user.data());
+      };
     });
     setSearchResults(matchedUsers);
   }
@@ -144,20 +165,39 @@ const UploadModalText = (props) => {
             /2,200
           </span>
         </div>
-        {isSearching &&
-          <section 
-            className='profile-search-results'
-          >
+        {isSearching && !isSearchHashTag &&
+          <section className='profile-search-results'>
             <PeopleList 
               searchSelection={searchSelection}
               isTag={false}
               isSearch={true}
               isComment={true}
               allUserProfiles={searchResults}
-            />
-          </section>
+            />              
+          </section> 
         }
-        
+        {isSearching && isSearchHashTag && 
+          <ul 
+            className='profile-search-results'
+          >
+            {searchResults.map((hashTag) => {
+              return (
+                <li 
+                  className='hash-tag-search-result'
+                  onClick={() => searchSelection(hashTag.hashTag)}
+                  onMouseDown={(event) => event.preventDefault()}
+                >
+                  <span className='hash-tag-text'>
+                    #{hashTag.hashTag}
+                  </span>
+                  <span className='hast-tag-post-length'>
+                    {hashTag.posts.length} posts
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        }
       </div>
       <div className="add-location-input-wrapper">
         <input 

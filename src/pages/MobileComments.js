@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './MobileComments.css'
 import firebaseApp from '../Firebase';
-import { getFirestore, doc, updateDoc, arrayUnion, query, collection, where, orderBy, getDocs, getDoc, documentId } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, updateDoc, arrayUnion, query, collection, where, orderBy, getDocs, getDoc, documentId } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid'
 import { useParams } from 'react-router-dom';
 import Comment from '../components/Comment';
@@ -12,6 +12,10 @@ const db = getFirestore();
 
 const MobileComments = (props) => {
   const {
+    setSelectedComment,
+    isCommentDeleteOpen,
+    setIsCommentDeleteOpen,
+    profileTagHandler,
     stringToLinks,
     isMobile,
     setIsLoadingPage,
@@ -178,6 +182,7 @@ const MobileComments = (props) => {
     } = userData;
     
     const postComment = async (event) => {
+      const commentID = uuidv4();
       if (event !== undefined) {
         event.preventDefault();
       }
@@ -185,7 +190,7 @@ const MobileComments = (props) => {
       const postRef = doc(db, 'postUploads', postID);
       await updateDoc(postRef, {
         comments: arrayUnion({
-          commentID: uuidv4(),
+          commentID,
           photoURL: photoURL,
           text: commentText,
           uid: uid,
@@ -195,6 +200,40 @@ const MobileComments = (props) => {
           replies: [],
         })
       });
+      // 'textTags' referes to profile tags in post caption, 'profileTagHandler' gets UIDs from usernames //
+      const textTags = await profileTagHandler(commentText);
+      for (let index = 0; index < textTags.length; index++) {
+        const notificationID = uuidv4();
+        await setDoc(doc(db, 'notifications', notificationID), {
+          originID: commentID,
+          notificationID,
+          recipientUID: textTags[index],
+          postID,
+          profile: {
+            username,
+            photoURL,
+            uid,
+          },
+          type: 'mention',
+          source: 'comment',
+          date: Date.now()
+        });
+      };
+      const notificationID = uuidv4();
+      await setDoc(doc(db, 'notifications', notificationID), {
+        originID: commentID,
+        notificationID,
+        recipientUID: selectedPost[0].uid,
+        postID,
+        profile: {
+          username,
+          photoURL,
+          uid,
+        },
+        type: 'comment',
+        source: 'post',
+        date: Date.now()
+      })
       const photoArray = [];
       const profilePhotoData = query(collection(db, 'photoUploads'), 
         where('postID', '==', postID), orderBy('index'));
@@ -242,9 +281,11 @@ const MobileComments = (props) => {
         const commentIndex = postSnap.data().comments
           .findIndex((comment) => comment.commentID === commentID)
         if (commentIndex !== -1) {
+          const commentReplyID = uuidv4();
           const { replies } = postSnap.data().comments[commentIndex];
           const newReply = {
-            commentID: uuidv4(),
+            commentID: commentReplyID,
+            parentID: commentID,
             photoURL: photoURL,
             uid: uid,
             uploadDate: Date.now(),
@@ -264,6 +305,56 @@ const MobileComments = (props) => {
           setCommentText('');
           getCommentData();
           setNewReplyID(commentID);
+          // 'textTags' referes to profile tags in post caption, 'profileTagHandler' gets UIDs from usernames //
+          const textTags = await profileTagHandler(commentText);
+          for (let index = 0; index < textTags.length; index++) {
+            if (textTags[index] !== replyUser.uid) {
+              const notificationID = uuidv4();
+              await setDoc(doc(db, 'notifications', notificationID), {
+                originID: commentReplyID,
+                notificationID,
+                recipientUID: textTags[index],
+                postID,
+                profile: {
+                  username,
+                  photoURL,
+                  uid,
+                },
+                type: 'mention',
+                source: 'comment',
+                date: Date.now()
+              });              
+            };
+          };
+          const notificationID = uuidv4();
+          await setDoc(doc(db, 'notifications', notificationID), {
+            originID: commentReplyID,
+            notificationID,
+            recipientUID: selectedPost[0].uid,
+            postID,
+            profile: {
+              username,
+              photoURL,
+              uid,
+            },
+            type: 'reply',
+            source: 'post',
+            date: Date.now()
+          })
+          const replyID = uuidv4();
+          await setDoc(doc(db, 'notifications', replyID), {
+            originID: commentReplyID,
+            notificationID: replyID,
+            recipientUID: replyUser.uid,
+            profile: {
+              username,
+              photoURL,
+              uid,
+            },
+            type: 'reply',
+            source: 'comment',
+            date: Date.now()
+          })
         } else {
           console.error('comment object not found');
         };
@@ -530,8 +621,10 @@ const MobileComments = (props) => {
                   <h2 className='comment-username'>
                     {selectedPost[0].username}
                   </h2>
-                  <span className='comment-text'>
-                    {postCaption}
+                  <span 
+                    className='comment-text'
+                    dangerouslySetInnerHTML={{__html: `${stringToLinks(postCaption)}`}} 
+                  >
                   </span>                    
                 </div>
                 <footer className='comment-footer'>
@@ -549,6 +642,9 @@ const MobileComments = (props) => {
               return (
                 <li key={commentID} className='comment-wrapper'>
                   <Comment
+                    setSelectedComment = {setSelectedComment}
+                    isCommentDeleteOpen = {isCommentDeleteOpen}
+                    setIsCommentDeleteOpen = {setIsCommentDeleteOpen}
                     stringToLinks={stringToLinks}
                     getPostData={getPostData}
                     isMobile={isMobile}

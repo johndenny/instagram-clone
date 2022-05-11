@@ -7,9 +7,13 @@ import CommentReplies from './CommentReplies';
 import { useNavigate } from 'react-router-dom';
 
 const db = getFirestore();
+let lastPress = 0;
 
 const Comment = (props) => {
   const {
+    setSelectedComment,
+    isCommentDeleteOpen,
+    setIsCommentDeleteOpen,
     stringToLinks,
     isFeatured,
     setCommentIDs,
@@ -48,6 +52,8 @@ const Comment = (props) => {
   const userLikeIndex = likes.findIndex((like) => like.uid === userData.uid)
   const [isLiked, setIsLiked] = useState(false);
   const navigate = useNavigate();
+  const touchTimer = useRef(null);
+  const tagTimerRef = useRef(null);
 
   const likeUploadToggle = async () => {
     console.log(isReply);
@@ -196,12 +202,44 @@ const Comment = (props) => {
       setCommentIDs({commentID: commentID, parentCommentID: parentCommentID});
     }
     setIsLoadingPage(false);    
+  };
+
+  const touchStart = (comment) => {
+    setSelectedComment(comment);
+    touchTimer.current = setTimeout(() => {
+      setIsCommentDeleteOpen(true);
+    }, 1000);
+    clearTimeout(tagTimerRef.current);
+    const time = new Date().getTime();
+    const delta = time - lastPress;
+
+    const DOUBLE_PRESS_DELAY = 400;
+    if (delta < DOUBLE_PRESS_DELAY) {
+      console.log('double press');
+      const index = likes.findIndex((like) => like.uid === userData.uid);
+      if (index === -1) {
+        likeUploadToggle();
+        setIsLiked(true);
+      }
+    } else {
+      console.log('press');
+    }
+    lastPress = time;        
+  };
+
+  const touchEnd = () => {
+    clearTimeout(touchTimer.current);
+    touchTimer.current = null;
   }
 
   if (isFeatured !== true) {
     return (
       <div className='replies-wrapper'>
-        <div className='comment-content'>
+        <div 
+          className='comment-content'
+          onTouchStart = {() => touchStart(comment)}
+          onTouchEnd = {touchEnd}
+        >
           <div 
             className='comment-profile-photo-frame'
             onClick={() => navigateUserProfile(username)}
@@ -275,6 +313,8 @@ const Comment = (props) => {
         </div>
         {!isReply && replies.length !== 0 &&
           <CommentReplies
+            setIsCommentDeleteOpen = {setIsCommentDeleteOpen}
+            setSelectedComment = {setSelectedComment}
             stringToLinks={stringToLinks}
             setIsLikedByModalOpen={setIsLikedByModalOpen}
             setCommentIDs={setCommentIDs}

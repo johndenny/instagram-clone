@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const PeopleList = (props) => {
   const {
+    setIsSearchClicked,
     deleteRecentHashTagSearch,
     isAddPeople,
     groupUIDs,
@@ -86,6 +87,7 @@ const PeopleList = (props) => {
                 <Link 
                   to={`/explore/tags/${hashTag}/`}
                   className='hash-tag-search-item'
+                  onClick={() => setIsSearchClicked(false)}
                 >
                   <div className='profile-photo-frame'>
                     <svg aria-label="Hashtag" className='hash-tag-svg' color="#262626" fill="#262626" height="16" role="img" viewBox="0 0 24 24" width="16">
@@ -94,28 +96,32 @@ const PeopleList = (props) => {
                       <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="17.009" x2="13.368" y1="2" y2="22"></line>
                       <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="10.64" x2="7" y1="2" y2="22"></line>
                     </svg>
-
-                  </div>
+                  </div>                  
                   <div className='hash-tag-search-text'>
                     <span className='hash-tag-title'>
                       #{hashTag}
                     </span>
                     <span className='hash-tag-post-count'>
                       <span className='hash-tag-post-number'>
-                        {postCount}
+                        {isRecentSearch
+                          ? postCount
+                          : user.posts.length
+                        }
                       </span>
                       posts
                     </span>
                   </div>
-                  <button 
-                    className='delete-recent-search'
-                    onClick={(event) => deleteRecentHashTagSearch(event, hashTag)}
-                  >
-                    <svg aria-label="Close" className="close-search-svg" color="#8e8e8e" fill="#8e8e8e" height="16" role="img" viewBox="0 0 24 24" width="16">
-                      <polyline fill="none" points="20.643 3.357 12 12 3.353 20.647" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3"></polyline>
-                      <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" x1="20.649" x2="3.354" y1="20.649" y2="3.354"></line>
-                    </svg>
-                  </button>                  
+                  {isRecentSearch &&
+                    <button 
+                      className='delete-recent-search'
+                      onClick={(event) => deleteRecentHashTagSearch(event, hashTag)}
+                    >
+                      <svg aria-label="Close" className="close-search-svg" color="#8e8e8e" fill="#8e8e8e" height="16" role="img" viewBox="0 0 24 24" width="16">
+                        <polyline fill="none" points="20.643 3.357 12 12 3.353 20.647" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3"></polyline>
+                        <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" x1="20.649" x2="3.354" y1="20.649" y2="3.354"></line>
+                      </svg>
+                    </button>                    
+                  }
                 </Link>
               </li>
             );

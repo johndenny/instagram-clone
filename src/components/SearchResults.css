@@ -16,12 +16,14 @@
   gap: 0;
 }
 
-.search-results .user-wrapper {
+.search-results .user-wrapper,
+.search-results .hash-tag-search-list-wrapper {
   padding: 8px 16px;
   cursor: pointer;
 }
 
-.search-results .user-wrapper:hover {
+.search-results .user-wrapper:hover,
+.search-results .hash-tag-search-list-wrapper:hover {
   background-color: rgba(250, 250, 250, 1);
 }
 

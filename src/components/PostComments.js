@@ -11,6 +11,8 @@ const db = getFirestore();
 
 const PostComments = (props) => {
   const {
+    isSearchHashTag,
+    setIsSearchHashTag,
     setIsSearching,
     isSearching,
     searchResults,
@@ -49,20 +51,20 @@ const PostComments = (props) => {
     console.log(lastLetter);
     if (lastLetter === '@') {
       console.log('@ found');
-      setUserIndex(value.length)
+      setUserIndex(value.length);
+      setIsSearchHashTag(false);
+    } else if (lastLetter === '#') {
+      console.log('# found')
+      setUserIndex(value.length);
+      setIsSearchHashTag(true);
     }
     if (value.length < userIndex) {
       setUserIndex(null)
       setIsSearching(false);
+      setIsSearchHashTag(false);
     };
     console.log(userIndex);
     if (userIndex !== null) {
-      const distanceFromTop = event.target.getBoundingClientRect(); 
-      if (distanceFromTop.y < (200 + 76)) {
-        setIsSearchModalFlipped(true);
-      } else {
-        setIsSearchModalFlipped(false);
-      }
       console.log(value.substring(userIndex))
       setSearchString(value.substring(userIndex));
       const lastLetter = value.substring(value.length - 1);
@@ -373,6 +375,7 @@ const PostComments = (props) => {
       </form>
       {isSearching &&
         <CommentSearchModal
+          isSearchHashTag = {isSearchHashTag}
           textareaRef={textareaRef}
           setUserIndex={setUserIndex}
           setIsSearching={setIsSearching}

@@ -8,7 +8,7 @@ import DiscardPostModal from './DiscardPostModal';
 import DiscardPhotoModal from './DiscardPhotoModal';
 import UploadModalFilters from './UploadModalFilters';
 import firebaseApp from '../Firebase';
-import { getFirestore, setDoc, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, setDoc, doc, arrayUnion } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import spinner10s from '../images/spinner10s.gif'
 import checkmarkLoopsOnce from '../images/checkmarkLoopsOnce.gif'
@@ -20,6 +20,8 @@ const db = getFirestore();
 
 const UploadPhotoModal = (props) => {
   const {
+    profileTagHandler,
+    hashTagHandler,
     searchString,
     searchResults,
     setSearchString,
@@ -817,6 +819,11 @@ const UploadPhotoModal = (props) => {
       w240,
       w150,
     } = photo;
+    const {
+      username,
+      photoURL,
+      uid
+    } = userData;
     let croppedAspectRatio;
     if (cropSelection === 'one-one') {
       croppedAspectRatio = 1;
@@ -886,6 +893,60 @@ const UploadPhotoModal = (props) => {
       w150: w150URL,
       uploadDate: Date.now(),
     }
+
+
+    // hash tags //
+    const hashTags = hashTagHandler(captionText);
+    console.log(hashTags);
+    for (let index = 0; index < hashTags.length; index++) {
+      await setDoc(doc(db, hashTags[index], postID), {
+        postID,
+        date: Date.now(),
+      });
+      await setDoc(doc(db, 'hashTags', hashTags[index]), {
+        posts: arrayUnion(postID)
+      });
+    };
+
+    // 'textTags' referes to profile tags in post caption, 'profileTagHandler' gets UIDs from usernames //
+    const textTags = await profileTagHandler(captionText);
+    for (let index = 0; index < textTags.length; index++) {
+      const notificationID = uuidv4();
+      await setDoc(doc(db, 'notifications', notificationID), {
+        notificationID,
+        recipientUID: textTags[index],
+        postID,
+        profile: {
+          username,
+          photoURL,
+          uid,
+        },
+        type: 'mention',
+        source: 'post',
+        date: Date.now()
+      });
+    };
+    console.log(textTags);
+
+    // photo tags //
+    for (let index = 0; index < tagIDs.length; index++) {
+      const notificationID = uuidv4();
+      await setDoc(doc(db, 'notifications', notificationID), {
+        notificationID,
+        recipientUID: tagIDs[index],
+        postID,
+        profile: {
+          username,
+          photoURL,
+          uid,
+        },
+        type: 'photo-tag',
+        source: 'post',
+        date: Date.now()
+      });
+    };
+
+
     await setDoc(doc(db, 'photoUploads', photoID), photoURLS);
     await setDoc(doc(db, 'postUploads', postID), {
       postID: postID,

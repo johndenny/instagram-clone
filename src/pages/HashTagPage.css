@@ -37,3 +37,38 @@
   padding: 16px;
   color: rgba(142, 142, 142, 1);
 }
+
+@media (min-width: 736px) {
+  .hash-tag-page {
+    align-items: center;
+  }
+  .hash-tag-page .profile-photo-frame {
+    height: 152px;
+    width: 152px;
+  }
+
+  .hash-tag-information {
+    gap: 32px;
+  }
+
+  .hash-tag-page-text-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .most-recent-photos .photo-grid-content {
+    padding-top: 0;
+  }
+
+  .most-recent-header {
+    padding: 20px;
+  }
+}
+
+.hash-tag-header-text {
+  margin: 0;
+  font-weight: 300;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}

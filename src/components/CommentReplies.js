@@ -4,6 +4,8 @@ import React, { useLayoutEffect, useState } from 'react';
 
 const CommentReplies = (props) => {
   const {
+    setIsCommentDeleteOpen,
+    setSelectedComment,
     stringToLinks,
     setIsLikedByModalOpen,
     setCommentIDs,
@@ -63,6 +65,8 @@ const CommentReplies = (props) => {
                 className='comment-reply'
               >
                 <Comment
+                  setIsCommentDeleteOpen = {setIsCommentDeleteOpen}
+                  setSelectedComment = {setSelectedComment}
                   stringToLinks={stringToLinks}
                   setIsLikedByModalOpen={setIsLikedByModalOpen}
                   setCommentIDs={setCommentIDs}

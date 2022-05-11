@@ -66,6 +66,7 @@ import SharePostModal from './components/SharePostModal';
 import MessageLikesModal from './components/MessageLikesModal';
 import { type } from '@testing-library/user-event/dist/type';
 import HashTagPage from './pages/HashTagPage';
+import DeleteCommentModal from './components/DeleteCommentModal';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -109,6 +110,10 @@ const RouterSwitch = () => {
   const [isLocationPost, setIsLocationPost] = useState(false)
   const [commentIDs, setCommentIDs] = useState('');
   const [isInboxOpen, setIsInboxOpen] = useState(false);
+
+  // COMMENTS //
+  const [selectedComment, setSelectedComment] = useState(null);
+  const [isCommentDeleteOpen, setIsCommentDeleteOpen] = useState(false);
 
   // Profile //
 
@@ -1247,7 +1252,9 @@ const RouterSwitch = () => {
           photoURL,
           uid,
         },
-        type: 'mention'
+        type: 'mention',
+        source: 'post',
+        date: Date.now()
       });
     };
     console.log(textTags);
@@ -1264,7 +1271,9 @@ const RouterSwitch = () => {
           photoURL,
           uid,
         },
-        type: 'photo-tag'
+        type: 'photo-tag',
+        source: 'post',
+        date: Date.now()
       });
     };
 
@@ -1858,6 +1867,15 @@ const RouterSwitch = () => {
   
   return (
     <BrowserRouter>
+      {isCommentDeleteOpen &&
+        <DeleteCommentModal
+          userData = {userData}
+          setSelectedPost = {setSelectedPost}
+          selectedPost = {selectedPost}
+          selectedComment = {selectedComment}
+          setIsCommentDeleteOpen = {setIsCommentDeleteOpen}
+        />
+      }
       {isNewMessageOpen &&
         <NewMessageModal
           isMobile = {isMobile}
@@ -2028,6 +2046,8 @@ const RouterSwitch = () => {
       }
       {photoUploadModalOpen &&
         <UploadPhotoModal
+          profileTagHandler = {profileTagHandler}
+          hashTagHandler = {hashTagHandler}
           searchResults={searchResults}
           setSearchResults={setSearchResults}
           tagData={tagData}
@@ -2053,6 +2073,10 @@ const RouterSwitch = () => {
 
         {(userLoggedIn && !isMobile) &&
           <NavigationBar
+            deleteRecentHashTagSearch = {deleteRecentHashTagSearch}
+            saveRecentHashTagSearch = {saveRecentHashTagSearch}
+            isSearchHashTag = {isSearchHashTag}
+            setIsSearchHashTag = {setIsSearchHashTag}
             notReadCount = {notReadCount}
             deleteRecentSearch={deleteRecentSearch}
             isNoMatch={isNoMatch}
@@ -2507,6 +2531,10 @@ const RouterSwitch = () => {
           />
           <Route path='/p/:postID/comments' element={
             <MobileComments
+              setSelectedComment = {setSelectedComment}
+              isCommentDeleteOpen = {isCommentDeleteOpen}
+              setIsCommentDeleteOpen = {setIsCommentDeleteOpen}
+              profileTagHandler = {profileTagHandler}
               stringToLinks={stringToLinks}
               getPostData={getPostData}
               isMobile={isMobile}

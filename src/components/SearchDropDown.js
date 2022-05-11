@@ -4,6 +4,10 @@ import SearchResults from './SearchResults';
 
 const SearchDropDown = (props) => {
   const {
+    setIsSearchClicked,
+    deleteRecentHashTagSearch,
+    saveRecentHashTagSearch,
+    isSearchHashTag,
     deleteRecentSearch,
     isNoMatch,
     isSearching,
@@ -35,6 +39,10 @@ const SearchDropDown = (props) => {
         <div className='search-drop-down-triangle'>
         </div>
         <SearchResults
+          setIsSearchClicked = {setIsSearchClicked}
+          deleteRecentHashTagSearch = {deleteRecentHashTagSearch}
+          saveRecentHashTagSearch = {saveRecentHashTagSearch}
+          isSearchHashTag = {isSearchHashTag}
           deleteRecentSearch={deleteRecentSearch}
           isNoMatch={isNoMatch}
           isSearching={isSearching}
