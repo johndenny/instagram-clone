@@ -5,6 +5,9 @@ import './PhotoPostModal.css'
 
 const PhotoPostModal = (props) => {
   const {
+    profileTagHandler,
+    setIsCommentDeleteOpen,
+    setSelectedComment,
     stringToLinks,
     setCommentIDs,
     setIsLocationPost,
@@ -82,6 +85,9 @@ const PhotoPostModal = (props) => {
         onClick={(event) => event.stopPropagation()}
       >
         <MobilePhotoPost
+          profileTagHandler = {profileTagHandler}
+          setIsCommentDeleteOpen = {setIsCommentDeleteOpen}
+          setSelectedComment = {setSelectedComment}
           stringToLinks={stringToLinks}
           setCommentIDs={setCommentIDs}
           setIsLocationPost={setIsLocationPost}

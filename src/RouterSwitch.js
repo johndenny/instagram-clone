@@ -2186,6 +2186,7 @@ const RouterSwitch = () => {
             <React.Fragment>
               <Route path='/' element={
                 <Homepage
+                  profileTagHandler = {profileTagHandler}
                   setIsSharePostOpen={setIsSharePostOpen}
                   setPostToSend={setPostToSend}
                   searchResults={searchResults}
@@ -2529,6 +2530,9 @@ const RouterSwitch = () => {
           />
           <Route path='/p/:postID' element={
             <MobilePhotoPost
+              profileTagHandler = {profileTagHandler}
+              setIsCommentDeleteOpen = {setIsCommentDeleteOpen}
+              setSelectedComment = {setSelectedComment}
               stringToLinks={stringToLinks}
               setCommentIDs={setCommentIDs}
               setIsLocationPost={setIsLocationPost}
@@ -2636,6 +2640,9 @@ const RouterSwitch = () => {
         <Routes>
           <Route path='/p/:postID' element={
             <PhotoPostModal
+              profileTagHandler = {profileTagHandler}
+              setIsCommentDeleteOpen = {setIsCommentDeleteOpen}
+              setSelectedComment = {setSelectedComment}
               stringToLinks={stringToLinks}
               setCommentIDs={setCommentIDs}
               setIsLocationPost={setIsLocationPost}

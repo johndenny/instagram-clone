@@ -1,7 +1,7 @@
 import './PostComments.css'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import firebaseApp from '../Firebase';
-import { getFirestore, doc, updateDoc, arrayUnion, query, collection, where, orderBy, getDocs, getDoc } from 'firebase/firestore';
+import { getFirestore, setDoc, doc, updateDoc, arrayUnion, query, collection, where, orderBy, getDocs, getDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid'
 import { useParams } from 'react-router-dom';
 import CommentSearchModal from './CommentSearchModal';
@@ -11,6 +11,7 @@ const db = getFirestore();
 
 const PostComments = (props) => {
   const {
+    profileTagHandler,
     isSearchHashTag,
     setIsSearchHashTag,
     setIsSearching,
@@ -102,8 +103,9 @@ const PostComments = (props) => {
     }
     setIsSaving(true);
     const postRef = doc(db, 'postUploads', postID);
+    const commentID = uuidv4();
     const commentDoc = {
-      commentID: uuidv4(),
+      commentID,
       photoURL: photoURL,
       text: commentText,
       uid: uid,
@@ -115,6 +117,40 @@ const PostComments = (props) => {
     await updateDoc(postRef, {
       comments: arrayUnion(commentDoc)
     });
+    // 'textTags' referes to profile tags in post caption, 'profileTagHandler' gets UIDs from usernames //
+    const textTags = await profileTagHandler(commentText);
+    for (let index = 0; index < textTags.length; index++) {
+      const notificationID = uuidv4();
+      await setDoc(doc(db, 'notifications', notificationID), {
+        originID: commentID,
+        notificationID,
+        recipientUID: textTags[index],
+        postID,
+        profile: {
+          username,
+          photoURL,
+          uid,
+        },
+        type: 'mention',
+        source: 'comment',
+        date: Date.now()
+      });
+    };
+    const notificationID = uuidv4();
+    await setDoc(doc(db, 'notifications', notificationID), {
+      originID: commentID,
+      notificationID,
+      recipientUID: selectedPost[0].uid,
+      postID,
+      profile: {
+        username,
+        photoURL,
+        uid,
+      },
+      type: 'comment',
+      source: 'post',
+      date: Date.now()
+    })
     if (params.postID === undefined) {
       setNewComments([...newComments, commentDoc])      
     } else {
@@ -164,9 +200,11 @@ const PostComments = (props) => {
       const commentIndex = postSnap.data().comments
         .findIndex((comment) => comment.commentID === commentID)
       if (commentIndex !== -1) {
+        const commentReplyID = uuidv4();
         const { replies } = postSnap.data().comments[commentIndex];
         const newReply = {
-          commentID: uuidv4(),
+          commentID: commentReplyID,
+          parentID: commentID,
           photoURL: photoURL,
           uid: uid,
           uploadDate: Date.now(),
@@ -186,6 +224,56 @@ const PostComments = (props) => {
         setCommentText('');
         getCommentData();
         setNewReplyID(commentID);
+        // 'textTags' referes to profile tags in post caption, 'profileTagHandler' gets UIDs from usernames //
+        const textTags = await profileTagHandler(commentText);
+        for (let index = 0; index < textTags.length; index++) {
+          if (textTags[index] !== replyUser.uid) {
+            const notificationID = uuidv4();
+            await setDoc(doc(db, 'notifications', notificationID), {
+              originID: commentReplyID,
+              notificationID,
+              recipientUID: textTags[index],
+              postID,
+              profile: {
+                username,
+                photoURL,
+                uid,
+              },
+              type: 'mention',
+              source: 'comment',
+              date: Date.now()
+            });              
+          };
+        };
+        const notificationID = uuidv4();
+        await setDoc(doc(db, 'notifications', notificationID), {
+          originID: commentReplyID,
+          notificationID,
+          recipientUID: selectedPost[0].uid,
+          postID,
+          profile: {
+            username,
+            photoURL,
+            uid,
+          },
+          type: 'reply',
+          source: 'post',
+          date: Date.now()
+        })
+        const replyID = uuidv4();
+        await setDoc(doc(db, 'notifications', replyID), {
+          originID: commentReplyID,
+          notificationID: replyID,
+          recipientUID: replyUser.uid,
+          profile: {
+            username,
+            photoURL,
+            uid,
+          },
+          type: 'reply',
+          source: 'comment',
+          date: Date.now()
+        })
       } else {
         console.error('comment object not found');
       };

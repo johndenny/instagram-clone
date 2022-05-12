@@ -15,6 +15,9 @@ let lastPress = 0;
 
 const MobilePhotoPost = (props) => {
   const {
+    profileTagHandler,
+    setIsCommentDeleteOpen,
+    setSelectedComment,
     setIsSharePostOpen,
     setPostToSend,
     stringToLinks, 
@@ -813,6 +816,8 @@ const MobilePhotoPost = (props) => {
                       className='comment-wrapper'
                     >
                       <Comment
+                        setIsCommentDeleteOpen = {setIsCommentDeleteOpen}
+                        setSelectedComment = {setSelectedComment}
                         stringToLinks={stringToLinks}
                         setIsLikedByModalOpen={setIsLikedByModalOpen}
                         setCommentIDs={setCommentIDs}
@@ -911,6 +916,7 @@ const MobilePhotoPost = (props) => {
               </div>
             </footer>
             <PostComments
+              profileTagHandler = {profileTagHandler}
               isSearchHashTag = {isSearchHashTag}
               setIsSearchHashTag = {setIsSearchHashTag}
               setIsSearching={setIsSearching}
@@ -1144,6 +1150,8 @@ const MobilePhotoPost = (props) => {
                           className='comment-wrapper'
                         >
                           <Comment
+                            setIsCommentDeleteOpen = {setIsCommentDeleteOpen}
+                            setSelectedComment = {setSelectedComment}
                             stringToLinks={stringToLinks}
                             setIsLikedByModalOpen={setIsLikedByModalOpen}
                             setCommentIDs={setCommentIDs}
@@ -1242,6 +1250,7 @@ const MobilePhotoPost = (props) => {
                   </div>
                 </footer>
                 <PostComments
+                  profileTagHandler = {profileTagHandler}
                   isSearchHashTag = {isSearchHashTag}
                   setIsSearchHashTag = {setIsSearchHashTag}
                   setIsSearching={setIsSearching}
@@ -1657,6 +1666,7 @@ const MobilePhotoPost = (props) => {
               </footer>
               {width > 736 &&
                 <PostComments
+                  profileTagHandler = {profileTagHandler}
                   isSearchHashTag = {isSearchHashTag}
                   setIsSearchHashTag = {setIsSearchHashTag}
                   setIsSearching={setIsSearching}

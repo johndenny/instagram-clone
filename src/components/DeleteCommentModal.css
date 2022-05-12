@@ -6,6 +6,12 @@
   border-radius: 12px;
 }
 
+@media (min-width: 735px) {
+  .delete-comment-content {
+    width: 400px;
+  }
+}
+
 .delete-comment-button,
 .cancel-modal-button {
   padding: 16px;

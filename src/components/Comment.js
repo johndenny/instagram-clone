@@ -297,6 +297,11 @@ const Comment = (props) => {
     touchTimer.current = null;
   }
 
+  const commentModalHandler = (comment) => {
+    setSelectedComment(comment);
+    setIsCommentDeleteOpen(true);
+  }
+
   if (isFeatured !== true) {
     return (
       <div className='replies-wrapper'>
@@ -359,7 +364,19 @@ const Comment = (props) => {
                 onClick={replyHandler}
               >
                 Reply  
-              </button>          
+              </button>
+              {!isMobile &&
+              <button 
+                className='comment-links-button'
+                onClick={() => commentModalHandler(comment)}
+              >
+                <svg aria-label="Comment Options" className="comment-options-svg" color="#8e8e8e" fill="#8e8e8e" height="24" role="img" viewBox="0 0 24 24" width="24">
+                  <circle cx="12" cy="12" r="1.5"></circle>
+                  <circle cx="6" cy="12" r="1.5"></circle>
+                  <circle cx="18" cy="12" r="1.5"></circle>
+                </svg>
+              </button>
+              }          
             </footer>
           </div> 
           <button 
