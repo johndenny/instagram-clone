@@ -120,37 +120,43 @@ const PostComments = (props) => {
     // 'textTags' referes to profile tags in post caption, 'profileTagHandler' gets UIDs from usernames //
     const textTags = await profileTagHandler(commentText);
     for (let index = 0; index < textTags.length; index++) {
+      if (textTags[index] !== uid) {
+          const notificationID = uuidv4();
+          await setDoc(doc(db, 'notifications', notificationID), {
+            originID: commentID,
+            notificationID,
+            recipientUID: textTags[index],
+            notRead: true,
+            postID,
+            profile: {
+              username,
+              photoURL,
+              uid,
+            },
+            type: 'mention',
+            source: 'comment',
+            date: Date.now()
+          });
+        };        
+      }
+    if (selectedPost[0].uid !== uid) {
       const notificationID = uuidv4();
       await setDoc(doc(db, 'notifications', notificationID), {
         originID: commentID,
         notificationID,
-        recipientUID: textTags[index],
+        recipientUID: selectedPost[0].uid,
+        notRead: true,
         postID,
         profile: {
           username,
           photoURL,
           uid,
         },
-        type: 'mention',
-        source: 'comment',
+        type: 'comment',
+        source: 'post',
         date: Date.now()
-      });
+      });      
     };
-    const notificationID = uuidv4();
-    await setDoc(doc(db, 'notifications', notificationID), {
-      originID: commentID,
-      notificationID,
-      recipientUID: selectedPost[0].uid,
-      postID,
-      profile: {
-        username,
-        photoURL,
-        uid,
-      },
-      type: 'comment',
-      source: 'post',
-      date: Date.now()
-    })
     if (params.postID === undefined) {
       setNewComments([...newComments, commentDoc])      
     } else {
@@ -227,12 +233,13 @@ const PostComments = (props) => {
         // 'textTags' referes to profile tags in post caption, 'profileTagHandler' gets UIDs from usernames //
         const textTags = await profileTagHandler(commentText);
         for (let index = 0; index < textTags.length; index++) {
-          if (textTags[index] !== replyUser.uid) {
+          if (textTags[index] !== replyUser.uid || textTags[index] !== uid) {
             const notificationID = uuidv4();
             await setDoc(doc(db, 'notifications', notificationID), {
               originID: commentReplyID,
               notificationID,
               recipientUID: textTags[index],
+              notRead: true,
               postID,
               profile: {
                 username,
@@ -245,35 +252,41 @@ const PostComments = (props) => {
             });              
           };
         };
-        const notificationID = uuidv4();
-        await setDoc(doc(db, 'notifications', notificationID), {
-          originID: commentReplyID,
-          notificationID,
-          recipientUID: selectedPost[0].uid,
-          postID,
-          profile: {
-            username,
-            photoURL,
-            uid,
-          },
-          type: 'reply',
-          source: 'post',
-          date: Date.now()
-        })
-        const replyID = uuidv4();
-        await setDoc(doc(db, 'notifications', replyID), {
-          originID: commentReplyID,
-          notificationID: replyID,
-          recipientUID: replyUser.uid,
-          profile: {
-            username,
-            photoURL,
-            uid,
-          },
-          type: 'reply',
-          source: 'comment',
-          date: Date.now()
-        })
+        if (selectedPost[0].uid !== uid) {
+          const notificationID = uuidv4();
+          await setDoc(doc(db, 'notifications', notificationID), {
+            originID: commentReplyID,
+            notificationID,
+            recipientUID: selectedPost[0].uid,
+            notRead: true,
+            postID,
+            profile: {
+              username,
+              photoURL,
+              uid,
+            },
+            type: 'reply',
+            source: 'post',
+            date: Date.now()
+          });          
+        };
+        if (replyUser.uid !== uid) {
+          const replyID = uuidv4();
+          await setDoc(doc(db, 'notifications', replyID), {
+            originID: commentReplyID,
+            notificationID: replyID,
+            recipientUID: replyUser.uid,
+            notRead: true,
+            profile: {
+              username,
+              photoURL,
+              uid,
+            },
+            type: 'reply',
+            source: 'comment',
+            date: Date.now()
+          });      
+        };
       } else {
         console.error('comment object not found');
       };

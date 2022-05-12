@@ -89,7 +89,6 @@ const ProfileImagesLoader = (props) => {
                 top: `-${((photoWidth / aspectRatio) - photoWidth) / 2}px`
               }
             }
-            console.log('sizes:', aspectRatio > 1 ? `${photoWidth * aspectRatio}px` : `${photoWidth}px`);
             return (
               <div 
                 key={photoID} 

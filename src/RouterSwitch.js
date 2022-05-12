@@ -206,6 +206,56 @@ const RouterSwitch = () => {
   //HASH TAG //
   const [hashTagString, setHashTagString] = useState('');
 
+  //NOTIFICATIONS //
+  const [userNotifications, setUserNotifications] = useState([]);
+  const [notificationCount, setNotificationCount] = useState({
+    comment: 0,
+    like: 0,
+    follow: 0,
+  });
+  const [isNotificationsNotRead, setIsNotificationsNotRead] = useState(false);
+  const [isNotificationPopUpVisable, setIsNotificationPopUpVisable] = useState(false);
+
+  const getNotReadNotifications = async () => {
+    const commentsArray = [];
+    const followsArray = [];
+    const likesArray = [];    
+    const notificationsQuery = query(collection(db, 'notifications'),
+      where('recipientUID', '==', userData.uid), where('notRead', '==', true));
+    const notificationSnapshot = await getDocs(notificationsQuery);
+    notificationSnapshot.forEach((document) => {
+      const {
+        type
+      } = document.data();
+      if (type === 'mention' || type === 'comment') {
+        commentsArray.push(document.data());
+      }
+      if (type === 'follow') {
+        followsArray.push(document.data());
+      }
+      if (type === 'like') {
+        likesArray.push(document.data());
+      };
+    });
+    setNotificationCount({
+      comment: commentsArray.length,
+      like: likesArray.length,
+      follow: followsArray.length
+    });
+    if (commentsArray.length !== 0 ||
+      likesArray.length !== 0 ||
+      followsArray.length !== 0) {
+        setIsNotificationsNotRead(true);
+        setIsNotificationPopUpVisable(true);
+      };
+  };
+
+  useEffect(() => {
+    if (userData.uid !== undefined) {
+      getNotReadNotifications();
+    };
+  }, [userData]);
+
   //SITE WIDE//
 
   const formatTime = (uploadDate) => {
@@ -684,21 +734,24 @@ const RouterSwitch = () => {
             fullName: fullname
           })
         });
-        const notificationID = uuidv4();
-        await setDoc(doc(db, 'notifications', notificationID), {
-          notificationID,
-          originID: likeID,
-          recipientUID: postSnap.data().uid,
-          postID,
-          profile: {
-            username,
-            photoURL,
-            uid,
-          },
-          type: 'like',
-          source: 'post',
-          date: Date.now()
-        })      
+        if (postSnap.data().uid !== uid) {
+          const notificationID = uuidv4();
+          await setDoc(doc(db, 'notifications', notificationID), {
+            notificationID,
+            originID: likeID,
+            notRead: true,
+            recipientUID: postSnap.data().uid,
+            postID,
+            profile: {
+              username,
+              photoURL,
+              uid,
+            },
+            type: 'like',
+            source: 'post',
+            date: Date.now()
+          })             
+        } 
       } else {
         const {
           likeID
@@ -743,6 +796,12 @@ const RouterSwitch = () => {
   // PROFILE //
 
   const followHandler = async (userProfile) => {
+    const {
+      uid,
+      photoURL,
+      username,
+      fullname,
+    } = userData;
     setSelectedListProfile(userProfile);
     setIsFollowLoading(true);
     setIsUnfollowModalOpen(false);
@@ -780,21 +839,43 @@ const RouterSwitch = () => {
       if (followersIndex === -1) {
         await updateDoc(followersRef, {
           followers: arrayUnion({
-            uid: userData.uid,
-            photoURL: userData.photoURL,
-            username: userData.displayName,
-            fullName: userData.fullname,
+            uid,
+            photoURL,
+            username,
+            fullname,
           })
         });
         await updateDoc(followersRef, {
           followersUID: arrayUnion(userData.uid)
-        });        
+        });
+        const notificationID = uuidv4();
+        await setDoc(doc(db, 'notifications', notificationID), {
+          notificationID,
+          originID: uid,
+          notRead: true,
+          recipientUID: userProfile.uid,
+          profile: {
+            username,
+            photoURL,
+            uid,
+          },
+          type: 'follow',
+          source: 'follow',
+          date: Date.now()
+        });      
       } else {
+        console.log('unfollow!')
         await updateDoc(followersRef, {
           followers: arrayRemove(followers[followersIndex])
         });
         await updateDoc(followersRef, {
           followersUID: arrayRemove(userData.uid)
+        });
+        const notificationQuery = query(collection(db, 'notifications'),
+          where('originID', '==', uid));
+        const notificationSnapshot = await getDocs(notificationQuery);
+        notificationSnapshot.forEach( async (document) => {
+          await deleteDoc(doc(db, 'notifications', document.data().notificationID));
         });
       };
     };
@@ -1270,39 +1351,44 @@ const RouterSwitch = () => {
     // 'textTags' referes to profile tags in post caption, 'profileTagHandler' gets UIDs from usernames //
     const textTags = await profileTagHandler(photoUploadText);
     for (let index = 0; index < textTags.length; index++) {
-      const notificationID = uuidv4();
-      await setDoc(doc(db, 'notifications', notificationID), {
-        notificationID,
-        recipientUID: textTags[index],
-        postID,
-        profile: {
-          username,
-          photoURL,
-          uid,
-        },
-        type: 'mention',
-        source: 'post',
-        date: Date.now()
-      });
+      if (textTags[index] !== uid) {
+        const notificationID = uuidv4();
+        await setDoc(doc(db, 'notifications', notificationID), {
+          notificationID,
+          notRead: true,
+          recipientUID: textTags[index],
+          postID,
+          profile: {
+            username,
+            photoURL,
+            uid,
+          },
+          type: 'mention',
+          source: 'post',
+          date: Date.now()
+        });        
+      };
     };
-    console.log(textTags);
 
     // photo tags //
     for (let index = 0; index < tagIDs.length; index++) {
-      const notificationID = uuidv4();
-      await setDoc(doc(db, 'notifications', notificationID), {
-        notificationID,
-        recipientUID: tagIDs[index],
-        postID,
-        profile: {
-          username,
-          photoURL,
-          uid,
-        },
-        type: 'photo-tag',
-        source: 'post',
-        date: Date.now()
-      });
+      if (tagIDs[index] !== uid) {
+        const notificationID = uuidv4();
+        await setDoc(doc(db, 'notifications', notificationID), {
+          notificationID,
+          notRead: true,
+          recipientUID: tagIDs[index],
+          postID,
+          profile: {
+            username,
+            photoURL,
+            uid,
+          },
+          type: 'photo-tag',
+          source: 'post',
+          date: Date.now()
+        });        
+      };
     };
 
     await setDoc(doc(db, 'photoUploads', photoID), photoURLS);
@@ -2133,6 +2219,12 @@ const RouterSwitch = () => {
         }
         {(userLoggedIn && isMobile && !photoUploadOpen) &&
           <MobileNavigationBars
+            dataLoading = {dataLoading}
+            setIsNotificationPopUpVisable = {setIsNotificationPopUpVisable}
+            isNotificationPopUpVisable = {isNotificationPopUpVisable}
+            isNotificationsNotRead = {isNotificationsNotRead}
+            setIsNotificationsNotRead = {setIsNotificationsNotRead}
+            notificationCount = {notificationCount}
             setIsSearchHashTag = {setIsSearchHashTag}
             hashTagString = {hashTagString}
             notReadCount={notReadCount}

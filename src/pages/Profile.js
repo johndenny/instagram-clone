@@ -4,13 +4,7 @@ import React, { useEffect, useState, useLayoutEffect } from "react";
 import ProfilePhotoModal from "../components/ProfilePhotoModal";
 import { Link, useParams, useLocation, useNavigate} from "react-router-dom";
 import useWindowSize from "../hooks/useWindowSize";
-import firebaseApp from "../Firebase";
-import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
 import ProfileImagesLoader from "../components/ProfileImagesLoader";
-
-const db = getFirestore(firebaseApp);
-const auth = getAuth();
 
 const Profile = (props) => {
   const {
@@ -61,9 +55,8 @@ const Profile = (props) => {
   const [postData, setPostData] = useState([]);
 
   useEffect(() => {
-    if (profileData.length === 0 || previousUsername !== params.username) {
+    if (profileData.length === 0 || (previousUsername !== params.username && previousUsername !== '')) {
       setProfileUsername(params.username);
-      console.log('params:', params.username, 'previous username:', previousUsername);
       setDataLoading(true);
       setPreviousUsername(params.username);
       getUserProfileData(params.username, params.page);
@@ -110,10 +103,6 @@ const Profile = (props) => {
       setPostData(profileSavedPosts);
     }
   }, [pageSelected, profilePosts, profileSavedPosts, profileTaggedPosts])
-
-  // useEffect(() => () => {
-  //   setProfileData([]);
-  // }, []);
 
   useEffect(() => {
     setSearchResults([]);

@@ -911,39 +911,45 @@ const UploadPhotoModal = (props) => {
     // 'textTags' referes to profile tags in post caption, 'profileTagHandler' gets UIDs from usernames //
     const textTags = await profileTagHandler(captionText);
     for (let index = 0; index < textTags.length; index++) {
-      const notificationID = uuidv4();
-      await setDoc(doc(db, 'notifications', notificationID), {
-        notificationID,
-        recipientUID: textTags[index],
-        postID,
-        profile: {
-          username,
-          photoURL,
-          uid,
-        },
-        type: 'mention',
-        source: 'post',
-        date: Date.now()
-      });
+      if (textTags[index] !== uid) {
+        const notificationID = uuidv4();
+        await setDoc(doc(db, 'notifications', notificationID), {
+          notificationID,
+          recipientUID: textTags[index],
+          notRead: true,
+          postID,
+          profile: {
+            username,
+            photoURL,
+            uid,
+          },
+          type: 'mention',
+          source: 'post',
+          date: Date.now()
+        });        
+      };
     };
     console.log(textTags);
 
     // photo tags //
     for (let index = 0; index < tagIDs.length; index++) {
-      const notificationID = uuidv4();
-      await setDoc(doc(db, 'notifications', notificationID), {
-        notificationID,
-        recipientUID: tagIDs[index],
-        postID,
-        profile: {
-          username,
-          photoURL,
-          uid,
-        },
-        type: 'photo-tag',
-        source: 'post',
-        date: Date.now()
-      });
+      if (tagIDs[index] !== uid) {
+        const notificationID = uuidv4();
+        await setDoc(doc(db, 'notifications', notificationID), {
+          notificationID,
+          recipientUID: tagIDs[index],
+          notRead: true,
+          postID,
+          profile: {
+            username,
+            photoURL,
+            uid,
+          },
+          type: 'photo-tag',
+          source: 'post',
+          date: Date.now()
+        });        
+      };
     };
 
 

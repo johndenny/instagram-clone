@@ -104,21 +104,24 @@ const Comment = (props) => {
                 username: displayName,
                 fullname: fullname,
               };
-              const notificationID = uuidv4();
-              await setDoc(doc(db, 'notifications', notificationID), {
-                notificationID,
-                originID: likeID,
-                recipientUID: replies[replyIndex].uid,
-                postID,
-                profile: {
-                  username,
-                  photoURL,
-                  uid,
-                },
-                type: 'like',
-                source: 'comment',
-                date: Date.now()
-              })
+              if (replies[replyIndex].uid !== uid) {
+                const notificationID = uuidv4();
+                await setDoc(doc(db, 'notifications', notificationID), {
+                  notificationID,
+                  originID: likeID,
+                  recipientUID: replies[replyIndex].uid,
+                  notRead: true,
+                  postID,
+                  profile: {
+                    username,
+                    photoURL,
+                    uid,
+                  },
+                  type: 'like',
+                  source: 'comment',
+                  date: Date.now()
+                });                
+              };
               const newLikes = [...likes, newLike];
               // comment is reply in props
               const newReply = {...comment, likes: newLikes}
@@ -160,21 +163,24 @@ const Comment = (props) => {
               username: displayName,
               fullname: fullname,
             };
-            const notificationID = uuidv4();
-            await setDoc(doc(db, 'notifications', notificationID), {
-              notificationID,
-              originID: likeID,
-              recipientUID: comments[commentIndex].uid,
-              postID,
-              profile: {
-                username,
-                photoURL,
-                uid,
-              },
-              type: 'like',
-              source: 'comment',
-              date: Date.now()
-            })
+            if (comments[commentIndex].uid !== uid) {
+              const notificationID = uuidv4();
+              await setDoc(doc(db, 'notifications', notificationID), {
+                notificationID,
+                originID: likeID,
+                recipientUID: comments[commentIndex].uid,
+                notRead: true,
+                postID,
+                profile: {
+                  username,
+                  photoURL,
+                  uid,
+                },
+                type: 'like',
+                source: 'comment',
+                date: Date.now()
+              });              
+            };
             const newLikes = [...likes, newLike];
             const newComment = {...comment, likes: newLikes};
             newComments.splice(commentIndex, 1, newComment);
