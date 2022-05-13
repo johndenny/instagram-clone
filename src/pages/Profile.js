@@ -55,8 +55,8 @@ const Profile = (props) => {
   const [postData, setPostData] = useState([]);
 
   useEffect(() => {
-    if (profileData.length === 0 || (previousUsername !== params.username && previousUsername !== '')) {
-      setProfileUsername(params.username);
+    console.log(profileData);
+    if (profileData.length === 0 || profileData.username !== params.username) {
       setDataLoading(true);
       setPreviousUsername(params.username);
       getUserProfileData(params.username, params.page);
@@ -72,6 +72,10 @@ const Profile = (props) => {
     setPhotoUploadModalOpen(true);
     setCurrentPath('');
   }
+
+  useLayoutEffect(() => {
+    setProfileUsername(params.username);
+  },[]);
 
   const navigateFollowers = () => {
     if (width > 736) {

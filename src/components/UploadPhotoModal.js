@@ -820,6 +820,7 @@ const UploadPhotoModal = (props) => {
       w150,
     } = photo;
     const {
+      fullname,
       username,
       photoURL,
       uid
@@ -918,7 +919,9 @@ const UploadPhotoModal = (props) => {
           recipientUID: textTags[index],
           notRead: true,
           postID,
+          postPhotoURL: w150URL,
           profile: {
+            fullname,
             username,
             photoURL,
             uid,
@@ -940,7 +943,9 @@ const UploadPhotoModal = (props) => {
           recipientUID: tagIDs[index],
           notRead: true,
           postID,
+          postPhotoURL: w150URL,
           profile: {
+            fullname,
             username,
             photoURL,
             uid,

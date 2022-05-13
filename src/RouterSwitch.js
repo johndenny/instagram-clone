@@ -30,7 +30,7 @@ import {
   deleteDoc, 
   onSnapshot,
   limit,
-  documentId
+  documentId,
 } from 'firebase/firestore';
 import UploadPhotoMobile from './pages/UploadPhotoMobile';
 import UploadPhotoMobileDetails from './pages/UploadPhotoMobileDetails';
@@ -67,6 +67,7 @@ import MessageLikesModal from './components/MessageLikesModal';
 import { type } from '@testing-library/user-event/dist/type';
 import HashTagPage from './pages/HashTagPage';
 import DeleteCommentModal from './components/DeleteCommentModal';
+import NotificationPage from './pages/NotificationPage';
 
 const auth = getAuth();
 const storage = getStorage();
@@ -247,7 +248,7 @@ const RouterSwitch = () => {
       followsArray.length !== 0) {
         setIsNotificationsNotRead(true);
         setIsNotificationPopUpVisable(true);
-      };
+    };
   };
 
   useEffect(() => {
@@ -255,6 +256,70 @@ const RouterSwitch = () => {
       getNotReadNotifications();
     };
   }, [userData]);
+
+  const getNotifications = async () => {
+    const {
+      uid
+    } = userData;
+    const notificationsQuery = query(collection(db, 'notifications'),
+      where('recipientUID', '==', uid), orderBy('date', 'desc'));
+    const notificationsSnapshot = await getDocs(notificationsQuery);
+    const notificationsArray = [];
+    const notReadArray = [];
+    notificationsSnapshot.forEach((document) => {
+      const {
+        notRead
+      } = document.data();
+      if (notRead) {
+        notReadArray.push(document.data());
+      }
+      notificationsArray.push(document.data());
+    });
+    for (let index = 0; index < notReadArray.length; index++) {
+      const {
+        notificationID
+      } = notReadArray[index];
+      await updateDoc(doc(db, 'notifications', notificationID), {
+        notRead: false
+      });
+    };
+    const newNotificationsArray = notificationsArray.map((notification) => {
+      const {
+        date,
+        notRead,
+      } = notification;
+      if (notRead) {
+        return {...notification, title: 'New'};
+      } else {
+        const title = notificationTitleHandler(date);
+        return {...notification, title};        
+      };
+    });
+    setUserNotifications(newNotificationsArray);
+    console.log(newNotificationsArray);
+  };
+
+  const notificationTitleHandler = (date) => {
+    const timePast = Date.now() - date;
+    const minutesPast = timePast / 60000;
+    const hoursPast = minutesPast / 60;
+    const daysPast = hoursPast / 24;
+    const weeksPast = daysPast / 7;
+    switch (true) {
+      case hoursPast < 24:
+        return 'Today';
+      case daysPast > 1 && daysPast < 2:
+        return 'Yesterday';
+      case daysPast > 2 && weeksPast < 1:
+        return 'This Week';
+      case weeksPast > 1 && weeksPast < 4:
+        return 'This Month';
+      case weeksPast > 4:
+        return 'Earlier';
+      default:
+    }
+  }
+
 
   //SITE WIDE//
 
@@ -707,7 +772,7 @@ const RouterSwitch = () => {
     }
   }
 
-  const likeUploadToggle = async (postID) => {
+  const likeUploadToggle = async (postID, w150) => {
     const {
       photoURL,
       uid,
@@ -742,7 +807,9 @@ const RouterSwitch = () => {
             notRead: true,
             recipientUID: postSnap.data().uid,
             postID,
+            postPhotoURL: w150,
             profile: {
+              fullname,
               username,
               photoURL,
               uid,
@@ -855,6 +922,7 @@ const RouterSwitch = () => {
           notRead: true,
           recipientUID: userProfile.uid,
           profile: {
+            fullname,
             username,
             photoURL,
             uid,
@@ -1279,6 +1347,7 @@ const RouterSwitch = () => {
       w150,
     } = resizedPhotos;
     const {
+      fullname,
       username,
       photoURL,
       uid,
@@ -1358,7 +1427,10 @@ const RouterSwitch = () => {
           notRead: true,
           recipientUID: textTags[index],
           postID,
+          postPhotoURL: w150URL,
+          comment: photoUploadText,
           profile: {
+            fullname,
             username,
             photoURL,
             uid,
@@ -1379,7 +1451,10 @@ const RouterSwitch = () => {
           notRead: true,
           recipientUID: tagIDs[index],
           postID,
+          postPhotoURL: w150URL,
+          comment: photoUploadText,
           profile: {
+            fullname,
             username,
             photoURL,
             uid,
@@ -2407,6 +2482,7 @@ const RouterSwitch = () => {
               } />
               <Route path='/explore/' element={
                 <Explore 
+                  setUserNotifications = {setUserNotifications}
                   getPhotoURLs = {getPhotoURLs}
                   isMobile = {isMobile}
                   getPostData = {getPostData}
@@ -2444,6 +2520,20 @@ const RouterSwitch = () => {
                   followHandler={followHandler}
                   isFollowLoading={isFollowLoading}
                   unfollowModalHandler={unfollowModalHandler}
+                />
+              }/>
+              <Route path='/accounts/activity' element={
+                <NotificationPage 
+                  selectedListProfile = {selectedListProfile}
+                  followHandler = {followHandler}
+                  unfollowModalHandler = {unfollowModalHandler}
+                  isFollowLoading = {isFollowLoading}
+                  userData = {userData}
+                  getNotifications = {getNotifications}
+                  userNotifications = {userNotifications}
+                  setIsNotificationsNotRead = {setIsNotificationsNotRead}
+                  setIsNotificationPopUpVisable = {setIsNotificationPopUpVisable}
+                  formatTimeShort = {formatTimeShort}
                 />
               }/>
               <Route path='/accounts/edit' element={

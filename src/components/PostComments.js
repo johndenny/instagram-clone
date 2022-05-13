@@ -11,6 +11,7 @@ const db = getFirestore();
 
 const PostComments = (props) => {
   const {
+    w150,
     profileTagHandler,
     isSearchHashTag,
     setIsSearchHashTag,
@@ -92,6 +93,7 @@ const PostComments = (props) => {
   }, [commentText, textareaRef]);
 
   const {
+    fullname,
     username,
     photoURL,
     uid,
@@ -121,24 +123,27 @@ const PostComments = (props) => {
     const textTags = await profileTagHandler(commentText);
     for (let index = 0; index < textTags.length; index++) {
       if (textTags[index] !== uid) {
-          const notificationID = uuidv4();
-          await setDoc(doc(db, 'notifications', notificationID), {
-            originID: commentID,
-            notificationID,
-            recipientUID: textTags[index],
-            notRead: true,
-            postID,
-            profile: {
-              username,
-              photoURL,
-              uid,
-            },
-            type: 'mention',
-            source: 'comment',
-            date: Date.now()
-          });
-        };        
-      }
+        const notificationID = uuidv4();
+        await setDoc(doc(db, 'notifications', notificationID), {
+          originID: commentID,
+          notificationID,
+          recipientUID: textTags[index],
+          notRead: true,
+          postID,
+          postPhotoURL: w150,
+          comment: commentText,
+          profile: {
+            fullname,
+            username,
+            photoURL,
+            uid,
+          },
+          type: 'mention',
+          source: 'comment',
+          date: Date.now()
+        });
+      };        
+    };
     if (selectedPost[0].uid !== uid) {
       const notificationID = uuidv4();
       await setDoc(doc(db, 'notifications', notificationID), {
@@ -147,7 +152,10 @@ const PostComments = (props) => {
         recipientUID: selectedPost[0].uid,
         notRead: true,
         postID,
+        postPhotoURL: w150,
+        comment: commentText,
         profile: {
+          fullname,
           username,
           photoURL,
           uid,
@@ -241,7 +249,10 @@ const PostComments = (props) => {
               recipientUID: textTags[index],
               notRead: true,
               postID,
+              postPhotoURL: w150,
+              comment: commentText,
               profile: {
+                fullname,
                 username,
                 photoURL,
                 uid,
@@ -260,7 +271,10 @@ const PostComments = (props) => {
             recipientUID: selectedPost[0].uid,
             notRead: true,
             postID,
+            postPhotoURL: w150,
+            comment: commentText,
             profile: {
+              fullname,
               username,
               photoURL,
               uid,
@@ -277,7 +291,11 @@ const PostComments = (props) => {
             notificationID: replyID,
             recipientUID: replyUser.uid,
             notRead: true,
+            postID,
+            postPhotoURL: w150,
+            comment: commentText,
             profile: {
+              fullname,
               username,
               photoURL,
               uid,

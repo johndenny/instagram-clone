@@ -23,6 +23,7 @@ let lastPress = 0;
 
 const Comment = (props) => {
   const {
+    w150,
     setSelectedComment,
     isCommentDeleteOpen,
     setIsCommentDeleteOpen,
@@ -78,7 +79,10 @@ const Comment = (props) => {
     const postRef = doc(db, 'postUploads', postID);
     const postSnap = await getDoc(postRef);
     if (postSnap.exists()) {
-      const { comments } = postSnap.data();
+      const { 
+        comments,
+        photos
+      } = postSnap.data();
       const newComments = [...comments];
       const commentIndex = postSnap.data().comments
         .findIndex((comment) => comment.commentID === (isReply ? parentCommentID : commentID));
@@ -112,7 +116,10 @@ const Comment = (props) => {
                   recipientUID: replies[replyIndex].uid,
                   notRead: true,
                   postID,
+                  postPhotoURL: w150,
+                  comment: replies[replyIndex].text,
                   profile: {
+                    fullname,
                     username,
                     photoURL,
                     uid,
@@ -171,7 +178,10 @@ const Comment = (props) => {
                 recipientUID: comments[commentIndex].uid,
                 notRead: true,
                 postID,
+                postPhotoURL: w150,
+                comment: comments[commentIndex].text,
                 profile: {
+                  fullname,
                   username,
                   photoURL,
                   uid,
@@ -401,6 +411,7 @@ const Comment = (props) => {
         </div>
         {!isReply && replies.length !== 0 &&
           <CommentReplies
+            w150 = {w150}
             setIsCommentDeleteOpen = {setIsCommentDeleteOpen}
             setSelectedComment = {setSelectedComment}
             stringToLinks={stringToLinks}

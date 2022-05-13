@@ -10,6 +10,11 @@ const FollowButton = (props) => {
     unfollowModalHandler,
     user,
   } = props
+
+  useEffect(() => {
+    console.log(userData.following)
+  }, []);
+
   const followIndex = userData.following.findIndex((follow) => follow.uid === user.uid);
 
   if (followIndex === -1 && user.uid !== userData.uid) {

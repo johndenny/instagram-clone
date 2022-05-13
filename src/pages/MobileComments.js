@@ -180,6 +180,9 @@ const MobileComments = (props) => {
       displayName,
       fullname
     } = userData;
+    const {
+      w150
+    } = selectedPost[1];
     
     const postComment = async (event) => {
       const commentID = uuidv4();
@@ -211,7 +214,10 @@ const MobileComments = (props) => {
             recipientUID: textTags[index],
             notRead: true,
             postID,
+            postPhotoURL: w150,
+            comment: commentText,
             profile: {
+              fullname,
               username,
               photoURL,
               uid,
@@ -231,7 +237,10 @@ const MobileComments = (props) => {
           recipientUID: selectedPost[0].uid,
           notRead: true,
           postID,
+          postPhotoURL: w150,
+          comment: commentText,
           profile: {
+            fullname,
             username,
             photoURL,
             uid,
@@ -322,8 +331,11 @@ const MobileComments = (props) => {
                 notificationID,
                 recipientUID: textTags[index],
                 notRead: true,
+                postPhotoURL: w150,
+                comment: commentText,
                 postID,
                 profile: {
+                  fullname,
                   username,
                   photoURL,
                   uid,
@@ -342,7 +354,10 @@ const MobileComments = (props) => {
               recipientUID: selectedPost[0].uid,
               notRead: true,
               postID,
+              postPhotoURL: w150,
+              comment: commentText,
               profile: {
+                fullname,
                 username,
                 photoURL,
                 uid,
@@ -359,7 +374,11 @@ const MobileComments = (props) => {
               notificationID: replyID,
               recipientUID: replyUser.uid,
               notRead: true,
+              postID,
+              postPhotoURL: w150,
+              comment: commentText,
               profile: {
+                fullname,
                 username,
                 photoURL,
                 uid,
