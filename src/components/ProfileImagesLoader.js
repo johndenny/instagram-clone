@@ -10,6 +10,7 @@ let lastPress = 0;
 
 const ProfileImagesLoader = (props) => {
   const {
+    stringToLinks,
     setIsPostLinksOpen,
     setSelectedPost,
     getUserProfileData,
@@ -63,9 +64,13 @@ const ProfileImagesLoader = (props) => {
     }
   }
 
+  useEffect(() => {
+    console.log(location);
+  }, []);
+
   return (
     <article className="profile-images">
-      {pageSelected !== 'feed' && location.pathname !== '/' &&
+      {pageSelected !== 'feed' &&
         <div className="profile-images-wrapper">
           {profilePosts.map((post) => {
             const {
@@ -144,12 +149,13 @@ const ProfileImagesLoader = (props) => {
           })}
         </div>      
       }
-      {(pageSelected === 'feed' || location.pathname === '/') &&
+      {(location.pathname === `/${userData.username}/feed`) &&
         <section className='profile-images-wrapper-feed'>
           {profilePosts.map((post, index) => {
             return (
               <div key={post[0].postID}>
                 <MobilePhotoPost
+                  stringToLinks = {stringToLinks}
                   setIsPostLinksOpen={setIsPostLinksOpen}
                   getUserProfileData={getUserProfileData}
                   setBackgroundLocation={setBackgroundLocation}

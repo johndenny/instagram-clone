@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 const ActivtiyDropDown = (props) => {
   const {
+    isActivityLoading,
     isActivityAnimating,
     setIsActivityAnimating,
     setIsDropDownOpen,
@@ -54,6 +55,7 @@ const ActivtiyDropDown = (props) => {
       </div>
       <div className='activity-drop-down-wrapper'>
         <NotificationPage 
+          isActivityLoading = {isActivityLoading}
           selectedListProfile = {selectedListProfile}
           followHandler = {followHandler}
           unfollowModalHandler = {unfollowModalHandler}

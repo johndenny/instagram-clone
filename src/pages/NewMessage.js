@@ -238,7 +238,7 @@ const NewMessage = (props) => {
       {!isSharePostOpen && !isAddPeople &&
         <header className="mobile-navigation-header">
           <div className="mobile-navigation-icon-wrapper">
-            {!isMobile
+            {isMobile
               ? <button
                   className='back-button'
                   onClick={() => setIsNewMessageOpen(false)}

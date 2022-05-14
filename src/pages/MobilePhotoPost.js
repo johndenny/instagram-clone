@@ -632,6 +632,7 @@ const MobilePhotoPost = (props) => {
                                 onClick={() => navigateUserProfile(username)}
                               >
                                 <Tag
+                                  isPost = {true}
                                   isTagsHidden={isTagsHidden}
                                   imageDimensions={imageDimensions}
                                   index={index}
@@ -1007,6 +1008,7 @@ const MobilePhotoPost = (props) => {
                                     onClick={() => navigateUserProfile(username)}
                                   >
                                     <Tag
+                                      isPost = {true}
                                       isTagsHidden={isTagsHidden}
                                       imageDimensions={imageDimensions}
                                       index={index}
@@ -1369,6 +1371,7 @@ const MobilePhotoPost = (props) => {
                                     onClick={() => navigateUserProfile(username)}
                                   >
                                     <Tag
+                                      isPost = {true}
                                       isTagsHidden={isTagsHidden}
                                       imageDimensions={imageDimensions}
                                       index={index}

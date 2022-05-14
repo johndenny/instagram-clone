@@ -17,6 +17,9 @@ const MobileNavigationBars = (props) => {
   const location = useLocation();
   const [currentPath, setCurrentPath] = useState('');
   const { 
+    selectedPost,
+    setPostToSend,
+    setIsSharePostOpen,
     dataLoading,
     setIsNotificationPopUpVisable,
     isNotificationPopUpVisable,
@@ -150,6 +153,11 @@ const MobileNavigationBars = (props) => {
       setPreviousLocation(location.pathname);
     }
   }, [location.pathname, dataLoading, isLoadingPage]);
+
+  const sendPost = () => {
+    setPostToSend(selectedPost);
+    setIsSharePostOpen(true);
+  }
 
   const topNavigationHandler = () => {
     const { pathname } = location;
@@ -432,12 +440,15 @@ const MobileNavigationBars = (props) => {
             <h1 className="logo-header">
               Comments
             </h1>
-            <div className="message-icon-wrapper">
+            <button 
+              className="message-icon-wrapper"
+              onClick={sendPost}
+            >
               <svg aria-label="Direct" className="messages-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
                 <line fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2" x1="22" x2="9.218" y1="3" y2="10.083"></line>
                 <polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></polygon>
               </svg>
-            </div>            
+            </button>            
           </div>
         </header>   
       )
@@ -527,7 +538,9 @@ const MobileNavigationBars = (props) => {
     
       <React.Fragment>
         <nav className="mobile-navigation-top-wrapper">
-          <div className='mobile-navigation-bar-spacer'></div>
+          {!hideTopNavigation &&
+            <div className='mobile-navigation-bar-spacer'></div>          
+          }
           {topNavigationHandler()}
         </nav>
         {!isInboxOpen &&

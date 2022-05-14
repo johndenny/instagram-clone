@@ -6,7 +6,7 @@ import Homepage from "./pages/Homepage";
 import LogIn from "./pages/LogIn";
 import SignUp from "./pages/SignUp";
 import firebaseApp from "./Firebase"; 
-import { getAuth, onAuthStateChanged, updateProfile} from "firebase/auth";
+import { confirmPasswordReset, getAuth, onAuthStateChanged, updateProfile} from "firebase/auth";
 import NavigationBar from "./components/NavigationBar";
 import Inbox from "./pages/Inbox";
 import Explore from "./pages/Explore";
@@ -216,6 +216,11 @@ const RouterSwitch = () => {
   });
   const [isNotificationsNotRead, setIsNotificationsNotRead] = useState(false);
   const [isNotificationPopUpVisable, setIsNotificationPopUpVisable] = useState(false);
+  const [isActivityLoading, setIsActivityLoading] = useState(false);
+
+  //HOMEPAGE//
+
+  const [isHomePageLoading, setIsHomePageLoading] = useState(false);
 
   const getNotReadNotifications = async () => {
     const commentsArray = [];
@@ -258,6 +263,7 @@ const RouterSwitch = () => {
   }, [userData]);
 
   const getNotifications = async () => {
+    setIsActivityLoading(true);
     const {
       uid
     } = userData;
@@ -295,6 +301,7 @@ const RouterSwitch = () => {
         return {...notification, title};        
       };
     });
+    setIsActivityLoading(false);
     setUserNotifications(newNotificationsArray);
     console.log(newNotificationsArray);
   };
@@ -649,6 +656,7 @@ const RouterSwitch = () => {
   },[profileModalData]);
 
   const getUserProfiles = async () => {
+    console.log('getuserprofiles')
     const allUsers = [];
     const usersRef = collection(db, 'users');
     const usersSnap = await getDocs(usersRef);
@@ -656,19 +664,23 @@ const RouterSwitch = () => {
       if (doc.data().uid === userData.uid) {
         return null
       }
-      // const followersIndex = doc.data().followers.findIndex((follower) => follower.uid === userData.uid);
-      // if (followersIndex === -1) {
-      // }
+      const followersIndex = doc.data().followersUID.findIndex((follower) => follower === userData.uid);
+      console.log(followersIndex, doc.data());
+      if (followersIndex !== -1) {
+        return null;
+      }
       allUsers.push(doc.data());
     });
+    console.log(allUsers);
     setAllUserProfiles(allUsers);
   }
 
-  const getFollowingPosts = async (user) => {
+  const getFollowingPosts = async () => {
+    setIsHomePageLoading(true)
     const { 
       following,
-    } = user;
-    const followingAndUser = [...following, user]
+    } = userData;
+    const followingAndUser = [...following, userData]
     const followingPosts = Array.from({length: followingAndUser.length}, async (_, i) => {
       const postData = query(collection(db, 'postUploads'), where('uid', '==', followingAndUser[i].uid));
       return new Promise( async (resolve) => {
@@ -691,8 +703,15 @@ const RouterSwitch = () => {
       });
       console.log(allPosts);
       setPhotosArray(allPosts);
+      setIsHomePageLoading(false);
     })
   }
+
+  useEffect(() => {
+    if (userData !== undefined) {
+      getFollowingPosts();
+    }
+  }, [userData.uid])
 
   // POSTS //
 
@@ -1884,7 +1903,6 @@ const RouterSwitch = () => {
       console.log('success!');
       setUserData({...user,...profileDataSnap.data()});
       console.log(profileDataSnap.data());
-      getFollowingPosts(profileDataSnap.data());
     }
   }
 
@@ -2262,6 +2280,7 @@ const RouterSwitch = () => {
 
         {(userLoggedIn && !isMobile) &&
           <NavigationBar
+            isActivityLoading = {isActivityLoading}
             getNotifications = {getNotifications}
             userNotifications = {userNotifications}
             setIsNotificationsNotRead = {setIsNotificationsNotRead}
@@ -2304,6 +2323,9 @@ const RouterSwitch = () => {
         }
         {(userLoggedIn && isMobile && !photoUploadOpen) &&
           <MobileNavigationBars
+            selectedPost = {selectedPost}
+            setPostToSend = {setPostToSend}
+            setIsSharePostOpen = {setIsSharePostOpen}
             dataLoading = {dataLoading}
             setIsNotificationPopUpVisable = {setIsNotificationPopUpVisable}
             isNotificationPopUpVisable = {isNotificationPopUpVisable}
@@ -2363,6 +2385,7 @@ const RouterSwitch = () => {
             <React.Fragment>
               <Route path='/' element={
                 <Homepage
+                  isHomePageLoading = {isHomePageLoading}
                   profileTagHandler = {profileTagHandler}
                   setIsSharePostOpen={setIsSharePostOpen}
                   setPostToSend={setPostToSend}
@@ -2680,6 +2703,7 @@ const RouterSwitch = () => {
           />
           <Route path='/:username/:page' element={
             <Profile
+              stringToLinks = {stringToLinks}
               profileSavedPosts={profileSavedPosts}
               profileTaggedPosts={profileTaggedPosts}
               setIsPostLinksOpen={setIsPostLinksOpen}

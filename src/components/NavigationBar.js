@@ -10,6 +10,7 @@ import ActivtiyDropDown from './ActivityDropDown';
 
 const NavigationBar = (props) => {
   const {
+    isActivityLoading,
     getNotifications,
     userNotifications,
     setIsNotificationsNotRead,
@@ -117,7 +118,6 @@ const NavigationBar = (props) => {
 
   const activityDropDownHandler = (event) => {
     event.stopPropagation();
-    console.log(isDropDownOpen)
     if (isDropDownOpen) {
       return setIsActivityAnimating(true);
     };
@@ -310,6 +310,7 @@ const NavigationBar = (props) => {
             </div>
             {isDropDownOpen &&
               <ActivtiyDropDown
+                isActivityLoading = {isActivityLoading}
                 setIsActivityAnimating = {setIsActivityAnimating}
                 isActivityAnimating = {isActivityAnimating}
                 setIsDropDownOpen = {setIsDropDownOpen}

@@ -3,6 +3,7 @@ import { useLayoutEffect, useEffect, useRef, useState } from 'react';
 
 const Tag = (props) => {
   const {
+    isPost,
     setTagIDs,
     tagIDs,
     isTagsHidden,
@@ -107,7 +108,7 @@ const Tag = (props) => {
   }
 
   const mouseUpHandler = () => {
-    if (isModal) {
+    if (isModal && isPost) {
       setIsTagTapped(false);
     }
   }
@@ -138,7 +139,7 @@ const Tag = (props) => {
       >
         {username}
       </span>
-      {isTagTapped && !isMoved && !isModal &&
+      {isTagTapped && !isMoved && !isModal && !isPost &&
         <span 
           className='photo-tag-delete-sprite'
           onTouchEnd={deleteTag}

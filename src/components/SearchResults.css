@@ -16,8 +16,7 @@
   gap: 0;
 }
 
-.search-results .user-wrapper,
-.search-results .hash-tag-search-list-wrapper {
+.search-results .user-wrapper {
   padding: 8px 16px;
   cursor: pointer;
 }
@@ -100,4 +99,9 @@
 .hash-tag-post-number,
 .hash-tag-title {
   font-weight: 600;
+}
+
+.spinner.search {
+  height: 32px;
+  width: 32px;
 }

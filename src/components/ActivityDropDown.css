@@ -46,3 +46,8 @@
 .activity-drop-down.animate {
   animation: fadeUpActivity 0.1s ease-in-out;
 }
+
+.spinner.activity {
+  height: 32px;
+  width: 32px;
+}
