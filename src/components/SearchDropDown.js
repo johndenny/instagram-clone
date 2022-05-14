@@ -4,6 +4,8 @@ import SearchResults from './SearchResults';
 
 const SearchDropDown = (props) => {
   const {
+    isSearchAnimating,
+    setIsSearchAnimating,
     setIsSearchClicked,
     deleteRecentHashTagSearch,
     saveRecentHashTagSearch,
@@ -30,10 +32,37 @@ const SearchDropDown = (props) => {
     setMenuClicked(true);
   }
 
+  const animateDropDown = () => {
+    if (!isSearchAnimating) {
+      setIsSearchAnimating(true);
+    };
+  };
+  
+  const hideDropDown = () => {
+    if (isSearchAnimating) {
+      setIsSearchClicked(false);
+    };
+  };
+
+  useEffect(() => {
+    window.addEventListener('click' , animateDropDown);
+    return () => {
+      window.removeEventListener('click', animateDropDown);
+      setIsSearchAnimating(false);
+    };
+  }, []);
+
   return (
-    <div className='search-drop-down'>
+    <div 
+      className='search-drop-down'
+      onAnimationEnd = {hideDropDown}
+    >
       <div 
-        className='search-drop-down-content'
+        className={
+          isSearchAnimating 
+          ? 'search-drop-down-content animate'
+          : 'search-drop-down-content'
+        }
         onMouseDown={mouseDownHandler}
       >
         <div className='search-drop-down-triangle'>

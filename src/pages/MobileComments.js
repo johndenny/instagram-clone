@@ -675,6 +675,7 @@ const MobileComments = (props) => {
               return (
                 <li key={commentID} className='comment-wrapper'>
                   <Comment
+                    w150 = {selectedPost[1].w150}
                     setSelectedComment = {setSelectedComment}
                     isCommentDeleteOpen = {isCommentDeleteOpen}
                     setIsCommentDeleteOpen = {setIsCommentDeleteOpen}

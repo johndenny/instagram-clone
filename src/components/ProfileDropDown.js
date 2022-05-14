@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './ProfileDropDown.css';
 import firebaseApp from '../Firebase';
 import { getAuth, signOut} from "firebase/auth";
@@ -7,16 +7,48 @@ import { Link } from 'react-router-dom';
 const auth = getAuth(firebaseApp);
 
 const ProfileDropDown = (props) => {
-  const { openDropDown, userData } = props;
+  const { 
+    setDropDownOpen,
+    setIsProfileAnimating,
+    isProfileAnimating,
+    openDropDown, 
+    userData 
+  } = props;
 
   const logOut = async () => {
     await signOut(auth);
   }
 
+  const animateDropDown = () => {
+    if (!isProfileAnimating) {
+      setIsProfileAnimating(true);
+    };
+  };
+
+  const hideDropDown = () => {
+    if (isProfileAnimating) {
+      setDropDownOpen(false);
+    };
+  };
+
+  useEffect(() => {
+    window.addEventListener('click', animateDropDown);
+    return () => {
+      window.removeEventListener('click', animateDropDown);
+      setIsProfileAnimating(false);
+    };
+  }, []);
+
   return (
     <React.Fragment>
-    <div className='drop-down-modal' onClick={openDropDown}></div>
-    <div className='profile-drop-down'>
+    <div 
+      className={
+        isProfileAnimating
+          ? 'profile-drop-down animate'
+          : 'profile-drop-down'
+      }
+      onAnimationEnd = {hideDropDown}
+    >
       <div className='drop-down-triangle'></div>
       <div className='profile-buttons-wrapper'>
         <Link to={`/${userData.displayName}/`} className='profile-button'>

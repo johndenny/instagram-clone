@@ -90,6 +90,7 @@ const MobilePhotoPost = (props) => {
   const [isSearching, setIsSearching] = useState(false);
   const [isSearchHashTag, setIsSearchHashTag] = useState(false);
   const [isPostLiked, setIsPostLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
 
   useEffect(() => {
     if (isModal) {
@@ -247,9 +248,11 @@ const MobilePhotoPost = (props) => {
     } = selectedPost[0];
         const index = likes.findIndex((like) => like.uid === userData.uid);
     if (index === -1) {
+      setLikeCount(likeCount + 1);
       setIsButtonLiked(true);
       setIsPostLiked(true);
     } else {
+      setLikeCount(likeCount - 1);
       setIsButtonLiked(false);
       setIsPostLiked(false);
     }
@@ -452,6 +455,7 @@ const MobilePhotoPost = (props) => {
       } else {
         setIsPostLiked(true);
       };
+      setLikeCount(likes.length);
     };
   }, [selectedPost]);
 
@@ -866,14 +870,14 @@ const MobilePhotoPost = (props) => {
                   }
                 </button>
               </div>
-              {likes.length > 0 &&
+              {likeCount > 0 &&
                 <button 
                   className='like-counter'
                   onClick={() => navigateLikedBy(postID)}
                 >
-                  {likes.length === 1
+                  {likeCount === 1
                     ? '1 like'
-                    : `${likes.length} likes`
+                    : `${likeCount} likes`
                   }
                 </button>                  
               }               
@@ -1202,14 +1206,14 @@ const MobilePhotoPost = (props) => {
                       }
                     </button>
                   </div>
-                  {likes.length > 0 &&
+                  {likeCount > 0 &&
                     <button 
                       className='like-counter'
                       onClick={() => navigateLikedBy(postID)}
                     >
-                      {likes.length === 1
+                      {likeCount === 1
                         ? '1 like'
-                        : `${likes.length} likes`
+                        : `${likeCount} likes`
                       }
                     </button>                  
                   }               
@@ -1476,14 +1480,14 @@ const MobilePhotoPost = (props) => {
                     }
                   </button>
                 </div>
-                {likes.length > 0 &&
+                {likeCount > 0 &&
                   <button 
                     className='like-counter'
                     onClick={() => navigateLikedBy(postID)}
                   >
-                    {likes.length === 1
+                    {likeCount === 1
                       ? '1 like'
-                      : `${likes.length} likes`
+                      : `${likeCount} likes`
                     }
                   </button>                  
                 }

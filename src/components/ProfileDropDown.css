@@ -94,3 +94,7 @@ svg {
 .profile-drop-down a:focus {
   background-color: rgba(239, 239, 239, 1);
 }
+
+.profile-drop-down.animate {
+  animation: fadeUpActivity 0.1s ease-in-out;
+}

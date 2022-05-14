@@ -301,3 +301,8 @@ h1.logo-header {
   bottom: 0;
   margin: 4px;
 }
+
+.bottom-navigation-icon-wrapper .profile-ring {
+  height: 30px;
+  width: 30px;
+}

@@ -2262,6 +2262,16 @@ const RouterSwitch = () => {
 
         {(userLoggedIn && !isMobile) &&
           <NavigationBar
+            getNotifications = {getNotifications}
+            userNotifications = {userNotifications}
+            setIsNotificationsNotRead = {setIsNotificationsNotRead}
+            formatTimeShort = {formatTimeShort}
+            dataLoading = {dataLoading}
+            isLoadingPage = {isLoadingPage}
+            isNotificationPopUpVisable = {isNotificationPopUpVisable}
+            setIsNotificationPopUpVisable = {setIsNotificationPopUpVisable}
+            notificationCount = {notificationCount}
+            isNotificationsNotRead = {isNotificationsNotRead}
             deleteRecentHashTagSearch = {deleteRecentHashTagSearch}
             saveRecentHashTagSearch = {saveRecentHashTagSearch}
             isSearchHashTag = {isSearchHashTag}

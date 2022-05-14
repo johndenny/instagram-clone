@@ -99,6 +99,7 @@ div {
   align-items: center;
   padding-left: 24px;
   white-space: nowrap;
+  position: relative;
 }
 
 .logo-wrapper {
@@ -232,4 +233,18 @@ div {
   .page-icons-wrapper {
     padding-left: 0;
   }
+}
+
+.activity-indicator-wrapper {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  bottom: 0;
+  transform: translateY(100%);
+}
+
+.activity-indicator-wrapper .not-read-activity-indicator {
+  position: relative;
 }

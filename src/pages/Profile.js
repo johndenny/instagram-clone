@@ -1387,7 +1387,7 @@ const Profile = (props) => {
                   </div>
                 </article>
               }
-              {currentUsersPage && pageSelected === 'tagged' &&
+              {currentUsersPage && pageSelected === 'tagged' && postData.length === 0 &&
                 <article className="no-tagged-posts">
                   <div className="no-tagged-posts-content">
                     <div className="no-tagged-posts-sprite">

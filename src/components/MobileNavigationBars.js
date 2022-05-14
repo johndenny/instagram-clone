@@ -511,6 +511,10 @@ const MobileNavigationBars = (props) => {
     setCurrentPath(location.pathname);
   },[location]);
 
+  useEffect(() => {
+    console.log(currentPath);
+  }, [currentPath])
+
   const navigateUserProfile = async () => {
     const { displayName } = userData;
     setIsLoadingPage(true);
@@ -585,7 +589,7 @@ const MobileNavigationBars = (props) => {
                 }
               </Link>
               <button onClick={navigateUserProfile} className='profile-picture icon'>
-                {currentPath === `/${userData.displayName}/` &&
+                {(currentPath === `/${userData.username}` || currentPath === `/${userData.username}/`) &&
                   <div className='profile-ring'></div>
                 }
                 <div className='profile-picture-wrapper'>

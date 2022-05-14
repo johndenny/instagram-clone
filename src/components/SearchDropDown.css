@@ -32,4 +32,10 @@
   border-radius: 6px;
   z-index: 3;
   position: relative;
+  overflow: hidden;
+  max-height: 400px;
+}
+
+.search-drop-down-content.animate {
+  animation: fadeUpActivity 0.1s ease-in-out;
 }

@@ -1,8 +1,28 @@
 .activity-pop-up {
   position: absolute;
-  bottom: 60px;
   animation: scaleInActivity 0.3s ease-in-out;
+}
+
+.bottom-navigation-icon-wrapper .activity-pop-up {
+  bottom: 60px;
   transform-origin: bottom;
+}
+
+.page-icons-wrapper .activity-pop-up {
+  top: 60px;
+  left: -300%;
+  right: -300%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: top;
+}
+
+.page-icons-wrapper .activity-pop-up-triangle {
+  border-top: 0;
+  border-bottom: 8px solid rgba(237, 73, 86, 1);
+  top: 0;
+  transform: translateY(-100%) translateX(-50%);
 }
 
 .activity-pop-up.animate {
@@ -27,8 +47,12 @@
   border-top: 8px solid rgba(237, 73, 86, 1);
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  bottom: 0;
+
   left: 50%;
+}
+
+.bottom-navigation-icon-wrapper .activity-pop-up-triangle {
+  bottom: 0;
   transform: translateY(100%) translateX(-50%);
 }
 
