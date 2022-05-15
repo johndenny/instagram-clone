@@ -8,6 +8,7 @@ import ProfileImagesLoader from "../components/ProfileImagesLoader";
 
 const Profile = (props) => {
   const {
+    getNextProfilePosts,
     stringToLinks,
     profileSavedPosts,
     profileTaggedPosts,
@@ -54,11 +55,14 @@ const Profile = (props) => {
   const [pageSelected, setPageSelected] = useState('posts');
   const [previousUsername, setPreviousUsername] = useState('');
   const [postData, setPostData] = useState([]);
+  const [isNextPostsLoading, setIsNextPostLoading] = useState(false);
 
   useEffect(() => {
+    console.log(profileData);
     if (profileData.length === 0 || profileData.username !== params.username) {
       setDataLoading(true);
       setPreviousUsername(params.username);
+      console.log('getuserprofiledata triggered')
       getUserProfileData(params.username, params.page);
     }
     if (params.page === 'feed' || params.page === 'tagged' || params.page === 'saved') {
@@ -76,6 +80,41 @@ const Profile = (props) => {
   useLayoutEffect(() => {
     setProfileUsername(params.username);
   },[]);
+
+  const scrollHandler = () => {
+    console.log(profileData);
+    const bufferFromBottom = 300;
+    const scrollPosition = window.pageYOffset + window.innerHeight;
+    const {
+      scrollHeight
+    } = document.documentElement;
+    console.log(scrollPosition + bufferFromBottom, scrollHeight);
+    if (scrollPosition === scrollHeight) {
+      console.log('hello')
+      getNextProfilePosts();
+    };
+    console.log(window.pageYOffset + window.innerHeight, document.documentElement.scrollHeight);
+  }
+
+  function throttle (callbackFn, limit) {
+    let wait = false;                  
+    return function () {              
+        if (!wait) {                  
+            callbackFn.call();           
+            wait = true;               
+            setTimeout(function () {   
+                wait = false;          
+            }, limit);
+        };
+    };
+  };
+
+  useEffect(() => {
+    window.addEventListener('scroll', scrollHandler);
+    return () => {
+      window.removeEventListener('scroll', scrollHandler);
+    };
+  }, []);
 
   const navigateFollowers = () => {
     if (width > 736) {
@@ -113,6 +152,10 @@ const Profile = (props) => {
     setSearchString('');
     setIsSearchClicked(false);
   },[])
+
+  useEffect(() => {
+    console.log(profilePosts);
+  }, [profilePosts]);
 
   return (
     <main className="profile-wrapper">

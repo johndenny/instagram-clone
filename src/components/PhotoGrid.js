@@ -5,6 +5,9 @@ import useWindowSize from '../hooks/useWindowSize';
 
 const PhotoGrid = (props) => {
   const {
+    photoRef,
+    bottomRowsPast,
+    topRowsPast,
     isMobile,
     getPostData,
     setIsLoadingPage,
@@ -50,7 +53,7 @@ const PhotoGrid = (props) => {
 
   return (
     <div className="photo-grid-content">
-    {postsArray.map((post) => {
+    {postsArray.map((post, index) => {
       const {
         photos,
         postID,
@@ -72,12 +75,18 @@ const PhotoGrid = (props) => {
           top: `-${((photoWidth / aspectRatio) - photoWidth) / 2}px`
         }
       }
-      console.log('sizes:', aspectRatio > 1 ? `${photoWidth * aspectRatio}px` : `${photoWidth}px`);
+      if (index < topRowsPast * 3) {
+        return null;
+      };
+      if (index > bottomRowsPast * 3) {
+        return null;
+      }
       return (
         <div 
           key={photoID} 
           className="photo-post"
           onClick={() => navigatePost(postID)}
+          ref={photoRef}
         >
           {!isMobile && 
             <div className='photo-hover-details'>

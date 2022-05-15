@@ -31,6 +31,7 @@ import {
   onSnapshot,
   limit,
   documentId,
+  startAfter,
 } from 'firebase/firestore';
 import UploadPhotoMobile from './pages/UploadPhotoMobile';
 import UploadPhotoMobileDetails from './pages/UploadPhotoMobileDetails';
@@ -89,7 +90,6 @@ const RouterSwitch = () => {
   const [profileExists, setProfileExists] = useState(false);
   const [currentUsersPage, setCurrentUsersPage] = useState(false);
   const [profileData, setProfileData] = useState([]);
-  const [profileImages, setProfileImages] = useState([]);
   const [currentPath, setCurrentPath] = useState('');
   const [profileUsername, setProfileUsername] = useState('');
   const [profileNavigate, setProfileNavigate] = useState('');
@@ -117,7 +117,9 @@ const RouterSwitch = () => {
   const [isCommentDeleteOpen, setIsCommentDeleteOpen] = useState(false);
 
   // Profile //
-
+  const [selectedProfileUID, setSelectedProfileUID] = useState('');
+  const [profileImages, setProfileImages] = useState([]);
+  const [lastProfilePostDocument, setLastProfilePostDocument] = useState('')
   const [profilePhotoURL, setProfilePhotoURL] = useState('');
   const [profileUpload, setProfileUpload] = useState('');
   const profileImageRef = ref(storage, `profilePhotos/${userData.uid}.jpg`);
@@ -1943,8 +1945,6 @@ const RouterSwitch = () => {
     const docSnap = await getDoc(displayNameRef);
     if (docSnap.exists()) {
       const { uid } = docSnap.data();
-      let imageArray = [];
-      let urlArray = [];
       let taggedArray = [];
       let savedArray = [];
 
@@ -1952,6 +1952,7 @@ const RouterSwitch = () => {
       const profileDataSnap = await getDoc(profileDataRef);
       if (profileDataSnap.exists()) {
         setProfileData(profileDataSnap.data());
+        setSelectedProfileUID(profileDataSnap.data().uid);
         console.log("page:", page);
         if (page === 'feed' || page === 'tagged' || page === undefined) {
           setProfileExists(true);
@@ -1970,23 +1971,7 @@ const RouterSwitch = () => {
         console.log('no profile data document')
       }      
 
-      const profileImageData = query(collection(db, 'postUploads'), 
-        where('uid', '==', uid), orderBy('uploadDate', 'desc'));
-      const profileImageDataSnap = await getDocs(profileImageData);
-      profileImageDataSnap.forEach((doc) => {
-        imageArray.push(doc.data());
-        let newPost = getPhotoURLs(doc.data());
-        urlArray.push(newPost);
-      });
-      console.log(urlArray);
-      Promise.all(urlArray).then((values) => {
-        console.log(values);
-        setProfilePosts(values);
-        setIsLoadingPage(false);
-        setDataLoading(false);
-      })
-      setProfileImages(imageArray);
-      console.log(imageArray);
+      await getProfilePosts(uid);
 
       const taggedImageData = query(collection(db, 'postUploads'),
         where('tags', 'array-contains', uid), orderBy('uploadDate', 'desc'));
@@ -2016,6 +2001,77 @@ const RouterSwitch = () => {
       setDataLoading(false);
     }
   };
+
+  const getProfilePosts = async (uid) => {
+    let imageArray = [];
+    let urlArray = [];
+    const profileImageData = query(collection(db, 'postUploads'), 
+      where('uid', '==', uid), 
+      orderBy('uploadDate', 'desc'), 
+      limit(12));
+    const profileImageDataSnap = await getDocs(profileImageData);
+    profileImageDataSnap.forEach((doc) => {
+      imageArray.push(doc.data());
+      let newPost = getPhotoURLs(doc.data());
+      urlArray.push(newPost);
+    });
+    console.log(urlArray);
+    Promise.all(urlArray).then((values) => {
+      console.log(values);
+      setProfilePosts(values);
+      setIsLoadingPage(false);
+      setDataLoading(false);
+    })
+    const lastVisableDocument = profileImageDataSnap.docs[profileImageDataSnap.docs.length-1]
+    setLastProfilePostDocument(lastVisableDocument);
+    setProfileImages(imageArray);
+    console.log(imageArray);
+  }
+
+  const getNextProfilePosts = async () => {
+    const {
+      uid
+    } = profileData;
+    console.log(profileData);
+    let imageArray = [];
+    let urlArray = [];
+    const nextQuery = query(collection(db, 'postUploads'),
+      where('uid', '==', uid),
+      orderBy('uploadDate', 'desc'),
+      startAfter(lastProfilePostDocument),
+      limit(12));
+    const nextSnapshot = await getDocs(nextQuery);
+    nextSnapshot.forEach((doc) => {
+      imageArray.push(doc.data());
+      let newPost = getPhotoURLs(doc.data());
+      urlArray.push(newPost);
+    });
+
+    console.log(urlArray);
+    Promise.all(urlArray).then((values) => {
+      console.log(values);
+      console.log(profilePosts);
+      setProfilePosts([...profilePosts, ...values]);
+      setIsLoadingPage(false);
+      setDataLoading(false);
+    })
+    const lastVisableDocument = nextSnapshot.docs[nextSnapshot.docs.length-1]
+    console.log(lastVisableDocument)
+    setLastProfilePostDocument(lastVisableDocument);
+  };
+
+  useEffect(() => {
+    console.log('last document changed');
+    console.log(lastProfilePostDocument)
+  }, [lastProfilePostDocument])
+
+  useEffect(() => {
+    console.log(profilePosts);
+  }, [profilePosts]);
+
+  useEffect(() => {
+    console.log(profileData);
+  }, [profileData])
 
   useEffect(() => {
     checkForMobile();
@@ -2661,6 +2717,7 @@ const RouterSwitch = () => {
           }
           <Route path='/:username' element={
             <Profile
+              getNextProfilePosts = {getNextProfilePosts}
               profileSavedPosts={profileSavedPosts}
               profileTaggedPosts={profileTaggedPosts}
               setIsPostLinksOpen={setIsPostLinksOpen}
