@@ -89,7 +89,7 @@ const RouterSwitch = () => {
   const [isLoadingPage, setIsLoadingPage] = useState(false);
   const [profileExists, setProfileExists] = useState(false);
   const [currentUsersPage, setCurrentUsersPage] = useState(false);
-  const [profileData, setProfileData] = useState([]);
+
   const [currentPath, setCurrentPath] = useState('');
   const [profileUsername, setProfileUsername] = useState('');
   const [profileNavigate, setProfileNavigate] = useState('');
@@ -97,7 +97,7 @@ const RouterSwitch = () => {
   const [isPostLinksOpen, setIsPostLinksOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState('');
   const [photosArray, setPhotosArray] = useState([]);
-  const [profilePosts, setProfilePosts] = useState([]);
+
   const [selectedListProfile, setSelectedListProfile] = useState('');
   const [isLikedByModalOpen, setIsLikedByModalOpen] = useState(false);
   const [backgroundLocation, setBackgroundLocation] = useState(null);
@@ -117,9 +117,26 @@ const RouterSwitch = () => {
   const [isCommentDeleteOpen, setIsCommentDeleteOpen] = useState(false);
 
   // Profile //
-  const [selectedProfileUID, setSelectedProfileUID] = useState('');
+  const nextPostsFired = useRef(false);  
+  const [profilePosts, _setProfilePosts] = useState([]);
+  const profilePostsReference = useRef(profilePosts);
+  const setProfilePosts = (data) => {
+    profilePostsReference.current = data;
+    _setProfilePosts(data);
+  };
+  const [profileData, _setProfileData] = useState([]);
+  const profileDataReference = useRef(profileData);
+  const setProfileData = (data) => {
+    profileDataReference.current = data;
+    _setProfileData(data);
+  };
+  const [lastProfilePostDocument, _setLastProfilePostDocument] = useState('')
+  const lastProfilePostDocumentReference = useRef(lastProfilePostDocument);
+  const setLastProfilePostDocument = (data) => {
+    lastProfilePostDocumentReference.current = data;
+    _setLastProfilePostDocument(data);
+  };
   const [profileImages, setProfileImages] = useState([]);
-  const [lastProfilePostDocument, setLastProfilePostDocument] = useState('')
   const [profilePhotoURL, setProfilePhotoURL] = useState('');
   const [profileUpload, setProfileUpload] = useState('');
   const profileImageRef = ref(storage, `profilePhotos/${userData.uid}.jpg`);
@@ -1952,7 +1969,6 @@ const RouterSwitch = () => {
       const profileDataSnap = await getDoc(profileDataRef);
       if (profileDataSnap.exists()) {
         setProfileData(profileDataSnap.data());
-        setSelectedProfileUID(profileDataSnap.data().uid);
         console.log("page:", page);
         if (page === 'feed' || page === 'tagged' || page === undefined) {
           setProfileExists(true);
@@ -2031,14 +2047,13 @@ const RouterSwitch = () => {
   const getNextProfilePosts = async () => {
     const {
       uid
-    } = profileData;
-    console.log(profileData);
+    } = profileDataReference.current;
     let imageArray = [];
     let urlArray = [];
     const nextQuery = query(collection(db, 'postUploads'),
       where('uid', '==', uid),
       orderBy('uploadDate', 'desc'),
-      startAfter(lastProfilePostDocument),
+      startAfter(lastProfilePostDocumentReference.current),
       limit(12));
     const nextSnapshot = await getDocs(nextQuery);
     nextSnapshot.forEach((doc) => {
@@ -2049,15 +2064,13 @@ const RouterSwitch = () => {
 
     console.log(urlArray);
     Promise.all(urlArray).then((values) => {
-      console.log(values);
-      console.log(profilePosts);
-      setProfilePosts([...profilePosts, ...values]);
+      setProfilePosts([...profilePostsReference.current, ...values]);
       setIsLoadingPage(false);
       setDataLoading(false);
     })
     const lastVisableDocument = nextSnapshot.docs[nextSnapshot.docs.length-1]
-    console.log(lastVisableDocument)
     setLastProfilePostDocument(lastVisableDocument);
+    nextPostsFired.current = false;
   };
 
   useEffect(() => {
@@ -2717,6 +2730,8 @@ const RouterSwitch = () => {
           }
           <Route path='/:username' element={
             <Profile
+              dataLoading = {dataLoading}
+              nextPostsFired = {nextPostsFired}
               getNextProfilePosts = {getNextProfilePosts}
               profileSavedPosts={profileSavedPosts}
               profileTaggedPosts={profileTaggedPosts}
@@ -2760,6 +2775,9 @@ const RouterSwitch = () => {
           />
           <Route path='/:username/:page' element={
             <Profile
+              dataLoading = {dataLoading}
+              nextPostsFired = {nextPostsFired}
+              getNextProfilePosts = {getNextProfilePosts}
               stringToLinks = {stringToLinks}
               profileSavedPosts={profileSavedPosts}
               profileTaggedPosts={profileTaggedPosts}

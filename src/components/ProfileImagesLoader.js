@@ -10,6 +10,9 @@ let lastPress = 0;
 
 const ProfileImagesLoader = (props) => {
   const {
+    topRowsPast,
+    bottomRowsPast,
+    photoRef,
     stringToLinks,
     setIsPostLinksOpen,
     setSelectedPost,
@@ -72,7 +75,7 @@ const ProfileImagesLoader = (props) => {
     <article className="profile-images">
       {pageSelected !== 'feed' &&
         <div className="profile-images-wrapper">
-          {profilePosts.map((post) => {
+          {profilePosts.map((post, index) => {
             const {
               photos,
               postID,
@@ -94,11 +97,18 @@ const ProfileImagesLoader = (props) => {
                 top: `-${((photoWidth / aspectRatio) - photoWidth) / 2}px`
               }
             }
+            if (index < topRowsPast * 3) {
+              return null;
+            };
+            if (index > bottomRowsPast * 3) {
+              return null;
+            } ;
             return (
               <div 
                 key={photoID} 
                 className="photo-post"
                 onClick={() => navigatePost(postID)}
+                ref={photoRef}
               >
                 {!isMobile && 
                   <div className='photo-hover-details'>

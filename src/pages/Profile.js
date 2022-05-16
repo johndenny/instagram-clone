@@ -1,6 +1,6 @@
 import defaultProfileImage from "../images/default-profile-image.jpg";
 import './Profile.css';
-import React, { useEffect, useState, useLayoutEffect } from "react";
+import React, { useEffect, useState, useLayoutEffect, useRef } from "react";
 import ProfilePhotoModal from "../components/ProfilePhotoModal";
 import { Link, useParams, useLocation, useNavigate} from "react-router-dom";
 import useWindowSize from "../hooks/useWindowSize";
@@ -8,6 +8,8 @@ import ProfileImagesLoader from "../components/ProfileImagesLoader";
 
 const Profile = (props) => {
   const {
+    dataLoading,
+    nextPostsFired,
     getNextProfilePosts,
     stringToLinks,
     profileSavedPosts,
@@ -56,6 +58,30 @@ const Profile = (props) => {
   const [previousUsername, setPreviousUsername] = useState('');
   const [postData, setPostData] = useState([]);
   const [isNextPostsLoading, setIsNextPostLoading] = useState(false);
+  const profilePostsReference = useRef(null);
+  const photoRef = useRef(null);
+  const headerHeight = useRef(null);
+  const photoHeight = useRef(null);
+  const [topRowsPast, setTopRowsPast] = useState(0);
+  const [bottomRowsPast, setBottomRowsPast] = useState(0);
+
+  useEffect(() => {
+    if (photoRef.current !== null) {
+      const {
+        height
+      } = photoRef.current.getBoundingClientRect();
+      photoHeight.current = height;
+    };
+  }, [photoRef.current]);
+  
+  useEffect(() => {
+    if (profilePostsReference.current !== null) {
+      const {
+        y
+      } = profilePostsReference.current.getBoundingClientRect();
+      headerHeight.current = y;
+    }
+  }, [profilePostsReference.current])
 
   useEffect(() => {
     console.log(profileData);
@@ -82,32 +108,32 @@ const Profile = (props) => {
   },[]);
 
   const scrollHandler = () => {
-    console.log(profileData);
     const bufferFromBottom = 300;
     const scrollPosition = window.pageYOffset + window.innerHeight;
     const {
       scrollHeight
     } = document.documentElement;
-    console.log(scrollPosition + bufferFromBottom, scrollHeight);
-    if (scrollPosition === scrollHeight) {
-      console.log('hello')
+    if ((scrollPosition + bufferFromBottom) > scrollHeight && nextPostsFired.current === false) {
       getNextProfilePosts();
+      nextPostsFired.current = true;
     };
-    console.log(window.pageYOffset + window.innerHeight, document.documentElement.scrollHeight);
+    rowsPastHandler();
   }
 
-  function throttle (callbackFn, limit) {
-    let wait = false;                  
-    return function () {              
-        if (!wait) {                  
-            callbackFn.call();           
-            wait = true;               
-            setTimeout(function () {   
-                wait = false;          
-            }, limit);
-        };
+  const rowsPastHandler = () => {
+    const scrollPosition = window.pageYOffset - headerHeight.current;
+    console.log(window.pageYOffset, headerHeight);
+    let rowsPast = 0;
+    const buffer = 3;    
+    if (scrollPosition >= 0) {
+      rowsPast = Math.floor(scrollPosition / photoHeight.current);
+      setTopRowsPast(rowsPast - buffer);
     };
-  };
+    const rowsVisable = Math.floor(window.innerHeight / photoHeight.current);  
+    setBottomRowsPast(rowsPast + rowsVisable + buffer);
+    console.log(rowsPast, rowsVisable, buffer);
+    console.log(rowsPast + rowsVisable + buffer);
+  }
 
   useEffect(() => {
     window.addEventListener('scroll', scrollHandler);
@@ -115,6 +141,16 @@ const Profile = (props) => {
       window.removeEventListener('scroll', scrollHandler);
     };
   }, []);
+
+  useEffect(() => {
+    const { 
+      scrollHeight 
+    } = document.documentElement;
+    if (!dataLoading && scrollHeight === window.innerHeight) {
+      getNextProfilePosts();
+      rowsPastHandler();
+    };
+  },[dataLoading])
 
   const navigateFollowers = () => {
     if (width > 736) {
@@ -713,7 +749,13 @@ const Profile = (props) => {
                 </div>            
               </React.Fragment>
             }
-            <div className="profile-posts">
+            <div 
+              className="profile-posts"
+              ref={profilePostsReference}
+              style={{
+                paddingTop: `${photoHeight.current * topRowsPast}px`
+              }}
+            >
               {pageSelected === 'saved' &&
                 <span className="no-saved-top-text">
                   Only you can see what you've saved
@@ -721,6 +763,9 @@ const Profile = (props) => {
               }
               {(pageSelected === 'posts' || pageSelected === 'feed' || pageSelected === 'tagged' || pageSelected === 'saved') &&
                 <ProfileImagesLoader
+                  bottomRowsPast = {bottomRowsPast}
+                  topRowsPast = {topRowsPast}
+                  photoRef = {photoRef}
                   stringToLinks = {stringToLinks}
                   setIsPostLinksOpen={setIsPostLinksOpen}
                   getUserProfileData={getUserProfileData}
