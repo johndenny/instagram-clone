@@ -28,7 +28,6 @@
   min-height: 100px;
   overflow-y: auto;
   width: 500px;
-  padding-right: 16px;
 }
 
 @keyframes fadeUpActivity {

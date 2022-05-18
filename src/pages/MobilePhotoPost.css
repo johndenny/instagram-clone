@@ -287,3 +287,7 @@
 .comment-search-results .user-text-wrapper {
   gap: 0;
 }
+
+.post-caption-text a {
+  margin-inline: 4px;
+}

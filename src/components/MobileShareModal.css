@@ -38,6 +38,7 @@
 }
 
 .send-share-button {
+  cursor: pointer;
   color: rgba(255, 255, 255, 1);
   font-weight: 600;
   width: 100%;

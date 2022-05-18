@@ -8,7 +8,7 @@ import DiscardPostModal from './DiscardPostModal';
 import DiscardPhotoModal from './DiscardPhotoModal';
 import UploadModalFilters from './UploadModalFilters';
 import firebaseApp from '../Firebase';
-import { getFirestore, setDoc, doc, arrayUnion } from 'firebase/firestore';
+import { getFirestore, updateDoc, getDoc, setDoc, doc, arrayUnion } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import spinner10s from '../images/spinner10s.gif'
 import checkmarkLoopsOnce from '../images/checkmarkLoopsOnce.gif'
@@ -515,10 +515,6 @@ const UploadPhotoModal = (props) => {
     imageLocationHandler();
   };
 
-  // useEffect(() => {
-  //   console.log("xMovement:", cursorMovement.x, 'yMovement:', cursorMovement.y);
-  // }, [cursorMovement]);
-
   const closeAllMenus = () => {
     if (zoomMenuOpen) {
       setAnimateZoomMenu(true);
@@ -904,9 +900,17 @@ const UploadPhotoModal = (props) => {
         postID,
         date: Date.now(),
       });
-      await setDoc(doc(db, 'hashTags', hashTags[index]), {
-        posts: arrayUnion(postID)
-      });
+      const documentReference = (doc(db, 'hashTags', hashTags[index]))
+      const documentSnapshot = await getDoc(documentReference);
+      if (documentSnapshot.exists()) {
+        await updateDoc(documentReference, {
+          posts: arrayUnion(postID)
+        });
+      } else {
+        await setDoc(documentReference, {
+          posts: [postID]
+        });        
+      };
     };
 
     // 'textTags' referes to profile tags in post caption, 'profileTagHandler' gets UIDs from usernames //

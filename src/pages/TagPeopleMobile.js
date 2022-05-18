@@ -7,6 +7,7 @@ import useWindowSize from '../hooks/useWindowSize';
 
 const TagPeopleMobile = (props) => {
   const {
+    setIsSearchHashTag,
     tagData,
     setTagData,
     setSearchResults,
@@ -50,6 +51,7 @@ const TagPeopleMobile = (props) => {
       clientY,
     } = event.touches[0];
     setIsSearchOpen(true);
+    setIsSearchHashTag(false);
     const image = imageRef.current.getBoundingClientRect();
     const {
       width,

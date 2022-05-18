@@ -9,6 +9,7 @@ import PostComments from '../components/PostComments';
 import FollowButton from '../components/FollowButton';
 import Tag from '../components/Tag';
 import Comment from '../components/Comment';
+import { Link } from 'react-router-dom';
 
 const db = getFirestore()
 let lastPress = 0;
@@ -626,6 +627,27 @@ const MobilePhotoPost = (props) => {
       }
     }
 
+    const formatTimeShort = () => {
+      const timePast = Date.now() - uploadDate;
+      const minutesPast = timePast / 60000;
+      const hoursPast = minutesPast / 60;
+      const daysPast = hoursPast / 24;
+      const weeksPast = daysPast / 7;
+      switch (true) {
+        case minutesPast < 1:
+          return 'Now';
+        case minutesPast < 60 && minutesPast > 1:
+          return `${Math.floor(minutesPast)}m`;
+        case hoursPast >= 1 && hoursPast < 24:
+          return `${Math.floor(hoursPast)}h`;
+        case daysPast >= 1 && daysPast < 7:
+          return `${Math.floor(daysPast)}d`;
+        case weeksPast >= 1:
+          return `${Math.floor(weeksPast)}w`;
+        default:
+      }
+    };
+
     if (isModal) {
       return (
         <article 
@@ -837,13 +859,15 @@ const MobilePhotoPost = (props) => {
                         >
                           {selectedPost[0].username}
                         </h2>
-                        <span className='comment-text'>
-                          {postCaption}
+                        <span 
+                          className='comment-text'
+                        >
+                          {stringToLinks(postCaption)}
                         </span>                    
                       </div>
                       <div className='comment-footer'>
                         <time className='comment-time-stamp'>
-                          {new Date(uploadDate).toDateString()}
+                          {formatTimeShort()}
                         </time>                        
                       </div>
                     </div>
@@ -1177,11 +1201,11 @@ const MobilePhotoPost = (props) => {
                             {selectedPost[0].username}
                           </h2>
                           <span className='comment-text'>
-                            {postCaption}
+                            {stringToLinks(postCaption)}
                           </span>                    
                         </div>
                         <time className='comment-time-stamp'>
-                          {new Date(uploadDate).toDateString()}
+                          {formatTimeShort()}
                         </time>
                       </div>
                       
@@ -1576,8 +1600,8 @@ const MobilePhotoPost = (props) => {
                         <span className='post-caption-text'>
                           <span 
                             className='first-caption-section'
-                            dangerouslySetInnerHTML={{__html: `${stringToLinks(postCaption.substring(0, 125))}`}} 
                           >
+                            {stringToLinks(postCaption.substring(0, 125))}
                           </span>
                           {postHidden &&
                             <React.Fragment>
@@ -1591,17 +1615,17 @@ const MobilePhotoPost = (props) => {
                           {!postHidden &&
                             <span 
                               className='second-caption-section'
-                              dangerouslySetInnerHTML={{__html: `${stringToLinks(postCaption.substring(125))}`}} 
                             >
+                              {stringToLinks(postCaption.substring(125))}
                             </span>
                           }
                         </span>                  
                       }
                       {postCaption.length < 125 &&
                         <span 
-                          className='post-caption-text'
-                          dangerouslySetInnerHTML={{__html: `${stringToLinks(postCaption)}`}} 
-                        >                    
+                          className='post-caption-text' 
+                        >
+                          {stringToLinks(postCaption)}                  
                         </span>
                       }
                     </div>                    

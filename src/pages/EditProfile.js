@@ -251,7 +251,7 @@ const EditProfile = (props) => {
                   className={profilePhotoURL === null ? "upload-profile-image" : ["upload-profile-image", "hidden"].join(' ')}
                 >
                   {profilePhotoURL !== null
-                    ? <img alt="" src={profilePhotoURL}/>
+                    ? <img alt="" src={userData.photoURL}/>
                     : <img alt="" src={defaultProfileImage}/>
                   }
                 </label>

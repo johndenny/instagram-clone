@@ -54,6 +54,7 @@
 }
 
 .selected-recipient-button {
+  cursor: pointer;
   display: flex;
   align-items: center;
   height: 35px;

@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 
 const HomepageFixedMenu = (props) => {
   const {
+    navigateUserProfile,
     setIsMouseHovering,
     onMouseEnter,
     onMouseLeave,
@@ -36,10 +37,16 @@ const HomepageFixedMenu = (props) => {
       }}  
     >
       <div className='user-profile-header'>
-        <div className='sidebar-profile-photo-frame'>
+        <div 
+          className='sidebar-profile-photo-frame'
+          onClick = {() => navigateUserProfile(userData.username)}
+        >
           <img alt='' className='user-profile-photo' src={userData.photoURL} />
         </div>
-        <div className='user-profile-text'>
+        <div 
+          className='user-profile-text'
+          onClick = {() => navigateUserProfile(userData.username)}
+        >
           <span className='user-username-text'>
             {userData.username}
           </span>
@@ -61,6 +68,8 @@ const HomepageFixedMenu = (props) => {
       </header>
       <main className='profile-suggestions-content'>
         <PeopleList
+          navigateUserProfile={navigateUserProfile}
+          isHomepage = {true}
           setIsMouseHovering={setIsMouseHovering}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}

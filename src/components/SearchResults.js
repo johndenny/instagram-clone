@@ -105,6 +105,7 @@ const SearchResults = (props) => {
       }
       {userData.recentSearch.length > 0 && searchString === '' &&        
         <PeopleList
+          hashTagClickHandler = {hashTagClickHandler}
           setIsSearchClicked = {setIsSearchClicked}
           deleteRecentHashTagSearch = {deleteRecentHashTagSearch}
           isRecentSearch={true}

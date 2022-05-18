@@ -221,3 +221,7 @@
 .hash-tag-text {
   font-weight: 600;
 }
+
+.comment-text a {
+  margin-inline: 4px;
+}

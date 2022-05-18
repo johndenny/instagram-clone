@@ -373,8 +373,8 @@ const Comment = (props) => {
               </h2>
               <span 
                 className='comment-text'
-                dangerouslySetInnerHTML={{__html: `${stringToLinks(text)}`}}
               >
+                {stringToLinks(text)}
               </span>                    
             </div>
             <footer className='comment-footer'>
@@ -473,8 +473,8 @@ const Comment = (props) => {
           </h2>
           <span 
             className='comment-text'
-            dangerouslySetInnerHTML={{__html: `${stringToLinks(text)}`}}  
           >
+            {stringToLinks(text)}
           </span>                    
         </div>
         <button 

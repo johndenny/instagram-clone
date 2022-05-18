@@ -1,9 +1,9 @@
 import './Homepage.css';
-import ProfileImagesLoader from '../components/ProfileImagesLoader';
 import MobilePhotoPost from './MobilePhotoPost';
 import HomepageFixedMenu from '../components/HomepageFixedMenu';
 import { useEffect, useRef, useState } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
+import { useNavigate } from 'react-router-dom';
 
 const Homepage = (props) => {
   const {
@@ -42,6 +42,7 @@ const Homepage = (props) => {
     photosArray,
     setPhotosArray,
   } = props;
+  const navigate = useNavigate();
   const [width, height] = useWindowSize();
   const postReference = useRef(null);
   const [postHeightArray, setPostHeightArray] = useState([]);
@@ -51,6 +52,14 @@ const Homepage = (props) => {
   const [pageYOffset, setPageYOffset] = useState(0);
   const [indexInView, setIndexInView] = useState(0);
   const [padding, setPadding] = useState(0)
+
+  const navigateUserProfile = async (username) => {
+    setIsLoadingPage(true);
+    await getUserProfileData(username);
+    navigate(`/${username}`);
+    setIsLoadingPage(false);
+    setIsMouseHovering(false);
+  }
 
   const scrollHandler = () => {
     setPageYOffset(window.pageYOffset);
@@ -185,6 +194,7 @@ const Homepage = (props) => {
         </section>
         {!isMobile && width > 999 &&
           <HomepageFixedMenu
+            navigateUserProfile = {navigateUserProfile}
             setIsMouseHovering={setIsMouseHovering}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}

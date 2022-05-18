@@ -68,13 +68,14 @@ const NavigationBar = (props) => {
   }, [location]);
 
   const openDropDown = (event) => {
-    if (event.target.className === 'drop-down-modal') {
-      setDropDownOpen(false);
-      setCurrentPath(location.pathname);
-    } else {
       setDropDownOpen(true);
+      if (isSearchClicked) {
+        setIsSearchAnimating(true);
+      };
+      if (isDropDownOpen) {
+        setIsActivityAnimating(true);
+      };
       setCurrentPath('');      
-    }
   };
 
   const openNewPostModal = () => {
@@ -84,6 +85,12 @@ const NavigationBar = (props) => {
 
   const inputFocusHandler = () => {
     setIsSearchClicked(true);
+    if (isDropDownOpen) {
+      setIsActivityAnimating(true);
+    };
+    if (dropDownOpen) {
+      setIsProfileAnimating(true);
+    };
     searchInputRef.current.focus();
   }
 
@@ -107,21 +114,18 @@ const NavigationBar = (props) => {
     setSearchResults([]);
   };
 
-  const onBlurHandler = () => {
-    if (menuClicked) {
-      setMenuClicked(false);
-      searchInputRef.current.focus();
-    } else {
-      setIsSearchClicked(false);
-    }
-  };
-
   const activityDropDownHandler = (event) => {
-    event.stopPropagation();
-    if (isDropDownOpen) {
-      return setIsActivityAnimating(true);
-    };
+    if (!isDropDownOpen) {
+      event.stopPropagation();
+    }
     setIsDropDownOpen(true);
+    if (isSearchClicked) {
+      setIsSearchAnimating(true);
+    };
+    if (dropDownOpen) {
+      setIsProfileAnimating(true);
+    };
+    setCurrentPath('');
   }
 
   useEffect(() => {

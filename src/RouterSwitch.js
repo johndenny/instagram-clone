@@ -436,9 +436,28 @@ const RouterSwitch = () => {
     })
   }
 
+  const getDirectMessages = async () => {
+    const {
+      uid
+    } = userData;
+    const allDirectMessagesQuery = query(collection(db, 'directMessages'),
+      where('UIDs', 'array-contains', uid),
+      orderBy('date', 'desc')
+    );
+    const messagesSnapshot = await getDocs(allDirectMessagesQuery);
+    setDirectMessages(() => {
+      const messagesArray = [];
+      messagesSnapshot.forEach((document) => {
+        messagesArray.push(document.data());
+      });
+      return messagesArray;      
+    });
+  };
+
   useEffect(() => {
     if (userData.uid !== undefined) {
       getNotReadMessages();
+      getDirectMessages();
     };
   }, [userData]);
 
@@ -574,6 +593,7 @@ const RouterSwitch = () => {
     const matchedUsers = [];
     let searchTerm = searchString.toLowerCase();
     let searchQuery;
+    console.log(isSearchHashTag);
     if (isSearchHashTag) {
       searchTerm = searchTerm.slice(1);
       searchQuery = query(collection(db, 'hashTags'), 
@@ -735,6 +755,8 @@ const RouterSwitch = () => {
   // POSTS //
 
   const stringToLinks = (string) => {
+
+    // finds links in string //
     const profileIndexs = [];
     const hashTagIndexs = [];
     const stringArray = string.split(' ');
@@ -746,18 +768,44 @@ const RouterSwitch = () => {
         hashTagIndexs.push(index);
       }
     });
+
+    // replaces strings with links //
     profileIndexs.forEach((index) => {
       const username = stringArray[index].substring(1);
-      const profileLink = `<a href='/${username}'>@${username}</a>`
+      const profileLink = <Link to={`/${username}`}>@${username}</Link>
       stringArray.splice(index, 1, profileLink);
     });
     hashTagIndexs.forEach((index) => {
       const hashTag = stringArray[index].substring(1);
-      const profileLink = `<a href='/explore/tags/${hashTag}/'>#${hashTag}</a>`
+      const profileLink = <Link to={`/explore/tags/${hashTag}`}>#{hashTag}</Link>
       stringArray.splice(index, 1, profileLink);
     });
+
+    // adds spaces to words //
+    let wordsSection = [];
+    const entireCaption = [];
+    stringArray.forEach((word) => {
+      if (typeof word === 'string') {
+        console.log('hi')
+        return wordsSection.push(word);
+      }
+      if (word instanceof Object) {
+        if (wordsSection.length === 0) {
+          return entireCaption.push(word);
+        } else {
+          const sentence = wordsSection.join(' ');
+          wordsSection = [];
+          entireCaption.push(sentence);
+          return entireCaption.push(word);
+        }
+      }
+    });
+    if (wordsSection.length !== 0) {
+      const sentence = wordsSection.join(' ');
+      entireCaption.push(sentence);
+    }
     return (
-      stringArray.join(' ')
+      entireCaption
     );
   };
 
@@ -1450,9 +1498,17 @@ const RouterSwitch = () => {
         postID,
         date: Date.now(),
       });
-      await setDoc(doc(db, 'hashTags', hashTags[index]), {
-        posts: arrayUnion(postID)
-      });
+      const documentReference = (doc(db, 'hashTags', hashTags[index]))
+      const documentSnapshot = await getDoc(documentReference);
+      if (documentSnapshot.exists()) {
+        await updateDoc(documentReference, {
+          posts: arrayUnion(postID)
+        });
+      } else {
+        await setDoc(documentReference, {
+          posts: [postID]
+        });        
+      };
     };
 
     // 'textTags' referes to profile tags in post caption, 'profileTagHandler' gets UIDs from usernames //
@@ -2711,6 +2767,7 @@ const RouterSwitch = () => {
               } />
               <Route path='/create/tag/' element={
                 <TagPeopleMobile
+                  setIsSearchHashTag = {setIsSearchHashTag}
                   setTagIDs={setTagIDs}
                   tagIDs={tagIDs}
                   tagData={tagData}

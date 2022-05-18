@@ -548,8 +548,8 @@ const MobileComments = (props) => {
                   </h2>
                   <span 
                     className='comment-text'
-                    dangerouslySetInnerHTML={{__html: `${stringToLinks(postCaption)}`}} 
                   >
+                    {stringToLinks(postCaption)}
                   </span>                    
                 </div>
                 <footer className='comment-footer'>

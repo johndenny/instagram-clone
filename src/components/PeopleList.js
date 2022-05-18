@@ -6,6 +6,9 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const PeopleList = (props) => {
   const {
+    hashTagClickHandler,
+    isHomepage,
+    navigateUserProfile,
     setIsSearchClicked,
     deleteRecentHashTagSearch,
     isAddPeople,
@@ -34,7 +37,7 @@ const PeopleList = (props) => {
   const usernameRef = useRef([]);
   const photoRef = useRef([]);
 
-  const navigateUserProfile = (username, uid) => {
+  const navigateHandler = (username, uid) => {
     if (isTag) {
       tagUserSelection(username, uid);
       return;
@@ -42,6 +45,9 @@ const PeopleList = (props) => {
       saveRecentSearch(uid)
       setIsMouseHovering(false);
       navigate(`/${username}`);      
+    }
+    if (isHomepage) {
+      navigateUserProfile(username)
     }
   }
 
@@ -56,7 +62,7 @@ const PeopleList = (props) => {
     if (isComment) {
       searchSelection(username);
     } else {
-      navigateUserProfile(username, uid);
+      navigateHandler(username, uid);
     }
   }
 
@@ -87,7 +93,7 @@ const PeopleList = (props) => {
                 <Link 
                   to={`/explore/tags/${hashTag}/`}
                   className='hash-tag-search-item'
-                  onClick={() => setIsSearchClicked(false)}
+                  onClick={() => hashTagClickHandler(user)}
                 >
                   <div className='profile-photo-frame'>
                     <svg aria-label="Hashtag" className='hash-tag-svg' color="#262626" fill="#262626" height="16" role="img" viewBox="0 0 24 24" width="16">
@@ -237,7 +243,7 @@ const PeopleList = (props) => {
             <li 
               key={uid}
               className='user-wrapper'
-              onClick={() => navigateUserProfile(username, uid)} 
+              onClick={() => navigateHandler(username, uid)} 
             >
               <div
                 to={`/${username}`}

@@ -20,6 +20,7 @@
   border-radius: 50%;
   overflow: hidden;
   position: relative;
+  cursor: pointer;
 }
 
 .sidebar-profile-photo-frame::after {
@@ -46,6 +47,11 @@
 
 .user-username-text {
   font-weight: 600;
+  cursor: pointer;
+}
+
+.user-username-text:hover {
+  text-decoration: underline;
 }
 
 .user-fullname-text {
