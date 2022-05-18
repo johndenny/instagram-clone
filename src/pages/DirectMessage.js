@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import './DirectMessage.css';
 import { v4 as uuidv4 } from 'uuid';
-import { getFirestore, setDoc, doc, onSnapshot, getDoc, collection, orderBy, where, updateDoc, query, arrayRemove, arrayUnion } from 'firebase/firestore';
+import { getFirestore, setDoc, doc, limit, startAfter, onSnapshot, getDocs, collection, orderBy, where, updateDoc, query, arrayRemove, arrayUnion, getDoc } from 'firebase/firestore';
 import Message from '../components/Message';
 import { getDownloadURL, getStorage, uploadBytes, ref } from 'firebase/storage';
 import DirectMessageDetailsModal from '../components/DirectMesssageDetailsModal';
@@ -44,44 +44,172 @@ const DirectMessage = (props) => {
   const textareaRef = useRef(null);
   const messagesRef = useRef(null);
   const [isGroup, setIsGroup] = useState(false);
+  const [firstVisableMessage, setFirstVisableMessage] = useState(null);
+  const [lastVisableMessage, setLastVisableMessage] = useState(null);
+  const [isLoadingNextMessages, setIsLoadingNextMessages] = useState(false);
+  const messagesContentRef = useRef(null);
 
   useEffect(() => {
     const {
       messageID
     } = params;
+    updateNotReadMessages(messageID);
+    getMessageHistory(messageID);    
+  }, [params.messageID]);
+
+  useEffect(() => {
+    const {
+      messageID
+    } = params;
+    if (firstVisableMessage === null) {
+      return
+    };    
+    const currentDate = Date.now();
     const messagesQuery = query(collection(db, 'messages'), 
       where('directMessageID', '==', messageID),
       where('recipientUIDs', 'array-contains', userData.uid),
+      where('date', '>', currentDate),
       orderBy('date'),
       );
     const messages = onSnapshot(messagesQuery, (querySnapShot) => {
-      const messageArray = [];
-      querySnapShot.forEach( async (docuemnt) => {
+      setMessages((messages) => {
         const {
-          notRead,
-          messageID,
-          directMessageID,
-        } = docuemnt.data();
-        messageArray.push(docuemnt.data());
-        const notReadIndex = notRead.findIndex((read) => read === userData.uid);
-        if (notReadIndex !== -1) {
-          await updateDoc(doc(db, 'messages', messageID), {
-            notRead: arrayRemove(userData.uid),
-            seenBy: arrayUnion(userData.uid),
-            seenDate: Date.now()
-          });
-          await updateDoc(doc(db, 'directMessages', directMessageID), {
-            'lastMessage.notRead': arrayRemove(userData.uid)
-          })          
+          messageID
+        } = firstVisableMessage;
+        console.log(messageID);
+        const historyStartIndex = messages
+          .findIndex((message) => message.messageID === messageID);
+        console.log(historyStartIndex);
+        if (historyStartIndex === -1) {
+          return messages
         }
-      });
-        setMessages(messageArray);
-        messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+        const messageHistory = []
+        console.log(messages, historyStartIndex);
+        messages.forEach((message, index) => {
+          if (index <= historyStartIndex) {
+            messageHistory.push(message);
+          };
+         });
+        console.log(messageHistory);
+        const newMessages = [];
+        querySnapShot.forEach((document) => {
+          newMessages.push(document.data());
+        })
+        console.log([...messageHistory,...newMessages])
+        return [...messageHistory,...newMessages]
+      })
+      messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     });      
     return () => {
-      messages();
+      messages()
     };    
-  }, [params.messageID]);
+  }, [params.messageID, firstVisableMessage]);
+
+  const updateNotReadMessages = async (messageID) => {
+    console.log('hi')
+    const messagesQuery = query(collection(db, 'messages'), 
+      where('directMessageID', '==', messageID),
+      where('notRead', 'array-contains', userData.uid),
+    );
+    const notReadSnapshot = await getDocs(messagesQuery);
+    console.log(notReadSnapshot.docs.length);
+    if (notReadSnapshot.docs.length === 0) {
+      return 
+    };
+
+    for (let index = 0; index < notReadSnapshot.length; index++) {
+      const {
+        messageID 
+      } = notReadSnapshot[index].data();
+      console.log(messageID);
+      await updateDoc(doc(db, 'messages', messageID), {
+        notRead: arrayRemove(userData.uid),
+        seenBy: arrayUnion(userData.uid),
+        seenDate: Date.now()
+      });
+    };
+    await updateDoc(doc(db, 'directMessages', messageID), {
+      'lastMessage.notRead': arrayRemove(userData.uid)
+    });
+  };
+
+  const getMessageHistory = async (messageID) => {
+    const messagesQuery = query(collection(db, 'messages'), 
+      where('directMessageID', '==', messageID),
+      where('recipientUIDs', 'array-contains', userData.uid),
+      orderBy('date', 'desc'),
+      limit(24)
+    );
+    const messagesSnapshot = await getDocs(messagesQuery);
+    const messagesArray = [];
+    messagesSnapshot
+      .forEach(
+        (document) => 
+          messagesArray
+            .push(document.data())
+      );
+    messagesArray
+      .sort((a, z) => a.date - z.date);
+    setMessages(messagesArray);
+    setLastVisableMessage(
+      messagesSnapshot.docs[messagesSnapshot.docs.length-1]
+    );
+    setFirstVisableMessage(
+      messagesSnapshot.docs[0].data()
+    );
+  };
+
+  const getNextMessageHistory = async (messageID) => {
+    if (lastVisableMessage === undefined) {
+      return console.log('last visable message undefined');
+    }
+    console.log('nextmessages');
+    const lastScrollTop = messagesRef.current.scrollTop;
+    setIsLoadingNextMessages(true)
+    const messagesQuery = query(collection(db, 'messages'),
+      where('directMessageID', '==', messageID),
+      where('recipientUIDs', 'array-contains', userData.uid),
+      orderBy('date', 'desc'),
+      startAfter(lastVisableMessage),
+      limit(24)
+    );
+    const messagesSnapshot = await getDocs(messagesQuery);
+    const messagesArray = [];
+    messagesSnapshot
+      .forEach(
+        (document) => 
+          messagesArray
+            .push(document.data())
+      );
+    messagesArray
+      .sort((a, z) => a.date - z.date);
+    console.log(messagesArray, messages);
+    setMessages(
+      [...messagesArray,...messages]
+    );
+    setLastVisableMessage(
+      messagesSnapshot.docs[messagesSnapshot.docs.length-1]
+    );
+    setIsLoadingNextMessages(false);
+    messagesRef.current.scrollTop = lastScrollTop;
+  };
+
+  const scrollHandler = () => {
+    console.log('scroll handler');
+    const {
+      scrollTop,
+      scrollHeight,
+      offsetHeight
+    } = messagesRef.current;
+    console.log(messagesRef.current.scrollTop, 'height:', messagesRef.current.scrollHeight, 'div height:', messagesRef.current.offsetHeight);
+    const {
+      messageID
+    } = params;
+    console.log((scrollTop - offsetHeight) * -1 === scrollHeight)
+    if ((scrollTop - offsetHeight) * -1 === scrollHeight && !isLoadingNextMessages) {
+      getNextMessageHistory(messageID);
+    }
+  }
 
   useEffect(() => {
     setIsInboxOpen(true);
@@ -89,7 +217,7 @@ const DirectMessage = (props) => {
       setIsInboxOpen(false)
       setSelectedMessages(null);
       setMessageTitle('');
-      setMessages([]);
+      setMessages([]);  
     }
   }, []);
 
@@ -98,8 +226,27 @@ const DirectMessage = (props) => {
     return () => {
       setIsMessageDetailsOpen(false);
       setMessages([]);
+      setLastVisableMessage(null);
     }
   }, [params.messageID]);
+
+  useEffect(() => {
+    if (messagesRef.current === null) {
+      return 
+    };
+
+    const {
+      scrollTop,
+      scrollHeight,
+      offsetHeight
+    } = messagesRef.current;
+    const {
+      messageID
+    } = params;
+    if ((scrollTop - offsetHeight) * -1 === scrollHeight && lastVisableMessage !== null) {
+      getNextMessageHistory(messageID)
+    };
+  }, [lastVisableMessage]);
 
   useLayoutEffect(() => {
     const {
@@ -485,8 +632,12 @@ const DirectMessage = (props) => {
       <div 
         className='messages-wrapper'
         ref={messagesRef}
+        onScroll={scrollHandler}
       >
-        <div className='messages-content'>
+        <div 
+          className='messages-content'
+          ref={messagesContentRef}
+        >
           {messages.map((message, index) => {
             const className = ['message'];
             if (message.uid === userData.uid) {

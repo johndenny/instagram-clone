@@ -15,6 +15,12 @@ let lastPress = 0;
 
 const MobilePhotoPost = (props) => {
   const {
+    setIndexInView,
+    pageYOffset,
+    setPostHeightArray,
+    postHeightArray,
+    setNextHiddenPost,
+    topRowsPast, 
     profileTagHandler,
     setIsCommentDeleteOpen,
     setSelectedComment,
@@ -91,6 +97,59 @@ const MobilePhotoPost = (props) => {
   const [isSearchHashTag, setIsSearchHashTag] = useState(false);
   const [isPostLiked, setIsPostLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const isHeightRecorded = useRef(false);
+  const postReference = useRef(null);
+
+  useEffect(() => {
+    if (params.postID !== undefined) {
+      return
+    };
+    if (!isInViewport(postReference.current)) {
+      return
+    }; 
+    
+    setIndexInView(index)
+    const {
+      height
+    } = postReference
+      .current
+        .getBoundingClientRect();
+    const {
+      postID,
+      postCaption
+    } = selectedPost[0];
+    const postIDIndex = postHeightArray
+      .findIndex((post) => post.postID === postID);
+
+    if (postIDIndex !== -1 && !isHeightRecorded.current) {
+      isHeightRecorded.current = true;
+      const newArray = [...postHeightArray];
+      newArray.splice(postIDIndex, 1, {
+        height,
+        postID,
+        postCaption
+      });
+      return setPostHeightArray(newArray);
+    };
+    if (!isHeightRecorded.current) {
+      isHeightRecorded.current = true;
+      setPostHeightArray([...postHeightArray, {
+        height,
+        postID,
+        postCaption
+      }]);    
+    };
+  }, [pageYOffset])
+
+  function isInViewport(element) {
+    const rect = element.getBoundingClientRect();
+    return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+    );
+  }
 
   useEffect(() => {
     if (isModal) {
@@ -242,6 +301,7 @@ const MobilePhotoPost = (props) => {
   }
 
   const likeHandler = async () => {
+    console.log('liked');
     const {
       postID,
       likes
@@ -257,11 +317,7 @@ const MobilePhotoPost = (props) => {
       setIsPostLiked(false);
     }
     await likeUploadToggle(postID, selectedPost[1].w150);
-    if (params.postID === undefined) {
-      getFollowingPosts(userData);         
-    } else {
-      getPostData();
-    }
+    getPostData();
   }
 
   const navigateLikedBy = async (postID) => {
@@ -281,7 +337,7 @@ const MobilePhotoPost = (props) => {
     } else {
       postID = params.postID;
     }
-    if (selectedPost === '' && backgroundLocation === null) {
+    if (selectedPost === '' && backgroundLocation === null && params.postID !== undefined) {
       setDataLoading(true)
     }  
     const photoArray = [];
@@ -294,7 +350,15 @@ const MobilePhotoPost = (props) => {
     const profilePostDocument = doc(db, 'postUploads', postID);
     const postSnap = await getDoc(profilePostDocument);
 
-    console.log([postSnap.data(), ...photoArray]);
+    console.log();
+
+    if (params.postID === undefined) {
+      const newPost = [postSnap.data(), ...photoArray];
+      const newPhotosArray = [...photosArray];
+      const newPhotosArrayIndex = photosArray.findIndex((post) => post[0].postID === postID);
+      newPhotosArray.splice(newPhotosArrayIndex, 1, newPost);
+      setPhotosArray(newPhotosArray);
+    }
     setSelectedPost([postSnap.data(), ...photoArray]);
     setDataLoading(false);
   };
@@ -1266,6 +1330,7 @@ const MobilePhotoPost = (props) => {
         <article 
           key={postID} 
           className="post-images"
+          ref={postReference}
         >
           <div className='profile-images-wrapper-feed'>
             <div className='photo-post-feed'>

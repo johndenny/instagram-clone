@@ -237,6 +237,9 @@ const Comment = (props) => {
             });
           }          
         }
+        if (isFeatured) {
+          return getPostData();
+        }
         getCommentData();
       } else {
         console.error('error comment-index-not-found', commentIndex);

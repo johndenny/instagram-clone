@@ -2,11 +2,12 @@ import './Homepage.css';
 import ProfileImagesLoader from '../components/ProfileImagesLoader';
 import MobilePhotoPost from './MobilePhotoPost';
 import HomepageFixedMenu from '../components/HomepageFixedMenu';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
 
 const Homepage = (props) => {
   const {
+    dataLoading,
     isHomePageLoading,
     profileTagHandler,
     setIsSharePostOpen,
@@ -42,6 +43,29 @@ const Homepage = (props) => {
     setPhotosArray,
   } = props;
   const [width, height] = useWindowSize();
+  const postReference = useRef(null);
+  const [postHeightArray, setPostHeightArray] = useState([]);
+  const topRowsPast = useRef(null);
+  const scrollTimerReference = useRef(null);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [pageYOffset, setPageYOffset] = useState(0);
+  const [indexInView, setIndexInView] = useState(0);
+  const [padding, setPadding] = useState(0)
+
+  const scrollHandler = () => {
+    setPageYOffset(window.pageYOffset);
+  };
+
+  useEffect(() => {
+    console.log(postHeightArray);
+  }, [postHeightArray]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', scrollHandler);
+    return () => {
+      window.removeEventListener('scroll', scrollHandler);
+    };
+  }, []);
 
   useEffect(() => {
     if (userData && Object.keys(userData).length > 0 && Object.getPrototypeOf(userData) === Object.prototype) {
@@ -61,7 +85,12 @@ const Homepage = (props) => {
           : 'homepage-width-wrapper'
         }
       >
-        <section className='homepage-posts-wrapper'>
+        <section 
+          className='homepage-posts-wrapper'
+          style={{
+            paddingTop: `${padding}px`
+          }}
+        >
           {isHomePageLoading &&
             <div className='homepage-spinner-wrapper'>
               <svg aria-label="Loading..." className='spinner activity' viewBox="0 0 100 100">
@@ -93,9 +122,31 @@ const Homepage = (props) => {
             </div>        
           }
           {photosArray.map((post, index) => {
+            if (index < (indexInView - 6)) {
+              return (
+                <div 
+                  className='homepage-post'
+                  style={{
+                    paddingBottom: `${postHeightArray[index].height}px`
+                  }}
+                ></div>
+              );
+            }
+            if (index > (indexInView + 6)) {
+              return null
+            }
             return (
-              <div className='homepage-post' key={post[0].postID}>
+              <div 
+                className='homepage-post' 
+                key={post[0].postID}
+                ref={postReference}
+              >
                 <MobilePhotoPost
+                  setIndexInView = {setIndexInView}
+                  postHeightArray = {postHeightArray}
+                  setPostHeightArray = {setPostHeightArray}
+                  pageYOffset = {pageYOffset}
+                  topRowsPast = {topRowsPast}
                   profileTagHandler = {profileTagHandler}
                   setIsSharePostOpen={setIsSharePostOpen}
                   setPostToSend={setPostToSend}

@@ -2454,6 +2454,7 @@ const RouterSwitch = () => {
             <React.Fragment>
               <Route path='/' element={
                 <Homepage
+                  dataLoading = {dataLoading}
                   isHomePageLoading = {isHomePageLoading}
                   profileTagHandler = {profileTagHandler}
                   setIsSharePostOpen={setIsSharePostOpen}
