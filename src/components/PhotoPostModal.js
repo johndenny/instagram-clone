@@ -47,6 +47,7 @@ const PhotoPostModal = (props) => {
   } = props;
   const navigate = useNavigate();
   const isModal = true;
+  const [isContentClicked, setIsContentClicked] = useState(false);
 
   useEffect(() => () => {
     console.log('unmount')
@@ -66,6 +67,14 @@ const PhotoPostModal = (props) => {
     }
   }, []);
 
+  const modalContentClickHandler = (event) => {
+    event.stopPropagation();
+    setIsContentClicked(true);
+    setTimeout(() => {
+      setIsContentClicked(false);
+    }, 300);
+  }
+
   return (
     <div 
       className='photo-post-modal'
@@ -82,9 +91,10 @@ const PhotoPostModal = (props) => {
       </button>
       <main 
         className='photo-post-modal-content'
-        onClick={(event) => event.stopPropagation()}
+        onClick={modalContentClickHandler}
       >
         <MobilePhotoPost
+          isContentClicked = {isContentClicked}
           profileTagHandler = {profileTagHandler}
           setIsCommentDeleteOpen = {setIsCommentDeleteOpen}
           setSelectedComment = {setSelectedComment}

@@ -5,12 +5,14 @@ import { getFirestore, setDoc, doc, updateDoc, arrayUnion, query, collection, wh
 import { v4 as uuidv4 } from 'uuid'
 import { useParams } from 'react-router-dom';
 import CommentSearchModal from './CommentSearchModal';
+import EmojiModal from './EmojiModal';
 
 const db = getFirestore();
 // let userIndex = null
 
 const PostComments = (props) => {
   const {
+    isContentClicked,
     w150,
     profileTagHandler,
     isSearchHashTag,
@@ -39,6 +41,7 @@ const PostComments = (props) => {
   // const textareaRef = useRef(null);
   const [isSearchModalFlipped, setIsSearchModalFlipped] = useState(false);
   const [userIndex, setUserIndex] = useState(null);
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
   useEffect(() => {
     if (commentText === '') {
@@ -85,6 +88,12 @@ const PostComments = (props) => {
       setCommentText(value)
     }
   }
+
+  const insertEmoji = (hexNumber) => {
+    setCommentText((commentText) => {
+      return commentText.concat(String.fromCodePoint(hexNumber));
+    });
+  };
 
   useLayoutEffect(() => {
       textareaRef.current.style.height = '1px'
@@ -327,8 +336,22 @@ const PostComments = (props) => {
     }
   }
 
+  const emojiModalHandler = (event) => {
+    if (!isEmojiOpen) {
+      event.stopPropagation();
+    };
+    setIsEmojiOpen(true);
+  };
+
   return (
     <section className='post-comment'>
+      {isEmojiOpen &&
+        <EmojiModal
+          isContentClicked = {isContentClicked}
+          insertEmoji = {insertEmoji}
+          setIsEmojiOpen = {setIsEmojiOpen}
+        />
+      }
       <div className={isSaving ? 'comment-spinner-wrapper' : 'comment-spinner-wrapper hidden'}>
         <svg aria-label="Loading..." className='spinner' viewBox="0 0 100 100">
           <rect fill="#555555" height="6" opacity="0" rx="3" ry="3" transform="rotate(-90 50 50)" width="25" x="72" y="47">
@@ -357,7 +380,10 @@ const PostComments = (props) => {
           </rect>
         </svg>        
       </div>
-      <button className='emoji-menu-button'>
+      <button 
+        className='emoji-menu-button'
+        onClick={emojiModalHandler}
+      >
         <svg aria-label="Emoji" className="emjoi-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
           <path d="M15.83 10.997a1.167 1.167 0 101.167 1.167 1.167 1.167 0 00-1.167-1.167zm-6.5 1.167a1.167 1.167 0 10-1.166 1.167 1.167 1.167 0 001.166-1.167zm5.163 3.24a3.406 3.406 0 01-4.982.007 1 1 0 10-1.557 1.256 5.397 5.397 0 008.09 0 1 1 0 00-1.55-1.263zM12 .503a11.5 11.5 0 1011.5 11.5A11.513 11.513 0 0012 .503zm0 21a9.5 9.5 0 119.5-9.5 9.51 9.51 0 01-9.5 9.5z"></path>
         </svg>

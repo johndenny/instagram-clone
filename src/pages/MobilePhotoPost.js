@@ -16,6 +16,7 @@ let lastPress = 0;
 
 const MobilePhotoPost = (props) => {
   const {
+    isContentClicked,
     setIndexInView,
     pageYOffset,
     setPostHeightArray,
@@ -984,6 +985,7 @@ const MobilePhotoPost = (props) => {
               </div>
             </footer>
             <PostComments
+              isContentClicked = {isContentClicked}
               w150 = {selectedPost[1].w150}
               profileTagHandler = {profileTagHandler}
               isSearchHashTag = {isSearchHashTag}
