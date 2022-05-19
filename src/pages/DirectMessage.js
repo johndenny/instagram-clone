@@ -267,10 +267,15 @@ const DirectMessage = (props) => {
     profiles.forEach((profile) => {
       const {
         fullname,
+        username,
         photoURL
       } = profile;
       if (profile.uid !== uid) {
-        fullnames.push(fullname);
+        if (fullname === '') {
+          fullname.push(username);
+        } else {
+          fullnames.push(fullname);
+        }
         photoURLs.push(photoURL)
       };
     });

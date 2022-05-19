@@ -437,7 +437,6 @@ const MobilePhotoPost = (props) => {
   }
 
   useEffect(() => {
-    console.log(selectedPost);
     if (selectedPost === '') {
       getPostData();
     }
@@ -940,7 +939,10 @@ const MobilePhotoPost = (props) => {
                     <path d="M20.656 17.008a9.993 9.993 0 10-3.59 3.615L22 22z" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></path>
                   </svg>
                 </button>
-                <button className='feed-share-button'>
+                <button 
+                  className='feed-share-button'
+                  onClick={() => sendPost(selectedPost)}
+                >
                   <svg aria-label="Share Post" className="share-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
                     <line fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2" x1="22" x2="9.218" y1="3" y2="10.083"></line>
                     <polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></polygon>
@@ -985,6 +987,7 @@ const MobilePhotoPost = (props) => {
               </div>
             </footer>
             <PostComments
+              getPostData = {getPostData}
               isContentClicked = {isContentClicked}
               w150 = {selectedPost[1].w150}
               profileTagHandler = {profileTagHandler}
@@ -1278,7 +1281,10 @@ const MobilePhotoPost = (props) => {
                         <path d="M20.656 17.008a9.993 9.993 0 10-3.59 3.615L22 22z" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></path>
                       </svg>
                     </button>
-                    <button className='feed-share-button'>
+                    <button 
+                      className='feed-share-button'
+                      onClick={() => sendPost(selectedPost)}
+                    >
                       <svg aria-label="Share Post" className="share-post-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
                         <line fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2" x1="22" x2="9.218" y1="3" y2="10.083"></line>
                         <polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></polygon>
@@ -1729,7 +1735,7 @@ const MobilePhotoPost = (props) => {
                     </ul>                
                   }
                 </div>                  
-                <div className='feed-post-timestamp'>
+                <Link to={`/p/${postID}`} className='feed-post-timestamp'>
                   <time 
                     className='post-time-stamp'
                     title={new Date(uploadDate).toLocaleDateString('en-US', {
@@ -1740,10 +1746,11 @@ const MobilePhotoPost = (props) => {
                   >
                     {formatTime()}
                   </time>
-                </div>
+                </Link>
               </footer>
               {width > 736 &&
                 <PostComments
+                  getPostData = {getPostData}
                   w150 = {selectedPost[1].w150}
                   profileTagHandler = {profileTagHandler}
                   isSearchHashTag = {isSearchHashTag}

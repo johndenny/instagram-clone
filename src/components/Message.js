@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import './Message.css';
 import MessagePopUp from './MessagePopUp';
 import MessagePost from './MessagePost';
+import defaultProfileImage from "../images/default-profile-image.jpg";
 
 let lastPress = 0;
 const db = getFirestore();
@@ -21,7 +22,6 @@ const Message = (props) => {
     isGroup,
     messages,
     index,
-    // formatTime,
     messagesRef,
     userData,
     message
@@ -475,16 +475,16 @@ const Message = (props) => {
                 {likes.length === 2 &&
                   <Fragment>
                     <div className='profile-photo-frame'>
-                      <img alt='' className='profile-photo' src={likes[0].photoURL} />
+                      <img alt='' className='profile-photo' src={likes[0].photoURL === '' ? defaultProfileImage : likes[0].photoURL} />
                     </div>
                     <div className='profile-photo-frame'>
-                      <img alt='' className='profile-photo' src={likes[1].photoURL} />
+                      <img alt='' className='profile-photo' src={likes[1].photoURL === '' ? defaultProfileImage : likes[1].photoURL} />
                     </div>
                   </Fragment>
                 }
                 {likes.length === 1 && isGroup &&
                   <div className='profile-photo-frame'>
-                    <img alt='' className='profile-photo' src={likes[0].photoURL} />
+                    <img alt='' className='profile-photo' src={likes[0].photoURL === '' ? defaultProfileImage : likes[0].photoURL} />
                   </div>
                 }
               </div>

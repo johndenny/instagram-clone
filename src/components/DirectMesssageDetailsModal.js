@@ -2,6 +2,7 @@ import { updateDoc, doc, getFirestore, setDoc } from 'firebase/firestore';
 import { useLayoutEffect, useState } from 'react';
 import './DirectMessageDetailsModal.css';
 import { v4 as uuidv4 } from 'uuid';
+import defaultProfileImage from "../images/default-profile-image.jpg";
 
 const db = getFirestore();
 
@@ -185,7 +186,7 @@ const DirectMessageDetailsModal = (props) => {
                     key={uid}
                   >
                     <div className='profile-photo-frame'>
-                      <img alt='' className='profile-photo' src={photoURL} />
+                      <img alt='' className='profile-photo' src={photoURL === '' ? defaultProfileImage : photoURL} />
                     </div>
                     <div className='group-member-text'>
                       <span className='group-member-username'>

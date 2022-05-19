@@ -226,6 +226,7 @@ const NewMessage = (props) => {
   }, [recipientSelection]);
 
   useEffect(() => {
+    console.log(isMobile);
     newMessageSearchRef.current.focus();
     setIsInboxOpen(true);
     return () => {
@@ -238,24 +239,26 @@ const NewMessage = (props) => {
       {!isSharePostOpen && !isAddPeople &&
         <header className="mobile-navigation-header">
           <div className="mobile-navigation-icon-wrapper">
-            {isMobile
-              ? <button
-                  className='back-button'
-                  onClick={() => setIsNewMessageOpen(false)}
-                >
-                  <svg aria-label="Close" className="close-svg" color="#262626" fill="#262626" height="18" role="img" viewBox="0 0 24 24" width="18">
-                    <polyline fill="none" points="20.643 3.357 12 12 3.353 20.647" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3"></polyline>
-                    <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" x1="20.649" x2="3.354" y1="20.649" y2="3.354"></line>
-                  </svg>
-                </button>
-              : <button 
-                  className="back-button" 
-                  onClick={() => navigate(-1)}
-                >
-                  <svg aria-label="Back" className="back-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
-                    <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
-                  </svg>
-                </button>
+            {!isMobile &&
+              <button
+                className='back-button'
+                onClick={() => setIsNewMessageOpen(false)}
+              >
+                <svg aria-label="Close" className="close-svg" color="#262626" fill="#262626" height="18" role="img" viewBox="0 0 24 24" width="18">
+                  <polyline fill="none" points="20.643 3.357 12 12 3.353 20.647" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3"></polyline>
+                  <line fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" x1="20.649" x2="3.354" y1="20.649" y2="3.354"></line>
+                </svg>
+              </button>
+            }
+            {isMobile &&
+              <button 
+                className="back-button" 
+                onClick={() => navigate(-1)}
+              >
+                <svg aria-label="Back" className="back-svg" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                  <path d="M21 17.502a.997.997 0 01-.707-.293L12 8.913l-8.293 8.296a1 1 0 11-1.414-1.414l9-9.004a1.03 1.03 0 011.414 0l9 9.004A1 1 0 0121 17.502z"></path>
+                </svg>
+              </button>            
             }
             <h1 className="logo-header">
               New Message

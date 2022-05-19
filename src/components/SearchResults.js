@@ -27,11 +27,6 @@ const SearchResults = (props) => {
   } = props;
   const [sortedRecentSearch, setSortedRecentSearch] = useState([]);
 
-  // useEffect(() => () => {
-  //   setSearchResults([]);
-  //   setSearchString('');
-  // },[]);
-
   useEffect(() => {
     const sortedArray = [...userData.recentSearch]
     sortedArray.sort((a, z) => {

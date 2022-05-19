@@ -3,6 +3,7 @@ import Inbox from './Inbox';
 import DirectMessage from './DirectMessage';
 import { Fragment, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import defaultProfileImage from "../images/default-profile-image.jpg";
 
 const DesktopDirectMessages = (props) => {
   const {
@@ -39,7 +40,8 @@ const DesktopDirectMessages = (props) => {
     selectedMessage
   } = props;
   const {
-    username
+    username,
+    fullname
   } = userData;
   const params = useParams();
   const [profilePhotos, setProfilePhotos] = useState([]);
@@ -87,7 +89,7 @@ const DesktopDirectMessages = (props) => {
             <div className='button-spacer'>
             </div>
             <h1 className='inbox-side-header-text'>
-              {username}
+              {fullname === '' ? username : fullname}
             </h1>
             <button 
               className='new-message-button'
@@ -142,7 +144,7 @@ const DesktopDirectMessages = (props) => {
                         <img 
                           alt='' 
                           className='profile-photo' 
-                          src={profilePhotos[0]} 
+                          src={profilePhotos[0] === '' ? defaultProfileImage : profilePhotos[0]} 
                         />
                       </div>
                       <div className="profile-photo-border">
@@ -150,7 +152,7 @@ const DesktopDirectMessages = (props) => {
                           <img 
                             alt='' 
                             className='profile-photo' 
-                            src={profilePhotos[1]} 
+                            src={profilePhotos[1] === '' ? defaultProfileImage : profilePhotos[1]} 
                           />
                         </div>             
                       </div>          
@@ -161,7 +163,7 @@ const DesktopDirectMessages = (props) => {
                       <img 
                         alt='' 
                         className='profile-photo' 
-                        src={profilePhotoTitle} 
+                        src={profilePhotos[0] === '' ? defaultProfileImage : profilePhotoTitle} 
                       />
                     </div>        
                   }          

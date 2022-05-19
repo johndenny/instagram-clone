@@ -7,6 +7,12 @@ import { useNavigate } from 'react-router-dom';
 
 const Homepage = (props) => {
   const {
+    postHeightArray,
+    setPostHeightArray,
+    pageYOffset,
+    setPageYOffset,
+    indexInView,
+    setIndexInView,
     dataLoading,
     isHomePageLoading,
     profileTagHandler,
@@ -45,12 +51,9 @@ const Homepage = (props) => {
   const navigate = useNavigate();
   const [width, height] = useWindowSize();
   const postReference = useRef(null);
-  const [postHeightArray, setPostHeightArray] = useState([]);
   const topRowsPast = useRef(null);
   const scrollTimerReference = useRef(null);
   const [isScrolling, setIsScrolling] = useState(false);
-  const [pageYOffset, setPageYOffset] = useState(0);
-  const [indexInView, setIndexInView] = useState(0);
   const [padding, setPadding] = useState(0)
 
   const navigateUserProfile = async (username) => {
@@ -62,6 +65,9 @@ const Homepage = (props) => {
   }
 
   const scrollHandler = () => {
+    if (window.pageYOffset === 0) {
+      return
+    };
     setPageYOffset(window.pageYOffset);
   };
 
@@ -83,6 +89,9 @@ const Homepage = (props) => {
   }, [userData.uid]);
 
   useEffect(() => {
+    if (window.pageYOffset === 0 && indexInView !== 0) {
+      window.scrollTo(0, pageYOffset);
+    };
     setSelectedPost('');
   },[]);
 

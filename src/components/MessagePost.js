@@ -30,6 +30,7 @@ const MessagePost = (props) => {
       <Link 
         className='message-post-photo-frame'
         to={`/p/${postID}`}
+        style={{paddingBottom: `${100 / photo.aspectRatio}%`}}    
       >
         <img
           decoding='sync' 
@@ -45,6 +46,7 @@ const MessagePost = (props) => {
             ${photo.w240} 240w,
             ${photo.w150} 150w
           `}
+
         />
         {message.post.length > 2 &&
           <span className='carousel-icon'>

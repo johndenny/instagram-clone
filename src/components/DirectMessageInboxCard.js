@@ -118,8 +118,14 @@ const DirectMessageInboxCard = (props) => {
           fullname,
           uid,
           photoURL,
+          username
         } = profile;
         if (uid !== userData.uid) {
+          if (fullname === '') {
+            fullnames.push(username)
+          } else {
+            fullnames.push(fullname)
+          }
           fullnames.push(fullname);
           if (photoURL === '') {
             photoURLs.push(defaultProfileImage);

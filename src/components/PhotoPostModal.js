@@ -5,6 +5,8 @@ import './PhotoPostModal.css'
 
 const PhotoPostModal = (props) => {
   const {
+    setIsSharePostOpen,
+    setPostToSend,
     profileTagHandler,
     setIsCommentDeleteOpen,
     setSelectedComment,
@@ -94,6 +96,8 @@ const PhotoPostModal = (props) => {
         onClick={modalContentClickHandler}
       >
         <MobilePhotoPost
+          setPostToSend = {setPostToSend}
+          setIsSharePostOpen = {setIsSharePostOpen}
           isContentClicked = {isContentClicked}
           profileTagHandler = {profileTagHandler}
           setIsCommentDeleteOpen = {setIsCommentDeleteOpen}

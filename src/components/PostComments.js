@@ -12,6 +12,7 @@ const db = getFirestore();
 
 const PostComments = (props) => {
   const {
+    getPostData,
     isContentClicked,
     w150,
     profileTagHandler,
@@ -97,8 +98,7 @@ const PostComments = (props) => {
 
   useLayoutEffect(() => {
       textareaRef.current.style.height = '1px'
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-      console.log(textareaRef.current.scrollHeight);      
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;    
   }, [commentText, textareaRef]);
 
   const {
@@ -190,6 +190,7 @@ const PostComments = (props) => {
       setSelectedPost([postSnap.data(), ...photoArray]);
       postCommentsRef.current.scrollTop = postCommentsRef.current.scrollHeight;
     }
+    getPostData();
     setCommentText('');
     setIsSaving(false);
   };

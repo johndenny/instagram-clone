@@ -194,7 +194,7 @@ const RouterSwitch = () => {
 
   const [isSearchClicked, setIsSearchClicked] = useState(false);
   const [searchString, setSearchString] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState(null);
   const searchTimeoutRef = useRef();
   const [isSearching, setIsSearching] = useState(false);
   const [isNoMatch, setIsNoMatch] = useState(false);
@@ -238,7 +238,9 @@ const RouterSwitch = () => {
   const [isActivityLoading, setIsActivityLoading] = useState(false);
 
   //HOMEPAGE//
-
+  const [postHeightArray, setPostHeightArray] = useState([]);
+  const [pageYOffset, setPageYOffset] = useState(0);
+  const [indexInView, setIndexInView] = useState(0);
   const [isHomePageLoading, setIsHomePageLoading] = useState(false);
 
   const getNotReadNotifications = async () => {
@@ -772,7 +774,7 @@ const RouterSwitch = () => {
     // replaces strings with links //
     profileIndexs.forEach((index) => {
       const username = stringArray[index].substring(1);
-      const profileLink = <Link to={`/${username}`}>@${username}</Link>
+      const profileLink = <Link to={`/${username}`}>@{username}</Link>
       stringArray.splice(index, 1, profileLink);
     });
     hashTagIndexs.forEach((index) => {
@@ -786,7 +788,6 @@ const RouterSwitch = () => {
     const entireCaption = [];
     stringArray.forEach((word) => {
       if (typeof word === 'string') {
-        console.log('hi')
         return wordsSection.push(word);
       }
       if (word instanceof Object) {
@@ -955,6 +956,7 @@ const RouterSwitch = () => {
       username,
       fullname,
     } = userData;
+    console.log(userProfile);
     setSelectedListProfile(userProfile);
     setIsFollowLoading(true);
     setIsUnfollowModalOpen(false);
@@ -1300,6 +1302,11 @@ const RouterSwitch = () => {
   }
 
   const imageHandler = () => {
+    if (aspectRatio === 1) {
+      setImageWidth(100);
+      setImageHeight(100);
+      return
+    };
     if (aspectRatio < 1) {
       if (!imageFitHeight) {
         if (imageFlipped) {
@@ -2510,6 +2517,12 @@ const RouterSwitch = () => {
             <React.Fragment>
               <Route path='/' element={
                 <Homepage
+                  postHeightArray = {postHeightArray}
+                  setPostHeightArray = {setPostHeightArray}
+                  pageYOffset = {pageYOffset}
+                  setPageYOffset = {setPageYOffset}
+                  indexInView = {indexInView}
+                  setIndexInView = {setIndexInView}
                   dataLoading = {dataLoading}
                   isHomePageLoading = {isHomePageLoading}
                   profileTagHandler = {profileTagHandler}
@@ -2568,6 +2581,7 @@ const RouterSwitch = () => {
               } />
               <Route path='/direct/new/' element={
                 <NewMessage
+                  isMobile = {isMobile}
                   isSharePostOpen={isSharePostOpen}
                   directMessages={directMessages}
                   setIsInboxOpen={setIsInboxOpen}
@@ -2879,6 +2893,8 @@ const RouterSwitch = () => {
           />
           <Route path='/p/:postID' element={
             <MobilePhotoPost
+              setIsSharePostOpen = {setIsSharePostOpen}
+              setPostToSend = {setPostToSend}
               profileTagHandler = {profileTagHandler}
               setIsCommentDeleteOpen = {setIsCommentDeleteOpen}
               setSelectedComment = {setSelectedComment}
@@ -2989,6 +3005,8 @@ const RouterSwitch = () => {
         <Routes>
           <Route path='/p/:postID' element={
             <PhotoPostModal
+              setIsSharePostOpen = {setIsSharePostOpen}
+              setPostToSend = {setPostToSend}
               profileTagHandler = {profileTagHandler}
               setIsCommentDeleteOpen = {setIsCommentDeleteOpen}
               setSelectedComment = {setSelectedComment}
